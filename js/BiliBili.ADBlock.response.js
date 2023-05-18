@@ -2,11 +2,14 @@
 WEBSITE: https://biliuniverse.io
 README: https://github.com/BiliUniverse
 */
-const $ = new Env("📺 BiliBili: 🛡️ ADBlock v0.2.0(1) response");
+const $ = new Env("📺 BiliBili: 🛡️ ADBlock v0.2.0(3) response");
 const URL = new URLs();
 const DataBase = {
 	"ADBlock":{
-		"Settings":{"Switch":"true","Detail":{"splash":true,"feed":true,"story":true,"cinema":true,"view":true,"search":true,"xlive":true,"Hot_topics":true,"Most_visited":true,"Dynamic_adcard":true},"Configs":{}}
+		"Settings":{
+			"Switch":"true",
+			"Detail":{"splash":"true","feed":"true","story":"true","cinema":"true","view":"true","search":"true","xlive":"true","Hot_topics":"true","Most_visited":"true","Dynamic_adcard":"true"}
+		}
 	},
 	"Default": {
 		"Settings":{"Switch":"true"}
@@ -555,8 +558,8 @@ function setENV(name, platform, database) {
 	$.log(`⚠ ${$.name}, Set Environment Variables`, "");
 	let { Settings, Caches, Configs } = getENV(name, platform, database);
 	/***************** Prase *****************/
-	traverseObject(Settings, (key, value) => value.includes(",") ? value.split(",") : value );
-	//$.log(`🎉 ${$.name}, Set Environment Variables`, `Settings: ${typeof Settings}`, `Settings内容: ${JSON.stringify(Settings)}`, "");
+	traverseObject(Settings, (key, value) => value?.includes(",") ? value?.split(",") : value);
+	$.log(`🎉 ${$.name}, Set Environment Variables`, `Settings: ${typeof Settings}`, `Settings内容: ${JSON.stringify(Settings)}`, "");
 	/***************** Caches *****************/
 	//$.log(`🎉 ${$.name}, Set Environment Variables`, `Caches: ${typeof Caches}`, `Caches内容: ${JSON.stringify(Caches)}`, "");
 	/***************** Configs *****************/
