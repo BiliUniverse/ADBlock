@@ -378,7 +378,7 @@ const DataBase = {
 																});
 															}
 															const adsControlValue = data.cmConfig?.adsControl?.value;
-															if (Object.values(adsControlValue).length !== 0) {
+															if (Boolean(adsControlValue) && Object.values(adsControlValue).length !== 0) {
 																data.cmConfig = null;
 																$.log(`🎉 ${$.name}`, "up主推荐广告弹幕去除");
 															}
