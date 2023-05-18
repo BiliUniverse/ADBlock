@@ -8,7 +8,7 @@ const DataBase = {
 	"ADBlock":{
 		"Settings":{
 			"Switch":"true",
-			"Detail":{"splash":"true","feed":"true","story":"true","cinema":"true","view":"true","search":"true","xlive":"true","Hot_topics":"true","Most_visited":"true","Dynamic_adcard":"true"}
+			"Detail":{"splash":"true","feed":"true","activity":"false","story":"true","cinema":"true","view":"true","search":"true","xlive":"true","Hot_topics":"true","Most_visited":"true","Dynamic_adcard":"true"}
 		}
 	},
 	"Default": {
@@ -58,7 +58,7 @@ const DataBase = {
 								case "x/v2/splash/list": // 开屏页
 								case "x/v2/splash/brand/list": // 开屏页
 								case "x/v2/splash/event/list2": // 开屏页
-									switch (Settings.Detail.splash) {
+									switch (Settings?.Detail?.splash) {
 										case "true":
 											const item = ["account", "event_list", "preload", "show"];
 											if (body.data) {
@@ -81,15 +81,22 @@ const DataBase = {
 													const { card_type: cardType, card_goto: cardGoto } = i;
 													if (cardType && cardGoto) {
 														if (cardType === 'banner_v8' && cardGoto === 'banner') {
-															if (i.banner_item) {
-																for (const v of i.banner_item) {
-																	if (v.type) {
-																		if (v.type === 'ad') {
-																			$.log(`🎉 ${$.name}`, "banner广告去除");
-																			return false;
+															switch (Settings?.Detail?.activity) {
+																case "true":
+																	$.log(`🎉 ${$.name}`, "推荐页活动大图去除");
+																	return false;
+																case "false":
+																	if (i.banner_item) {
+																		for (const v of i.banner_item) {
+																			if (v.type) {
+																				if (v.type === 'ad') {
+																					$.log(`🎉 ${$.name}`, "推荐页大图广告去除");
+																					return false;
+																				}
+																			}
 																		}
 																	}
-																}
+																	break;
 															}
 														} else if (cardType === 'cm_v2' && ['ad_web_s', 'ad_av', 'ad_web_gif', 'ad_player', 'ad_inline_3d', 'ad_inline_eggs'].includes(cardGoto)) {
 															// ad_player大视频广告 ad_web_gif大gif广告 ad_web_s普通小广告 ad_av创作推广广告 ad_inline_3d  上方大的视频3d广告 ad_inline_eggs 上方大的视频广告
