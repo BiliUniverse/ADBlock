@@ -1,0 +1,24 @@
+{
+	"ADBlock": {
+		"Settings": {
+			"Switch": "true",
+			"Detail": {
+				"splash": "true",
+				"feed": "true",
+				"story": "true",
+				"cinema": "true",
+				"view": "true",
+				"search": "true",
+				"xlive": "true",
+				"Hot_topics": "true",
+				"Most_visited": "true",
+				"Dynamic_adcard": "true"
+			}
+		}
+	},
+	"Default": {
+		"Settings": {
+			"Switch": "true"
+		}
+	}
+}
