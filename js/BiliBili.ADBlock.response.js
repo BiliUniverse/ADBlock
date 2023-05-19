@@ -8,7 +8,7 @@ const DataBase = {
 	"ADBlock":{
 		"Settings":{
 			"Switch":"true",
-			"Detail":{"splash":"true","feed":"true","activity":"false","story":"true","cinema":"true","view":"true","search":"true","xlive":"true","Hot_topics":"true","Most_visited":"true","Dynamic_adcard":"true"}
+			"Detail":{"splash":"true","feed":"true","activity":"false","story":"true","cinema":"true","view":"true","search":"true","xlive":"true","Hot_search":"true","Hot_topics":"true","Most_visited":"true","Dynamic_adcard":"true"}
 		}
 	},
 	"Default": {
@@ -137,6 +137,17 @@ const DataBase = {
 											$.log(`🚧 ${$.name}`, "用户设置首页短视频流广告不去除");
 											break;
 									};
+									break;
+								case "x/v2/search/square": // 搜索页
+									switch (Settings?.Detail?.Hot_search) {
+										case "true":
+											body.data = body.data.filter((i) => !(i.type === "trending"));
+											$.log(`🎉 ${$.name}`, "搜索页热搜内容去除");
+											break;
+										case "false":
+											$.log(`🚧 ${$.name}`, "用户设置搜索页热搜内容不去除");
+											break;
+									}
 									break;
 							};
 							break;
