@@ -43,7 +43,7 @@ http:
       type: response
       require-body: true
       argument:
-    - match: ^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/(splash\/(brand\/list|event\/list2|list|show)|feed\/index(\/story)?)
+    - match: ^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/(splash\/(brand\/list|event\/list2|list|show)|feed\/index(\/story)?|search\/square)
       name: BiliBili.ADBlock.response.json
       type: response
       require-body: true
