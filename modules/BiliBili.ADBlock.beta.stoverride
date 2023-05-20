@@ -54,7 +54,7 @@ http:
       require-body: true
       binary-mode: true
       argument:
-    - match: ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.dynamic\.v2\.Dynamic\/DynAll$
+    - match: ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.dynamic\.v2\.Dynamic\/Dyn(All|Video)$
       name: BiliBili.ADBlock.response.proto
       type: response
       require-body: true
