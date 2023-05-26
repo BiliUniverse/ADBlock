@@ -80,7 +80,7 @@ const DataBase = {
 												body.data.items = await Promise.all(body.data.items.map(async item => {
 													const { card_type: cardType, card_goto: cardGoto } = item;
 													if (cardType && cardGoto) {
-														if (cardType === 'banner_v8' && cardGoto === 'banner') {
+														if (['banner_v8', 'banner_ipad_v8'].includes(cardType) && cardGoto === 'banner') {
 															switch (Settings?.Detail?.activity) {
 																case "true":
 																	$.setdata(item.hash, "@BiliBili.Index.Settings.hash");//获取banner_hash,无此字段会有活动页且此字段无法伪造.
@@ -98,18 +98,24 @@ const DataBase = {
 																	}
 																	break;
 															}
-														} else if (cardType === 'cm_v2' && ['ad_web_s', 'ad_av', 'ad_web_gif'].includes(cardGoto)) {
+														} else if (['cm_v2', 'cm_v1'].includes(cardType) && ['ad_web_s', 'ad_av', 'ad_web_gif'].includes(cardGoto)) {
 															// ad_player大视频广告 ad_web_gif大gif广告 ad_web_s普通小广告 ad_av创作推广广告 ad_inline_3d  上方大的视频3d广告 ad_inline_eggs 上方大的视频广告
 															$.log(`🎉 ${$.name}`, `${cardGoto}广告去除`);
-															await fixPosition().then(result => item = result);
-															return item;//小广告补位
+															if (config.hasOwnProperty("ipad_hd_abtest")) {
+																return undefined;//pad直接去除
+															} else {
+																await fixPosition().then(result => item = result);//小广告补位
+															}
 														} else if (cardType === 'cm_v2' && ['ad_player', 'ad_inline_3d', 'ad_inline_eggs'].includes(cardGoto)) {
 															$.log(`🎉 ${$.name}`, `${cardGoto}广告去除`);
 															return undefined;//大广告直接去除
 														} else if (cardType === 'small_cover_v10' && cardGoto === 'game') {
 															$.log(`🎉 ${$.name}`, "游戏广告去除");
-															await fixPosition().then(result => item = result);
-															return item;//小广告补位
+															if (config.hasOwnProperty("ipad_hd_abtest")) {
+																return undefined;//pad直接去除
+															} else {
+																await fixPosition().then(result => item = result);//小广告补位
+															}
 														} else if (cardType === 'cm_double_v9' && cardGoto === 'ad_inline_av') {
 															$.log(`🎉 ${$.name}`, "大视频广告去除");
 															return undefined;//大广告直接去除
@@ -638,7 +644,7 @@ function newRawBody({ header, body }, encoding = undefined) {
  * @return {Object} { Settings, Caches, Configs }
  */
 function setENV(name, platform, database) {
-	$.log(`⚠ ${$.name}, Set Environment Variables`, "");
+	//$.log(`⚠ ${$.name}, Set Environment Variables`, "");
 	let { Settings, Caches, Configs } = getENV(name, platform, database);
 	/***************** Prase *****************/
 	traverseObject(Settings, (key, value) => value?.includes(",") ? value?.split(",") : value);

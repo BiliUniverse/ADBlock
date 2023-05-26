@@ -461,7 +461,7 @@ function newRawBody({ header, body }, encoding = undefined) {
  * @return {Object} { Settings, Caches, Configs }
  */
 function setENV(name, platform, database) {
-	$.log(`⚠ ${$.name}, Set Environment Variables`, "");
+	//$.log(`⚠ ${$.name}, Set Environment Variables`, "");
 	let { Settings, Caches, Configs } = getENV(name, platform, database);
 	/***************** Prase *****************/
 	traverseObject(Settings, (key, value) => value?.includes(",") ? value?.split(",") : value);
