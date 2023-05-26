@@ -31,6 +31,8 @@ http-response ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app
 http-response ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.dynamic\.v2\.Dynamic\/Dyn(All|Video)$ requires-body=1, binary-body-mode=1, script-path=https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.response.beta.js, tag=BiliBili.ADBlock.response.proto, argument=
 http-response ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.playurl\.v1\.PlayURL\/PlayView$ requires-body=1, binary-body-mode=1, script-path=https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.response.beta.js, tag=BiliBili.ADBlock.response.proto, argument=
 http-response ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.polymer\.app\.search\.v1\.Search\/SearchAll$ requires-body=1, binary-body-mode=1, script-path=https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.response.beta.js, tag=BiliBili.ADBlock.response.proto, argument=
+http-request ^https?:\/\/app\.bilibili\.com\/x\/v2\/feed\/index? requires-body=0, timeout=15,script-path=https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.request.beta.js, tag=BiliBili.ADBlock.request.json, argument=
 
 [MitM]
 hostname = manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, api.bilibili.com, api.biliapi.net, grpc.biliapi.net
+h2 = true

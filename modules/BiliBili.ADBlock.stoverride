@@ -72,11 +72,20 @@ http:
       require-body: true
       binary-mode: true
       argument:
+		- match: ^https?:\/\/app\.bilibili\.com\/x\/v2\/feed\/index?
+      name: BiliBili.ADBlock.request.json
+      type: request
+      require-body: false
+      timeout: 15
+      argument:
 
 script-providers:
   BiliBili.ADBlock.response.json:
-    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/main/js/BiliBili.ADBlock.response.js
+    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.response.js
     interval: 86400
   BiliBili.ADBlock.response.proto:
-    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/main/js/BiliBili.ADBlock.response.js
+    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.response.js
+    interval: 86400
+	BiliBili.ADBlock.request.json:
+    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.request.js
     interval: 86400

@@ -2,7 +2,7 @@
 WEBSITE: https://biliuniverse.io
 README: https://github.com/BiliUniverse
 */
-const $ = new Env("📺 BiliBili: 🛡️ ADBlock v0.2.0(4) response");
+const $ = new Env("📺 BiliBili: 🛡️ ADBlock v0.2.0(5) response");
 const URL = new URLs();
 const DataBase = {
 	"ADBlock":{
@@ -77,41 +77,97 @@ const DataBase = {
 									switch (Settings?.Detail?.feed) {
 										case "true":
 											if (body.data.items?.length) {
-												body.data.items = body.data.items.filter(i => {
-													const { card_type: cardType, card_goto: cardGoto } = i;
+												body.data.items = await Promise.all(body.data.items.map(async item => {
+													const { card_type: cardType, card_goto: cardGoto } = item;
 													if (cardType && cardGoto) {
 														if (cardType === 'banner_v8' && cardGoto === 'banner') {
 															switch (Settings?.Detail?.activity) {
 																case "true":
+																	$.setdata(item.hash, "@BiliBili.Index.Settings.hash");//获取banner_hash,无此字段会有活动页且此字段无法伪造.
 																	$.log(`🎉 ${$.name}`, "推荐页活动大图去除");
-																	return false;
+																	return undefined;
 																case "false":
-																	if (i.banner_item) {
-																		for (const v of i.banner_item) {
-																			if (v.type) {
-																				if (v.type === 'ad') {
-																					$.log(`🎉 ${$.name}`, "推荐页大图广告去除");
-																					return false;
-																				}
+																	if (item.banner_item) {
+																		item.banner_item = item.banner_item.filter(i => {
+																			if (i.type === 'ad') {
+																				$.log(`🎉 ${$.name}`, "推荐页大图广告去除");
+																				return false;
 																			}
-																		}
+																			return true;
+																		});
 																	}
 																	break;
 															}
-														} else if (cardType === 'cm_v2' && ['ad_web_s', 'ad_av', 'ad_web_gif', 'ad_player', 'ad_inline_3d', 'ad_inline_eggs'].includes(cardGoto)) {
+														} else if (cardType === 'cm_v2' && ['ad_web_s', 'ad_av', 'ad_web_gif'].includes(cardGoto)) {
 															// ad_player大视频广告 ad_web_gif大gif广告 ad_web_s普通小广告 ad_av创作推广广告 ad_inline_3d  上方大的视频3d广告 ad_inline_eggs 上方大的视频广告
-															$.log(`🎉 ${$.name}`, `${cardGoto}广告去除)`);
-															return false;
+															$.log(`🎉 ${$.name}`, `${cardGoto}广告去除`);
+															await fixPosition().then(result => item = result);
+															return item;//小广告补位
+														} else if (cardType === 'cm_v2' && ['ad_player', 'ad_inline_3d', 'ad_inline_eggs'].includes(cardGoto)) {
+															$.log(`🎉 ${$.name}`, `${cardGoto}广告去除`);
+															return undefined;//大广告直接去除
 														} else if (cardType === 'small_cover_v10' && cardGoto === 'game') {
 															$.log(`🎉 ${$.name}`, "游戏广告去除");
-															return false;
+															await fixPosition().then(result => item = result);
+															return item;//小广告补位
 														} else if (cardType === 'cm_double_v9' && cardGoto === 'ad_inline_av') {
 															$.log(`🎉 ${$.name}`, "大视频广告去除");
-															return false;
+															return undefined;//大广告直接去除
 														}
 													}
-													return true;
-												});
+													return item;
+												}));
+												body.data.items = body.data.items.filter(fix => fix !== undefined);
+											}
+											async function fixPosition() {
+												let itemsCache = $.getdata("@BiliBili.Index.Caches","");
+												let singleItem = {};
+												if (itemsCache.length > 0) {
+													singleItem = itemsCache.pop();
+													$.log(`🎉 ${$.name}`, "推荐页空缺位填充成功");
+												} else {//重新获取填充位
+													const myRequest = {
+														url: $request.url,
+														headers: $request.heders
+													}
+													await $.http.get(myRequest).then(response => {
+														try {
+															const body = $.toObj(response.body)
+															if (body?.code === 0 && body?.message === "0") {
+																body.data.items = body.data.items.map(item => {
+																	const { card_type: cardType, card_goto: cardGoto } = item;
+																	if (cardType && cardGoto) {
+																		if (cardType === 'banner_v8' && cardGoto === 'banner') {
+																			return undefined;
+																		} else if (cardType === 'cm_v2' && ['ad_web_s', 'ad_av', 'ad_web_gif', 'ad_player', 'ad_inline_3d', 'ad_inline_eggs'].includes(cardGoto)) {
+																			return undefined;
+																		} else if (cardType === 'small_cover_v10' && cardGoto === 'game') {
+																			return undefined;
+																		} else if (cardType === 'cm_double_v9' && cardGoto === 'ad_inline_av') {
+																			return undefined;
+																		} else if (cardType === 'large_cover_v9' && cardGoto === 'inline_av_v2') {//补位不需要大视频
+																			return undefined;
+																		}
+																	}
+																	return item;
+																}).filter(fix => fix !== undefined);
+																$.setdata(body.data.items, "@BiliBili.Index.Caches");
+																$.log(`🎉 ${$.name}`, "推荐页缓存数组补充成功");
+															} else {
+																$.log(`🚧 ${$.name}`, "访问推荐页尝试填补失败");
+															}
+														} catch (e) {
+															$.logErr(e, response)
+														}
+													})
+													itemsCache = $.getdata("@BiliBili.Index.Caches","");
+													if (itemsCache.length > 0) {
+														singleItem = itemsCache.pop();
+														$.log(`🎉 ${$.name}`, "推荐页空缺位填充成功");
+													}
+												}
+												$.setdata(itemsCache, "@BiliBili.Index.Caches");
+												return singleItem;
 											}
 											break;
 										case "false":
