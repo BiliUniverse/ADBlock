@@ -77,6 +77,7 @@ const DataBase = {
 									switch (Settings?.Detail?.feed) {
 										case "true":
 											if (body.data.items?.length) {
+												let config = body.data.config;//区分pad与phone
 												body.data.items = await Promise.all(body.data.items.map(async item => {
 													const { card_type: cardType, card_goto: cardGoto } = item;
 													if (cardType && cardGoto) {
