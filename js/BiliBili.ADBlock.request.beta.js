@@ -50,23 +50,30 @@ let $response = undefined;
 								case "x/v2/feed/index": // 推荐页
 									switch (Settings?.Detail?.feed) {
 										case "true":
-											let [headUrl, params] = $request.url.split('?');
-											let obj = $.queryObj(params);
-											if (!obj.banner_hash) {//无论如何此字段都为空，因为客户端无法收到（只要去了大图）
-												if (!obj.login_event) {//此字段可区分第一次请求和后续请求
-													delete obj.sign;
-													obj.open_event = '';
-													obj.pull = 0;
-													let hash = $.getdata("@BiliBili.Index.Settings.hash","");
-													if (hash) {
-														obj.banner_hash = hash;
-														$.log(`🎉 ${$.name}`, "读取hash缓存成功");
+											switch (Settings?.Detail?.activity) {
+												case "true":
+													let [headUrl, params] = $request.url.split('?');
+													let obj = $.queryObj(params);
+													if (!obj.banner_hash) {//无论如何此字段都为空，因为客户端无法收到（只要去了大图）
+														if (!obj.login_event) {//此字段可区分第一次请求和后续请求
+															delete obj.sign;
+															obj.open_event = '';
+															obj.pull = 0;
+															let hash = $.getdata("@BiliBili.Index.Settings.hash","");
+															if (hash) {
+																obj.banner_hash = hash;
+																$.log(`🎉 ${$.name}`, "读取hash缓存成功");
+															}
+															obj['sign'] = md5($.queryStr(obj) + 'c2ed53a74eeefe3cf99fbd01d8c9c375');
+															params = $.queryStr(Object.fromEntries(new Map(Array.from(Object.entries(obj)).sort())));
+														}
 													}
-													obj['sign'] = md5($.queryStr(obj) + 'c2ed53a74eeefe3cf99fbd01d8c9c375');
-													params = $.queryStr(Object.fromEntries(new Map(Array.from(Object.entries(obj)).sort())));
-												}
+													$request.url = headUrl + '?' + params;
+													break;
+												case "false":
+													$.log(`🚧 ${$.name}`, "用户设置推荐页活动大图不去除");
+													break;
 											}
-											$request.url = headUrl + '?' + params;
 											break;
 										case "false":
 											$.log(`🚧 ${$.name}`, "用户设置推荐页广告不去除");
