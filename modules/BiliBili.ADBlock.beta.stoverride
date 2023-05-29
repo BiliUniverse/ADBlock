@@ -33,7 +33,12 @@ http:
     - ^https?:\/\/manga\.bilibili\.com\/twirp\/comic\.v\d\.Comic\/ListFlash - reject-dict
     - ^https?:\/\/api\.live\.bilibili\.com\/xlive\/e-commerce-interface\/v1\/ecommerce-user\/get_shopping_info\? - reject-dict
   script:
-    - match: ^https?:\/\/api\.live\.bilibili\.com\/xlive\/app-room\/v1\/index\/getInfoByRoom
+  	- match: ^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/feed\/index\?
+      name: BiliBili.ADBlock.request.json
+      type: request
+      require-body: false
+      argument:
+    - match: ^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/(splash\/(brand\/list|event\/list2|list|show)|feed\/index(\/story)?|search\/square)
       name: BiliBili.ADBlock.response.json
       type: response
       require-body: true
@@ -43,7 +48,7 @@ http:
       type: response
       require-body: true
       argument:
-    - match: ^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/(splash\/(brand\/list|event\/list2|list|show)|feed\/index(\/story)?|search\/square)
+    - match: ^https?:\/\/api\.live\.bilibili\.com\/xlive\/app-room\/v1\/index\/getInfoByRoom
       name: BiliBili.ADBlock.response.json
       type: response
       require-body: true
@@ -72,20 +77,14 @@ http:
       require-body: true
       binary-mode: true
       argument:
-		- match: ^https?:\/\/app\.bilibili\.com\/x\/v2\/feed\/index?
-      name: BiliBili.ADBlock.request.json
-      type: request
-      require-body: false
-      timeout: 15
-      argument:
 
 script-providers:
+	BiliBili.ADBlock.request.json:
+    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.request.beta.js
+    interval: 86400
   BiliBili.ADBlock.response.json:
     url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.response.beta.js
     interval: 86400
   BiliBili.ADBlock.response.proto:
     url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.response.beta.js
-    interval: 86400
-	BiliBili.ADBlock.request.json:
-    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.request.beta.js
     interval: 86400
