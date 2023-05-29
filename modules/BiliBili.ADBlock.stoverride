@@ -80,11 +80,11 @@ http:
 
 script-providers:
 	BiliBili.ADBlock.request.json:
-    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.request.js
+    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/main/js/BiliBili.ADBlock.request.js
     interval: 86400
   BiliBili.ADBlock.response.json:
-    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.response.js
+    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/main/js/BiliBili.ADBlock.response.js
     interval: 86400
   BiliBili.ADBlock.response.proto:
-    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.response.js
+    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/main/js/BiliBili.ADBlock.response.js
     interval: 86400
