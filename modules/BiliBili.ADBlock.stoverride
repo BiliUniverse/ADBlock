@@ -2,7 +2,7 @@ name: "📺 BiliBili: 🛡️ ADBlock"
 desc: "哔哩哔哩：去广告"
 openUrl: "http://boxjs.com/#/app/BiliBili.ADBlock"
 author: "ClydeTime"
-references: "VirgilClyne、app2smile、RuCu6"
+references: "VirgilClyne、app2smile、RuCu6、Maasea"
 homepage: "https://adblock.biliuniverse.io"
 manual: "https://manual.biliuniverse.io"
 icon: "https://github.com/BiliUniverse/ADBlock/raw/main/database/icon_108x.png"
@@ -33,12 +33,17 @@ http:
     - ^https?:\/\/manga\.bilibili\.com\/twirp\/comic\.v\d\.Comic\/ListFlash - reject-dict
     - ^https?:\/\/api\.live\.bilibili\.com\/xlive\/e-commerce-interface\/v1\/ecommerce-user\/get_shopping_info\? - reject-dict
   script:
-		- match: ^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/feed\/index\?
+    - match: ^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/feed\/index\?
       name: BiliBili.ADBlock.request.json
       type: request
       require-body: false
       argument:
     - match: ^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/(splash\/(brand\/list|event\/list2|list|show)|feed\/index(\/story)?|search\/square)
+      name: BiliBili.ADBlock.response.json
+      type: response
+      require-body: true
+      argument:
+    - match: ^https?:\/\/api\.bilibili\.com\/x\/web-interface\/wbi\/index\/top\/feed\/rcmd\?
       name: BiliBili.ADBlock.response.json
       type: response
       require-body: true
@@ -72,6 +77,24 @@ http:
       binary-mode: true
       argument:
     - match: ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.polymer\.app\.search\.v1\.Search\/SearchAll$
+      name: BiliBili.ADBlock.response.proto
+      type: response
+      require-body: true
+      binary-mode: true
+      argument:
+    - match: ^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.community\.service\.dm\.v1\.DM\/(DmView|DmSegMobile)
+      name: BiliBili.ADBlock.response.proto
+      type: response
+      require-body: true
+      binary-mode: true
+      argument:
+    - match: ^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.interface\.v1\.Teenagers\/ModeStatus
+      name: BiliBili.ADBlock.response.proto
+      type: response
+      require-body: true
+      binary-mode: true
+      argument:
+    - match: ^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.main\.community\.reply\.v1\.Reply\/MainList
       name: BiliBili.ADBlock.response.proto
       type: response
       require-body: true

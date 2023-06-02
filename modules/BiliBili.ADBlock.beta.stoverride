@@ -2,7 +2,7 @@ name: "📺 BiliBili: 🛡️ ADBlock β"
 desc: "(BETA) 哔哩哔哩：去广告"
 openUrl: "http://boxjs.com/#/app/BiliBili.ADBlock.beta"
 author: "ClydeTime"
-references: "VirgilClyne、app2smile、RuCu6"
+references: "VirgilClyne、app2smile、RuCu6、Maasea"
 homepage: "https://adblock.biliuniverse.io"
 manual: "https://manual.biliuniverse.io"
 icon: "https://github.com/BiliUniverse/ADBlock/raw/main/database/icon_108x.png"
@@ -43,6 +43,11 @@ http:
       type: response
       require-body: true
       argument:
+    - match: ^https?:\/\/api\.bilibili\.com\/x\/web-interface\/wbi\/index\/top\/feed\/rcmd\?
+      name: BiliBili.ADBlock.response.json
+      type: response
+      require-body: true
+      argument:
     - match: ^https?:\/\/api\.bili(bili\.com|api\.net)\/pgc\/page\/(bangumi|cinema\/tab\?)
       name: BiliBili.ADBlock.response.json
       type: response
@@ -77,9 +82,27 @@ http:
       require-body: true
       binary-mode: true
       argument:
+    - match: ^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.community\.service\.dm\.v1\.DM\/(DmView|DmSegMobile)
+      name: BiliBili.ADBlock.response.proto
+      type: response
+      require-body: true
+      binary-mode: true
+      argument:
+    - match: ^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.interface\.v1\.Teenagers\/ModeStatus
+      name: BiliBili.ADBlock.response.proto
+      type: response
+      require-body: true
+      binary-mode: true
+      argument:
+    - match: ^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.main\.community\.reply\.v1\.Reply\/MainList
+      name: BiliBili.ADBlock.response.proto
+      type: response
+      require-body: true
+      binary-mode: true
+      argument:
 
 script-providers:
-	BiliBili.ADBlock.request.json:
+  BiliBili.ADBlock.request.json:
     url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/beta/js/BiliBili.ADBlock.request.beta.js
     interval: 86400
   BiliBili.ADBlock.response.json:
