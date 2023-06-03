@@ -470,7 +470,7 @@ const DataBase = {
 															}
 															if (data.relates?.length) {
 																data.relates = data.relates.filter((item) => {
-																	if (item.goto === "cm") {
+																	if (item.cm) {
 																		$.log(`🎉 ${$.name}`, "播放页关联推荐广告去除");
 																		return false;
 																	}
