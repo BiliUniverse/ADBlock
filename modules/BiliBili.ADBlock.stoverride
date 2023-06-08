@@ -58,7 +58,7 @@ http:
       type: response
       require-body: true
       argument:
-    - match: ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.view\.v1\.View\/View$
+    - match: ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.view\.v1\.View\/(View|TFInfo)$
       name: BiliBili.ADBlock.response.proto
       type: response
       require-body: true
