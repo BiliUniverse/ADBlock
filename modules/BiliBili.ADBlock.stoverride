@@ -102,7 +102,7 @@ http:
       argument:
 
 script-providers:
-	BiliBili.ADBlock.request.json:
+  BiliBili.ADBlock.request.json:
     url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/main/js/BiliBili.ADBlock.request.js
     interval: 86400
   BiliBili.ADBlock.response.json:
