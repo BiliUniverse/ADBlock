@@ -2,7 +2,7 @@
 WEBSITE: https://biliuniverse.io
 README: https://github.com/BiliUniverse
 */
-const $ = new Env("📺 BiliBili: 🛡️ ADBlock v0.3.1(1) response.beta");
+const $ = new Env("📺 BiliBili: 🛡️ ADBlock v0.3.1(2) response.beta");
 const URL = new URLs();
 const DataBase = {
 	"ADBlock":{
@@ -109,6 +109,12 @@ const DataBase = {
 															if (params.device !== "phone") {
 																return undefined;//pad直接去除
 															} else {
+																await fixPosition().then(result => item = result);//小广告补位
+															}
+														} else if (cardGoto === 'live' && cardType === 'small_cover_v9') {
+															let blockUpLiveList = Settings?.Detail?.blockUpLiveList;
+															if (blockUpLiveList && blockUpLiveList.includes(item?.args?.up_id?.toString())) {
+																$.log(`🎉 ${$.name}`, `屏蔽Up主<${item?.args?.up_name}>直播推广`);
 																await fixPosition().then(result => item = result);//小广告补位
 															}
 														} else if (cardType === 'cm_v2' && ['ad_player', 'ad_inline_3d', 'ad_inline_eggs'].includes(cardGoto)) {
