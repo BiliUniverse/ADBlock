@@ -113,6 +113,9 @@ const DataBase = {
 															}
 														} else if (cardGoto === 'live' && cardType === 'small_cover_v9') {
 															let blockUpLiveList = Settings?.Detail?.blockUpLiveList;
+															if (typeof blockUpLiveList === 'number') {
+																blockUpLiveList = blockUpLiveList.toString();
+															}
 															if (blockUpLiveList && blockUpLiveList.includes(item?.args?.up_id?.toString())) {
 																$.log(`🎉 ${$.name}`, `屏蔽Up主<${item?.args?.up_name}>直播推广`);
 																await fixPosition().then(result => item = result);//小广告补位
