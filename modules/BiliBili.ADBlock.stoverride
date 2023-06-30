@@ -59,43 +59,43 @@ http:
       require-body: true
       argument:
     - match: ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.view\.v1\.View\/(View|TFInfo)$
-      name: BiliBili.ADBlock.response.proto
+      name: BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
       binary-mode: true
       argument:
     - match: ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.dynamic\.v2\.Dynamic\/Dyn(All|Video)$
-      name: BiliBili.ADBlock.response.proto
+      name: BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
       binary-mode: true
       argument:
     - match: ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.playurl\.v1\.PlayURL\/PlayView$
-      name: BiliBili.ADBlock.response.proto
+      name: BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
       binary-mode: true
       argument:
     - match: ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.polymer\.app\.search\.v1\.Search\/SearchAll$
-      name: BiliBili.ADBlock.response.proto
+      name: BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
       binary-mode: true
       argument:
     - match: ^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.community\.service\.dm\.v1\.DM\/(DmView|DmSegMobile)
-      name: BiliBili.ADBlock.response.proto
+      name: BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
       binary-mode: true
       argument:
     - match: ^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.interface\.v1\.Teenagers\/ModeStatus
-      name: BiliBili.ADBlock.response.proto
+      name: BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
       binary-mode: true
       argument:
     - match: ^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.main\.community\.reply\.v1\.Reply\/MainList
-      name: BiliBili.ADBlock.response.proto
+      name: BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
       binary-mode: true
@@ -108,6 +108,6 @@ script-providers:
   BiliBili.ADBlock.response.json:
     url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/main/js/BiliBili.ADBlock.response.js
     interval: 86400
-  BiliBili.ADBlock.response.proto:
+  BiliBili.ADBlock.response.grpc:
     url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/main/js/BiliBili.ADBlock.response.js
     interval: 86400
