@@ -2,7 +2,7 @@
 WEBSITE: https://biliuniverse.io
 README: https://github.com/BiliUniverse
 */
-const $ = new Env("📺 BiliBili: 🛡️ ADBlock v0.3.1(2) response");
+const $ = new Env("📺 BiliBili: 🛡️ ADBlock v0.3.3(2) response");
 const URL = new URLs();
 const DataBase = {
 	"ADBlock":{
@@ -535,7 +535,7 @@ const DataBase = {
 															if (data.cm?.sourceContent?.length) {
 																data.cm.sourceContent = [];
 																$.log(`🎉 ${$.name}`, "up主推荐广告去除");
-																$.msg(`🎉 ${$.name}`,"", "up主推荐广告去除");
+																//$.msg(`🎉 ${$.name}`,"", "up主推荐广告去除");
 															}
 															body = ViewReply.toBinary(data);
 															break;
