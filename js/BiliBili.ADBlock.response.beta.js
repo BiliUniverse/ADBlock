@@ -51,7 +51,7 @@ const DataBase = {
 				case "application/xml":
 				case "application/plist":
 				case "application/x-plist":
-										//body = XML.parse($response.body);
+					//body = XML.parse($response.body);
 					//$.log(body);
 					//$response.body = XML.stringify(body);
 					break;
@@ -553,9 +553,9 @@ const DataBase = {
 																data.cm.sourceContent = [];
 																$.log(`🎉 ${$.name}`, "up主推荐广告去除");
 															}
-															data.tab.tabModule[0].tab.introduction.modules =data.tab.tabModule[0].tab.introduction.modules.map((i) => {
-																if (i.type === 28){
-																	i.data.relates.cards = i.data.relates.cards.filter((j) => j.relateCardType !== 5);
+															data.tab.tabModule[0].tab.introduction.modules = data.tab.tabModule[0].tab.introduction.modules.map((i) => {
+																if (i.type === 28) {
+																	i.data.relates.cards = i.data.relates.cards.filter((j) => j.relateCardType !== 5 && j.relateCardType !== 4);
 																	$.log(`🎉 ${$.name}`, "视频详情下方推荐卡广告去除");
 																}
 																return i;
