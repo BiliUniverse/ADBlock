@@ -8,7 +8,7 @@ const DataBase = {
 	"ADBlock":{
 		"Settings":{
 			"Switch":true,
-			"Detail":{"splash":true,"feed":true,"activity":false,"story":true,"cinema":true,"view":true,"search":true,"commandDms":false,"colorfulDms":false,"MainList":true,"xlive":true,"Hot_search":true,"Hot_topics":true,"Most_visited":true,"Dynamic_adcard":true}
+			"Detail":{"splash":true,"feed":true,"vertical":false,"activity":false,"story":true,"cinema":true,"view":true,"search":true,"commandDms":false,"colorfulDms":false,"MainList":true,"xlive":true,"Hot_search":true,"Hot_topics":true,"Most_visited":true,"Dynamic_adcard":true}
 		}
 	},
 	"Default": {
@@ -86,7 +86,7 @@ const DataBase = {
 											if (body.data.items?.length) {
 												//区分pad与phone
 												body.data.items = await Promise.all(body.data.items.map(async item => {
-													const { card_type: cardType, card_goto: cardGoto } = item;
+													const { card_type: cardType, card_goto: cardGoto, goto: Goto } = item;
 													if (cardType && cardGoto) {
 														if (['banner_v8', 'banner_ipad_v8'].includes(cardType) && cardGoto === 'banner') {
 															switch (Settings?.Detail?.activity) {
@@ -138,6 +138,17 @@ const DataBase = {
 														} else if (cardType === 'cm_double_v9' && cardGoto === 'ad_inline_av') {
 															$.log(`🎉 ${$.name}`, "大视频广告去除");
 															return undefined;//大广告直接去除
+														} else if (Goto === 'vertical_av') {
+															switch (Settings?.Detail?.vertical) {
+																case true:
+																default:
+																	$.log(`🎉 ${$.name}`, "竖屏视频去除");
+																	await fixPosition().then(result => item = result);//小视频补位
+																	break;
+																case false:
+																	$.log(`🚧 ${$.name}`, "用户设置推荐页竖屏视频不去除");
+																	break;
+															}
 														}
 													}
 													return item;
@@ -160,17 +171,19 @@ const DataBase = {
 															const body = $.toObj(response.body)
 															if (body?.code === 0 && body?.message === "0") {
 																body.data.items = body.data.items.map(item => {
-																	const { card_type: cardType, card_goto: cardGoto } = item;
+																	const { card_type: cardType, card_goto: cardGoto, goto: Goto } = item;
 																	if (cardType && cardGoto) {
 																		if (cardType === 'banner_v8' && cardGoto === 'banner') {
 																			return undefined;
-																		} else if (cardType === 'cm_v2' && ['ad_web_s', 'ad_av', 'ad_web_gif', 'ad_player', 'ad_inline_3d', 'ad_inline_eggs'].includes(cardGoto)) {
+																		} else if (cardType === 'cm_v2' && ['ad_web_s', 'ad_av', 'ad_web_gif', 'ad_player', 'ad_inline_3d', 'ad_inline_eggs', 'ad_inline_live'].includes(cardGoto)) {
 																			return undefined;
 																		} else if (cardType === 'small_cover_v10' && cardGoto === 'game') {
 																			return undefined;
 																		} else if (cardType === 'cm_double_v9' && cardGoto === 'ad_inline_av') {
 																			return undefined;
 																		} else if (cardType === 'large_cover_v9' && cardGoto === 'inline_av_v2') {//补位不需要大视频
+																			return undefined;
+																		} else if (Goto === 'vertical_av') {//补位不需要竖屏视频
 																			return undefined;
 																		}
 																	}

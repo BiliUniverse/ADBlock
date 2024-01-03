@@ -5,6 +5,7 @@
 			"Detail": {
 				"splash": true,
 				"feed": true,
+				"vertical":false,
 				"activity": false,
 				"story": true,
 				"cinema": true,
