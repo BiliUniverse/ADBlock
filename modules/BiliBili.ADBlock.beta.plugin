@@ -6,6 +6,7 @@
 #!homepage=https://adblock.biliuniverse.io
 #!manual=https://manual.biliuniverse.io
 #!icon=https://github.com/BiliUniverse/ADBlock/raw/main/database/icon_108x.png
+#!category=📺 BiliUniverse
 
 [Rewrite]
 # 去除搜索中的默认关键词
