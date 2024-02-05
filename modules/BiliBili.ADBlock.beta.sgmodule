@@ -5,7 +5,7 @@
 #!references=VirgilClyne、app2smile、RuCu6、Maasea
 #!homepage=https://adblock.biliuniverse.io
 #!manual=https://manual.biliuniverse.io
-#!icon=https://github.com/BiliUniverse/ADBlock/raw/main/database/icon_108x.png
+#!icon=https://github.com/BiliUniverse/ADBlock/raw/main/database/icon_rounded.png
 #!category=📺 BiliUniverse
 #!arguments=[开屏]去除广告:true,[推荐]去除广告:true,[推荐]去除“活动大图”:false,[首页]去除短视频流广告:true,[番剧电影]去除广告:true,[用户投稿]去除视频广告:true,[搜索]去除广告:true,[弹幕]去除交互式弹幕:false,[弹幕]替换大会员弹幕:false,[评论区]去除广告:true,[直播]去除广告:true,[搜索]去除“热搜”:true,[动态]去除“热门话题”:true,[动态]去除“最常访问”:true,[动态]去除广告动态:true
 
