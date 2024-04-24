@@ -1,35 +1,10736 @@
-/*
-WEBSITE: https://biliuniverse.io
-README: https://github.com/BiliUniverse
-*/
-const $ = new Env("📺 BiliBili: 🛡️ ADBlock v0.5.0(1) response.beta");
-const URI = new URIs();
-const DataBase = {
-	"ADBlock":{
-		"Settings":{
-			"Switch":true,
-			"Detail":{"splash":true,"feed":true,"vertical":false,"activity":false,"story":true,"cinema":true,"view":true,"search":true,"commandDms":false,"colorfulDms":false,"MainList":true,"xlive":true,"Hot_search":true,"Hot_topics":true,"Most_visited":true,"Dynamic_adcard":true}
+/* README: https://github.com/BiliUniverse */
+/* https://www.lodashjs.com */
+class Lodash {
+	static name = "Lodash";
+	static version = "1.2.2";
+	static about() { return console.log(`\n🟧 ${this.name} v${this.version}\n`) };
+
+	static get(object = {}, path = "", defaultValue = undefined) {
+		// translate array case to dot case, then split with .
+		// a[0].b -> a.0.b -> ['a', '0', 'b']
+		if (!Array.isArray(path)) path = this.toPath(path);
+
+		const result = path.reduce((previousValue, currentValue) => {
+			return Object(previousValue)[currentValue]; // null undefined get attribute will throwError, Object() can return a object 
+		}, object);
+		return (result === undefined) ? defaultValue : result;
+	}
+
+	static set(object = {}, path = "", value) {
+		if (!Array.isArray(path)) path = this.toPath(path);
+		path
+			.slice(0, -1)
+			.reduce(
+				(previousValue, currentValue, currentIndex) =>
+					(Object(previousValue[currentValue]) === previousValue[currentValue])
+						? previousValue[currentValue]
+						: previousValue[currentValue] = (/^\d+$/.test(path[currentIndex + 1]) ? [] : {}),
+				object
+			)[path[path.length - 1]] = value;
+		return object
+	}
+
+	static unset(object = {}, path = "") {
+		if (!Array.isArray(path)) path = this.toPath(path);
+		let result = path.reduce((previousValue, currentValue, currentIndex) => {
+			if (currentIndex === path.length - 1) {
+				delete previousValue[currentValue];
+				return true
+			}
+			return Object(previousValue)[currentValue]
+		}, object);
+		return result
+	}
+
+	static toPath(value) {
+		return value.replace(/\[(\d+)\]/g, '.$1').split('.').filter(Boolean);
+	}
+
+	static escape(string) {
+		const map = {
+			'&': '&amp;',
+			'<': '&lt;',
+			'>': '&gt;',
+			'"': '&quot;',
+			"'": '&#39;',
+		};
+		return string.replace(/[&<>"']/g, m => map[m])
+	};
+
+	static unescape(string) {
+		const map = {
+			'&amp;': '&',
+			'&lt;': '<',
+			'&gt;': '>',
+			'&quot;': '"',
+			'&#39;': "'",
+		};
+		return string.replace(/&amp;|&lt;|&gt;|&quot;|&#39;/g, m => map[m])
+	}
+
+}
+
+/* https://developer.mozilla.org/zh-CN/docs/Web/API/Storage/setItem */
+class $Storage {
+	static name = "$Storage";
+	static version = "1.0.9";
+	static about() { return console.log(`\n🟧 ${this.name} v${this.version}\n`) };
+	static data = null
+	static dataFile = 'box.dat'
+	static #nameRegex = /^@(?<key>[^.]+)(?:\.(?<path>.*))?$/;
+
+	static #platform() {
+		if ('undefined' !== typeof $environment && $environment['surge-version'])
+			return 'Surge'
+		if ('undefined' !== typeof $environment && $environment['stash-version'])
+			return 'Stash'
+		if ('undefined' !== typeof module && !!module.exports) return 'Node.js'
+		if ('undefined' !== typeof $task) return 'Quantumult X'
+		if ('undefined' !== typeof $loon) return 'Loon'
+		if ('undefined' !== typeof $rocket) return 'Shadowrocket'
+		if ('undefined' !== typeof Egern) return 'Egern'
+	}
+
+    static getItem(keyName = new String, defaultValue = null) {
+        let keyValue = defaultValue;
+        // 如果以 @
+		switch (keyName.startsWith('@')) {
+			case true:
+				const { key, path } = keyName.match(this.#nameRegex)?.groups;
+				//console.log(`1: ${key}, ${path}`);
+				keyName = key;
+				let value = this.getItem(keyName, {});
+				//console.log(`2: ${JSON.stringify(value)}`)
+				if (typeof value !== "object") value = {};
+				//console.log(`3: ${JSON.stringify(value)}`)
+				keyValue = Lodash.get(value, path);
+				//console.log(`4: ${JSON.stringify(keyValue)}`)
+				try {
+					keyValue = JSON.parse(keyValue);
+				} catch (e) {
+					// do nothing
+				}				//console.log(`5: ${JSON.stringify(keyValue)}`)
+				break;
+			default:
+				switch (this.#platform()) {
+					case 'Surge':
+					case 'Loon':
+					case 'Stash':
+					case 'Egern':
+					case 'Shadowrocket':
+						keyValue = $persistentStore.read(keyName);
+						break;
+					case 'Quantumult X':
+						keyValue = $prefs.valueForKey(keyName);
+						break;
+					case 'Node.js':
+						this.data = this.#loaddata(this.dataFile);
+						keyValue = this.data?.[keyName];
+						break;
+					default:
+						keyValue = this.data?.[keyName] || null;
+						break;
+				}				try {
+					keyValue = JSON.parse(keyValue);
+				} catch (e) {
+					// do nothing
+				}				break;
+		}		return keyValue ?? defaultValue;
+    };
+
+	static setItem(keyName = new String, keyValue = new String) {
+		let result = false;
+		//console.log(`0: ${typeof keyValue}`);
+		switch (typeof keyValue) {
+			case "object":
+				keyValue = JSON.stringify(keyValue);
+				break;
+			default:
+				keyValue = String(keyValue);
+				break;
+		}		switch (keyName.startsWith('@')) {
+			case true:
+				const { key, path } = keyName.match(this.#nameRegex)?.groups;
+				//console.log(`1: ${key}, ${path}`);
+				keyName = key;
+				let value = this.getItem(keyName, {});
+				//console.log(`2: ${JSON.stringify(value)}`)
+				if (typeof value !== "object") value = {};
+				//console.log(`3: ${JSON.stringify(value)}`)
+				Lodash.set(value, path, keyValue);
+				//console.log(`4: ${JSON.stringify(value)}`)
+				result = this.setItem(keyName, value);
+				//console.log(`5: ${result}`)
+				break;
+			default:
+				switch (this.#platform()) {
+					case 'Surge':
+					case 'Loon':
+					case 'Stash':
+					case 'Egern':
+					case 'Shadowrocket':
+						result = $persistentStore.write(keyValue, keyName);
+						break;
+					case 'Quantumult X':
+						result =$prefs.setValueForKey(keyValue, keyName);
+						break;
+					case 'Node.js':
+						this.data = this.#loaddata(this.dataFile);
+						this.data[keyName] = keyValue;
+						this.#writedata(this.dataFile);
+						result = true;
+						break;
+					default:
+						result = this.data?.[keyName] || null;
+						break;
+				}				break;
+		}		return result;
+	};
+
+    static removeItem(keyName){
+		let result = false;
+		switch (keyName.startsWith('@')) {
+			case true:
+				const { key, path } = keyName.match(this.#nameRegex)?.groups;
+				keyName = key;
+				let value = this.getItem(keyName);
+				if (typeof value !== "object") value = {};
+				keyValue = Lodash.unset(value, path);
+				result = this.setItem(keyName, value);
+				break;
+			default:
+				switch (this.#platform()) {
+					case 'Surge':
+					case 'Loon':
+					case 'Stash':
+					case 'Egern':
+					case 'Shadowrocket':
+						result = false;
+						break;
+					case 'Quantumult X':
+						result = $prefs.removeValueForKey(keyName);
+						break;
+					case 'Node.js':
+						result = false;
+						break;
+					default:
+						result = false;
+						break;
+				}				break;
+		}		return result;
+    }
+
+    static clear() {
+		let result = false;
+		switch (this.#platform()) {
+			case 'Surge':
+			case 'Loon':
+			case 'Stash':
+			case 'Egern':
+			case 'Shadowrocket':
+				result = false;
+				break;
+			case 'Quantumult X':
+				result = $prefs.removeAllValues();
+				break;
+			case 'Node.js':
+				result = false;
+				break;
+			default:
+				result = false;
+				break;
+		}		return result;
+    }
+
+	static #loaddata(dataFile) {
+		if (this.isNode()) {
+			this.fs = this.fs ? this.fs : require('fs');
+			this.path = this.path ? this.path : require('path');
+			const curDirDataFilePath = this.path.resolve(dataFile);
+			const rootDirDataFilePath = this.path.resolve(
+				process.cwd(),
+				dataFile
+			);
+			const isCurDirDataFile = this.fs.existsSync(curDirDataFilePath);
+			const isRootDirDataFile =
+				!isCurDirDataFile && this.fs.existsSync(rootDirDataFilePath);
+			if (isCurDirDataFile || isRootDirDataFile) {
+				const datPath = isCurDirDataFile
+					? curDirDataFilePath
+					: rootDirDataFilePath;
+				try {
+					return JSON.parse(this.fs.readFileSync(datPath))
+				} catch (e) {
+					return {}
+				}
+			} else return {}
+		} else return {}
+	}
+
+	static #writedata(dataFile = this.dataFile) {
+		if (this.isNode()) {
+			this.fs = this.fs ? this.fs : require('fs');
+			this.path = this.path ? this.path : require('path');
+			const curDirDataFilePath = this.path.resolve(dataFile);
+			const rootDirDataFilePath = this.path.resolve(
+				process.cwd(),
+				dataFile
+			);
+			const isCurDirDataFile = this.fs.existsSync(curDirDataFilePath);
+			const isRootDirDataFile =
+				!isCurDirDataFile && this.fs.existsSync(rootDirDataFilePath);
+			const jsondata = JSON.stringify(this.data);
+			if (isCurDirDataFile) {
+				this.fs.writeFileSync(curDirDataFilePath, jsondata);
+			} else if (isRootDirDataFile) {
+				this.fs.writeFileSync(rootDirDataFilePath, jsondata);
+			} else {
+				this.fs.writeFileSync(curDirDataFilePath, jsondata);
+			}
 		}
-	},
-	"Default": {
-		"Settings":{"Switch":true}
+	};
+
+}
+
+class ENV {
+	static name = "ENV"
+	static version = '1.8.3'
+	static about() { return console.log(`\n🟧 ${this.name} v${this.version}\n`) }
+
+	constructor(name, opts) {
+		console.log(`\n🟧 ${ENV.name} v${ENV.version}\n`);
+		this.name = name;
+		this.logs = [];
+		this.isMute = false;
+		this.isMuteLog = false;
+		this.logSeparator = '\n';
+		this.encoding = 'utf-8';
+		this.startTime = new Date().getTime();
+		Object.assign(this, opts);
+		this.log(`\n🚩 开始!\n${name}\n`);
+	}
+	
+	environment() {
+		switch (this.platform()) {
+			case 'Surge':
+				$environment.app = 'Surge';
+				return $environment
+			case 'Stash':
+				$environment.app = 'Stash';
+				return $environment
+			case 'Egern':
+				$environment.app = 'Egern';
+				return $environment
+			case 'Loon':
+				let environment = $loon.split(' ');
+				return {
+					"device": environment[0],
+					"ios": environment[1],
+					"loon-version": environment[2],
+					"app": "Loon"
+				};
+			case 'Quantumult X':
+				return {
+					"app": "Quantumult X"
+				};
+			case 'Node.js':
+				process.env.app = 'Node.js';
+				return process.env
+			default:
+				return {}
+		}
+	}
+
+	platform() {
+		if ('undefined' !== typeof $environment && $environment['surge-version'])
+			return 'Surge'
+		if ('undefined' !== typeof $environment && $environment['stash-version'])
+			return 'Stash'
+		if ('undefined' !== typeof module && !!module.exports) return 'Node.js'
+		if ('undefined' !== typeof $task) return 'Quantumult X'
+		if ('undefined' !== typeof $loon) return 'Loon'
+		if ('undefined' !== typeof $rocket) return 'Shadowrocket'
+		if ('undefined' !== typeof Egern) return 'Egern'
+	}
+
+	isNode() {
+		return 'Node.js' === this.platform()
+	}
+
+	isQuanX() {
+		return 'Quantumult X' === this.platform()
+	}
+
+	isSurge() {
+		return 'Surge' === this.platform()
+	}
+
+	isLoon() {
+		return 'Loon' === this.platform()
+	}
+
+	isShadowrocket() {
+		return 'Shadowrocket' === this.platform()
+	}
+
+	isStash() {
+		return 'Stash' === this.platform()
+	}
+
+	isEgern() {
+		return 'Egern' === this.platform()
+	}
+
+	async getScript(url) {
+		return await this.fetch(url).then(response => response.body);
+	}
+
+	async runScript(script, runOpts) {
+		let httpapi = $Storage.getItem('@chavy_boxjs_userCfgs.httpapi');
+		httpapi = httpapi?.replace?.(/\n/g, '')?.trim();
+		let httpapi_timeout = $Storage.getItem('@chavy_boxjs_userCfgs.httpapi_timeout');
+		httpapi_timeout = (httpapi_timeout * 1) ?? 20;
+		httpapi_timeout = runOpts?.timeout ?? httpapi_timeout;
+		const [password, address] = httpapi.split('@');
+		const request = {
+			url: `http://${address}/v1/scripting/evaluate`,
+			body: {
+				script_text: script,
+				mock_type: 'cron',
+				timeout: httpapi_timeout
+			},
+			headers: { 'X-Key': password, 'Accept': '*/*' },
+			timeout: httpapi_timeout
+		};
+		await this.fetch(request).then(response => response.body, error => this.logErr(error));
+	}
+
+	initGotEnv(opts) {
+		this.got = this.got ? this.got : require('got');
+		this.cktough = this.cktough ? this.cktough : require('tough-cookie');
+		this.ckjar = this.ckjar ? this.ckjar : new this.cktough.CookieJar();
+		if (opts) {
+			opts.headers = opts.headers ? opts.headers : {};
+			if (undefined === opts.headers.Cookie && undefined === opts.cookieJar) {
+				opts.cookieJar = this.ckjar;
+			}
+		}
+	}
+
+	async fetch(request = {} || "", option = {}) {
+		// 初始化参数
+		switch (request.constructor) {
+			case Object:
+				request = { ...option, ...request };
+				break;
+			case String:
+				request = { ...option, "url": request };
+				break;
+		}		// 自动判断请求方法
+		if (!request.method) {
+			request.method = "GET";
+			if (request.body ?? request.bodyBytes) request.method = "POST";
+		}		// 移除请求头中的部分参数, 让其自动生成
+		delete request.headers?.Host;
+		delete request.headers?.[":authority"];
+		delete request.headers?.['Content-Length'];
+		delete request.headers?.['content-length'];
+		// 定义请求方法（小写）
+		const method = request.method.toLocaleLowerCase();
+		// 判断平台
+		switch (this.platform()) {
+			case 'Loon':
+			case 'Surge':
+			case 'Stash':
+			case 'Egern':
+			case 'Shadowrocket':
+			default:
+				// 转换请求参数
+				if (request.timeout) {
+					request.timeout = parseInt(request.timeout, 10);
+					if (this.isSurge()) ; else request.timeout = request.timeout * 1000;
+				}				if (request.policy) {
+					if (this.isLoon()) request.node = request.policy;
+					if (this.isStash()) Lodash.set(request, "headers.X-Stash-Selected-Proxy", encodeURI(request.policy));
+					if (this.isShadowrocket()) Lodash.set(request, "headers.X-Surge-Proxy", request.policy);
+				}				if (typeof request.redirection === "boolean") request["auto-redirect"] = request.redirection;
+				// 转换请求体
+				if (request.bodyBytes && !request.body) {
+					request.body = request.bodyBytes;
+					delete request.bodyBytes;
+				}				// 发送请求
+				return await new Promise((resolve, reject) => {
+					$httpClient[method](request, (error, response, body) => {
+						if (error) reject(error);
+						else {
+							response.ok = /^2\d\d$/.test(response.status);
+							response.statusCode = response.status;
+							if (body) {
+								response.body = body;
+								if (request["binary-mode"] == true) response.bodyBytes = body;
+							}							resolve(response);
+						}
+					});
+				});
+			case 'Quantumult X':
+				// 转换请求参数
+				if (request.policy) Lodash.set(request, "opts.policy", request.policy);
+				if (typeof request["auto-redirect"] === "boolean") Lodash.set(request, "opts.redirection", request["auto-redirect"]);
+				// 转换请求体
+				if (request.body instanceof ArrayBuffer) {
+					request.bodyBytes = request.body;
+					delete request.body;
+				} else if (ArrayBuffer.isView(request.body)) {
+					request.bodyBytes = request.body.buffer.slice(request.body.byteOffset, request.body.byteLength + request.body.byteOffset);
+					delete object.body;
+				} else if (request.body) delete request.bodyBytes;
+				// 发送请求
+				return await $task.fetch(request).then(
+					response => {
+						response.ok = /^2\d\d$/.test(response.statusCode);
+						response.status = response.statusCode;
+						return response;
+					},
+					reason => Promise.reject(reason.error));
+			case 'Node.js':
+				let iconv = require('iconv-lite');
+				this.initGotEnv(request);
+				const { url, ...option } = request;
+				return await this.got[method](url, option)
+					.on('redirect', (response, nextOpts) => {
+						try {
+							if (response.headers['set-cookie']) {
+								const ck = response.headers['set-cookie']
+									.map(this.cktough.Cookie.parse)
+									.toString();
+								if (ck) {
+									this.ckjar.setCookieSync(ck, null);
+								}
+								nextOpts.cookieJar = this.ckjar;
+							}
+						} catch (e) {
+							this.logErr(e);
+						}
+						// this.ckjar.setCookieSync(response.headers['set-cookie'].map(Cookie.parse).toString())
+					})
+					.then(
+						response => {
+							response.statusCode = response.status;
+							response.body = iconv.decode(response.rawBody, this.encoding);
+							response.bodyBytes = response.rawBody;
+							return response;
+						},
+						error => Promise.reject(error.message));
+		}	};
+
+	/**
+	 *
+	 * 示例:$.time('yyyy-MM-dd qq HH:mm:ss.S')
+	 *    :$.time('yyyyMMddHHmmssS')
+	 *    y:年 M:月 d:日 q:季 H:时 m:分 s:秒 S:毫秒
+	 *    其中y可选0-4位占位符、S可选0-1位占位符，其余可选0-2位占位符
+	 * @param {string} format 格式化参数
+	 * @param {number} ts 可选: 根据指定时间戳返回格式化日期
+	 *
+	 */
+	time(format, ts = null) {
+		const date = ts ? new Date(ts) : new Date();
+		let o = {
+			'M+': date.getMonth() + 1,
+			'd+': date.getDate(),
+			'H+': date.getHours(),
+			'm+': date.getMinutes(),
+			's+': date.getSeconds(),
+			'q+': Math.floor((date.getMonth() + 3) / 3),
+			'S': date.getMilliseconds()
+		};
+		if (/(y+)/.test(format))
+			format = format.replace(
+				RegExp.$1,
+				(date.getFullYear() + '').substr(4 - RegExp.$1.length)
+			);
+		for (let k in o)
+			if (new RegExp('(' + k + ')').test(format))
+				format = format.replace(
+					RegExp.$1,
+					RegExp.$1.length == 1
+						? o[k]
+						: ('00' + o[k]).substr(('' + o[k]).length)
+				);
+		return format
+	}
+
+	/**
+	 * 系统通知
+	 *
+	 * > 通知参数: 同时支持 QuanX 和 Loon 两种格式, EnvJs根据运行环境自动转换, Surge 环境不支持多媒体通知
+	 *
+	 * 示例:
+	 * $.msg(title, subt, desc, 'twitter://')
+	 * $.msg(title, subt, desc, { 'open-url': 'twitter://', 'media-url': 'https://github.githubassets.com/images/modules/open_graph/github-mark.png' })
+	 * $.msg(title, subt, desc, { 'open-url': 'https://bing.com', 'media-url': 'https://github.githubassets.com/images/modules/open_graph/github-mark.png' })
+	 *
+	 * @param {*} title 标题
+	 * @param {*} subt 副标题
+	 * @param {*} desc 通知详情
+	 * @param {*} opts 通知参数
+	 *
+	 */
+	msg(title = name, subt = '', desc = '', opts) {
+		const toEnvOpts = (rawopts) => {
+			switch (typeof rawopts) {
+				case undefined:
+					return rawopts
+				case 'string':
+					switch (this.platform()) {
+						case 'Surge':
+						case 'Stash':
+						case 'Egern':
+						default:
+							return { url: rawopts }
+						case 'Loon':
+						case 'Shadowrocket':
+							return rawopts
+						case 'Quantumult X':
+							return { 'open-url': rawopts }
+						case 'Node.js':
+							return undefined
+					}
+				case 'object':
+					switch (this.platform()) {
+						case 'Surge':
+						case 'Stash':
+						case 'Egern':
+						case 'Shadowrocket':
+						default: {
+							let openUrl =
+								rawopts.url || rawopts.openUrl || rawopts['open-url'];
+							return { url: openUrl }
+						}
+						case 'Loon': {
+							let openUrl =
+								rawopts.openUrl || rawopts.url || rawopts['open-url'];
+							let mediaUrl = rawopts.mediaUrl || rawopts['media-url'];
+							return { openUrl, mediaUrl }
+						}
+						case 'Quantumult X': {
+							let openUrl =
+								rawopts['open-url'] || rawopts.url || rawopts.openUrl;
+							let mediaUrl = rawopts['media-url'] || rawopts.mediaUrl;
+							let updatePasteboard =
+								rawopts['update-pasteboard'] || rawopts.updatePasteboard;
+							return {
+								'open-url': openUrl,
+								'media-url': mediaUrl,
+								'update-pasteboard': updatePasteboard
+							}
+						}
+						case 'Node.js':
+							return undefined
+					}
+				default:
+					return undefined
+			}
+		};
+		if (!this.isMute) {
+			switch (this.platform()) {
+				case 'Surge':
+				case 'Loon':
+				case 'Stash':
+				case 'Egern':
+				case 'Shadowrocket':
+				default:
+					$notification.post(title, subt, desc, toEnvOpts(opts));
+					break
+				case 'Quantumult X':
+					$notify(title, subt, desc, toEnvOpts(opts));
+					break
+				case 'Node.js':
+					break
+			}
+		}
+		if (!this.isMuteLog) {
+			let logs = ['', '==============📣系统通知📣=============='];
+			logs.push(title);
+			subt ? logs.push(subt) : '';
+			desc ? logs.push(desc) : '';
+			console.log(logs.join('\n'));
+			this.logs = this.logs.concat(logs);
+		}
+	}
+
+	log(...logs) {
+		if (logs.length > 0) {
+			this.logs = [...this.logs, ...logs];
+		}
+		console.log(logs.join(this.logSeparator));
+	}
+
+	logErr(error) {
+		switch (this.platform()) {
+			case 'Surge':
+			case 'Loon':
+			case 'Stash':
+			case 'Egern':
+			case 'Shadowrocket':
+			case 'Quantumult X':
+			default:
+				this.log('', `❗️ ${this.name}, 错误!`, error);
+				break
+			case 'Node.js':
+				this.log('', `❗️${this.name}, 错误!`, error.stack);
+				break
+		}
+	}
+
+	wait(time) {
+		return new Promise((resolve) => setTimeout(resolve, time))
+	}
+
+	done(object = {}) {
+		const endTime = new Date().getTime();
+		const costTime = (endTime - this.startTime) / 1000;
+		this.log("", `🚩 ${this.name}, 结束! 🕛 ${costTime} 秒`, "");
+		switch (this.platform()) {
+			case 'Surge':
+				if (object.policy) Lodash.set(object, "headers.X-Surge-Policy", object.policy);
+				$done(object);
+				break;
+			case 'Loon':
+				if (object.policy) object.node = object.policy;
+				$done(object);
+				break;
+			case 'Stash':
+				if (object.policy) Lodash.set(object, "headers.X-Stash-Selected-Proxy", encodeURI(object.policy));
+				$done(object);
+				break;
+			case 'Egern':
+				$done(object);
+				break;
+			case 'Shadowrocket':
+			default:
+				$done(object);
+				break;
+			case 'Quantumult X':
+				if (object.policy) Lodash.set(object, "opts.policy", object.policy);
+				// 移除不可写字段
+				delete object["auto-redirect"];
+				delete object["auto-cookie"];
+				delete object["binary-mode"];
+				delete object.charset;
+				delete object.host;
+				delete object.insecure;
+				delete object.method; // 1.4.x 不可写
+				delete object.opt; // $task.fetch() 参数, 不可写
+				delete object.path; // 可写, 但会与 url 冲突
+				delete object.policy;
+				delete object["policy-descriptor"];
+				delete object.scheme;
+				delete object.sessionIndex;
+				delete object.statusCode;
+				delete object.timeout;
+				if (object.body instanceof ArrayBuffer) {
+					object.bodyBytes = object.body;
+					delete object.body;
+				} else if (ArrayBuffer.isView(object.body)) {
+					object.bodyBytes = object.body.buffer.slice(object.body.byteOffset, object.body.byteLength + object.body.byteOffset);
+					delete object.body;
+				} else if (object.body) delete object.bodyBytes;
+				$done(object);
+				break;
+			case 'Node.js':
+				process.exit(1);
+				break;
+		}
+	}
+}
+
+var Settings$1 = {
+	Switch: true
+};
+var Default = {
+	Settings: Settings$1
+};
+
+var Default$1 = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	Settings: Settings$1,
+	default: Default
+});
+
+var Settings = {
+	Switch: true,
+	Detail: {
+		splash: true,
+		feed: true,
+		activity: false,
+		story: true,
+		cinema: true,
+		view: true,
+		search: true,
+		xlive: true,
+		Hot_search: true,
+		Hot_topics: true,
+		Most_visited: true,
+		Dynamic_adcard: true
 	}
 };
+var BiliBili_ADBlock = {
+	Settings: Settings
+};
+
+var Global = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	Settings: Settings,
+	default: BiliBili_ADBlock
+});
+
+var Database$1 = Database = {
+	"Default": Default$1,
+	"ADBlock": Global,
+};
+
+/**
+ * Get Storage Variables
+ * @link https://github.com/NanoCat-Me/ENV/blob/main/getStorage.mjs
+ * @author VirgilClyne
+ * @param {String} key - Persistent Store Key
+ * @param {Array} names - Platform Names
+ * @param {Object} database - Default Database
+ * @return {Object} { Settings, Caches, Configs }
+ */
+function getStorage(key, names, database) {
+    //console.log(`☑️ ${this.name}, Get Environment Variables`, "");
+    /***************** BoxJs *****************/
+    // 包装为局部变量，用完释放内存
+    // BoxJs的清空操作返回假值空字符串, 逻辑或操作符会在左侧操作数为假值时返回右侧操作数。
+    let BoxJs = $Storage.getItem(key, database);
+    //console.log(`🚧 ${this.name}, Get Environment Variables`, `BoxJs类型: ${typeof BoxJs}`, `BoxJs内容: ${JSON.stringify(BoxJs)}`, "");
+    /***************** Argument *****************/
+    let Argument = {};
+    if (typeof $argument !== "undefined") {
+        if (Boolean($argument)) {
+            //console.log(`🎉 ${this.name}, $Argument`);
+            let arg = Object.fromEntries($argument.split("&").map((item) => item.split("=").map(i => i.replace(/\"/g, ''))));
+            //console.log(JSON.stringify(arg));
+            for (let item in arg) Lodash.set(Argument, item, arg[item]);
+            //console.log(JSON.stringify(Argument));
+        }        //console.log(`✅ ${this.name}, Get Environment Variables`, `Argument类型: ${typeof Argument}`, `Argument内容: ${JSON.stringify(Argument)}`, "");
+    }    /***************** Store *****************/
+    const Store = { Settings: database?.Default?.Settings || {}, Configs: database?.Default?.Configs || {}, Caches: {} };
+    if (!Array.isArray(names)) names = [names];
+    //console.log(`🚧 ${this.name}, Get Environment Variables`, `names类型: ${typeof names}`, `names内容: ${JSON.stringify(names)}`, "");
+    for (let name of names) {
+        Store.Settings = { ...Store.Settings, ...database?.[name]?.Settings, ...Argument, ...BoxJs?.[name]?.Settings };
+        Store.Configs = { ...Store.Configs, ...database?.[name]?.Configs };
+        if (BoxJs?.[name]?.Caches && typeof BoxJs?.[name]?.Caches === "string") BoxJs[name].Caches = JSON.parse(BoxJs?.[name]?.Caches);
+        Store.Caches = { ...Store.Caches, ...BoxJs?.[name]?.Caches };
+    }    //console.log(`🚧 ${this.name}, Get Environment Variables`, `Store.Settings类型: ${typeof Store.Settings}`, `Store.Settings: ${JSON.stringify(Store.Settings)}`, "");
+    traverseObject(Store.Settings, (key, value) => {
+        //console.log(`🚧 ${this.name}, traverseObject`, `${key}: ${typeof value}`, `${key}: ${JSON.stringify(value)}`, "");
+        if (value === "true" || value === "false") value = JSON.parse(value); // 字符串转Boolean
+        else if (typeof value === "string") {
+            if (value.includes(",")) value = value.split(",").map(item => string2number(item)); // 字符串转数组转数字
+            else value = string2number(value); // 字符串转数字
+        }        return value;
+    });
+    //console.log(`✅ ${this.name}, Get Environment Variables`, `Store: ${typeof Store.Caches}`, `Store内容: ${JSON.stringify(Store)}`, "");
+    return Store;
+
+    /***************** function *****************/
+    function traverseObject(o, c) { for (var t in o) { var n = o[t]; o[t] = "object" == typeof n && null !== n ? traverseObject(n, c) : c(t, n); } return o }
+    function string2number(string) { if (string && !isNaN(string)) string = parseInt(string, 10); return string }
+}
+
+/**
+ * Set Environment Variables
+ * @author VirgilClyne
+ * @param {String} name - Persistent Store Key
+ * @param {Array} platforms - Platform Names
+ * @param {Object} database - Default DataBase
+ * @return {Object} { Settings, Caches, Configs }
+ */
+function setENV(name, platforms, database) {
+	console.log(`☑️ Set Environment Variables`, "");
+	let { Settings, Caches, Configs } = getStorage(name, platforms, database);
+	/***************** Settings *****************/
+	if (!Array.isArray(Settings?.Locales)) Settings.Locales = (Settings.Locales) ? [Settings.Locales] : []; // 只有一个选项时，无逗号分隔
+	console.log(`✅ Set Environment Variables, Settings: ${typeof Settings}, Settings内容: ${JSON.stringify(Settings)}`, "");
+	/***************** Caches *****************/
+	//console.log(`✅ Set Environment Variables, Caches: ${typeof Caches}, Caches内容: ${JSON.stringify(Caches)}`, "");
+	/***************** Configs *****************/
+	return { Settings, Caches, Configs };
+}
+
+/*! pako 2.1.0 https://github.com/nodeca/pako @license (MIT AND Zlib) */
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
+/* eslint-disable space-unary-ops */
+
+/* Public constants ==========================================================*/
+/* ===========================================================================*/
+
+
+//const Z_FILTERED          = 1;
+//const Z_HUFFMAN_ONLY      = 2;
+//const Z_RLE               = 3;
+const Z_FIXED$1               = 4;
+//const Z_DEFAULT_STRATEGY  = 0;
+
+/* Possible values of the data_type field (though see inflate()) */
+const Z_BINARY              = 0;
+const Z_TEXT                = 1;
+//const Z_ASCII             = 1; // = Z_TEXT
+const Z_UNKNOWN$1             = 2;
+
+/*============================================================================*/
+
+
+function zero$1(buf) { let len = buf.length; while (--len >= 0) { buf[len] = 0; } }
+
+// From zutil.h
+
+const STORED_BLOCK = 0;
+const STATIC_TREES = 1;
+const DYN_TREES    = 2;
+/* The three kinds of block type */
+
+const MIN_MATCH$1    = 3;
+const MAX_MATCH$1    = 258;
+/* The minimum and maximum match lengths */
+
+// From deflate.h
+/* ===========================================================================
+ * Internal compression state.
+ */
+
+const LENGTH_CODES$1  = 29;
+/* number of length codes, not counting the special END_BLOCK code */
+
+const LITERALS$1      = 256;
+/* number of literal bytes 0..255 */
+
+const L_CODES$1       = LITERALS$1 + 1 + LENGTH_CODES$1;
+/* number of Literal or Length codes, including the END_BLOCK code */
+
+const D_CODES$1       = 30;
+/* number of distance codes */
+
+const BL_CODES$1      = 19;
+/* number of codes used to transfer the bit lengths */
+
+const HEAP_SIZE$1     = 2 * L_CODES$1 + 1;
+/* maximum heap size */
+
+const MAX_BITS$1      = 15;
+/* All codes must not exceed MAX_BITS bits */
+
+const Buf_size      = 16;
+/* size of bit buffer in bi_buf */
+
+
+/* ===========================================================================
+ * Constants
+ */
+
+const MAX_BL_BITS = 7;
+/* Bit length codes must not exceed MAX_BL_BITS bits */
+
+const END_BLOCK   = 256;
+/* end of block literal code */
+
+const REP_3_6     = 16;
+/* repeat previous bit length 3-6 times (2 bits of repeat count) */
+
+const REPZ_3_10   = 17;
+/* repeat a zero length 3-10 times  (3 bits of repeat count) */
+
+const REPZ_11_138 = 18;
+/* repeat a zero length 11-138 times  (7 bits of repeat count) */
+
+/* eslint-disable comma-spacing,array-bracket-spacing */
+const extra_lbits =   /* extra bits for each length code */
+  new Uint8Array([0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0]);
+
+const extra_dbits =   /* extra bits for each distance code */
+  new Uint8Array([0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13]);
+
+const extra_blbits =  /* extra bits for each bit length code */
+  new Uint8Array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,7]);
+
+const bl_order =
+  new Uint8Array([16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15]);
+/* eslint-enable comma-spacing,array-bracket-spacing */
+
+/* The lengths of the bit length codes are sent in order of decreasing
+ * probability, to avoid transmitting the lengths for unused bit length codes.
+ */
+
+/* ===========================================================================
+ * Local data. These are initialized only once.
+ */
+
+// We pre-fill arrays with 0 to avoid uninitialized gaps
+
+const DIST_CODE_LEN = 512; /* see definition of array dist_code below */
+
+// !!!! Use flat array instead of structure, Freq = i*2, Len = i*2+1
+const static_ltree  = new Array((L_CODES$1 + 2) * 2);
+zero$1(static_ltree);
+/* The static literal tree. Since the bit lengths are imposed, there is no
+ * need for the L_CODES extra codes used during heap construction. However
+ * The codes 286 and 287 are needed to build a canonical tree (see _tr_init
+ * below).
+ */
+
+const static_dtree  = new Array(D_CODES$1 * 2);
+zero$1(static_dtree);
+/* The static distance tree. (Actually a trivial tree since all codes use
+ * 5 bits.)
+ */
+
+const _dist_code    = new Array(DIST_CODE_LEN);
+zero$1(_dist_code);
+/* Distance codes. The first 256 values correspond to the distances
+ * 3 .. 258, the last 256 values correspond to the top 8 bits of
+ * the 15 bit distances.
+ */
+
+const _length_code  = new Array(MAX_MATCH$1 - MIN_MATCH$1 + 1);
+zero$1(_length_code);
+/* length code for each normalized match length (0 == MIN_MATCH) */
+
+const base_length   = new Array(LENGTH_CODES$1);
+zero$1(base_length);
+/* First normalized length for each code (0 = MIN_MATCH) */
+
+const base_dist     = new Array(D_CODES$1);
+zero$1(base_dist);
+/* First normalized distance for each code (0 = distance of 1) */
+
+
+function StaticTreeDesc(static_tree, extra_bits, extra_base, elems, max_length) {
+
+  this.static_tree  = static_tree;  /* static tree or NULL */
+  this.extra_bits   = extra_bits;   /* extra bits for each code or NULL */
+  this.extra_base   = extra_base;   /* base index for extra_bits */
+  this.elems        = elems;        /* max number of elements in the tree */
+  this.max_length   = max_length;   /* max bit length for the codes */
+
+  // show if `static_tree` has data or dummy - needed for monomorphic objects
+  this.has_stree    = static_tree && static_tree.length;
+}
+
+
+let static_l_desc;
+let static_d_desc;
+let static_bl_desc;
+
+
+function TreeDesc(dyn_tree, stat_desc) {
+  this.dyn_tree = dyn_tree;     /* the dynamic tree */
+  this.max_code = 0;            /* largest code with non zero frequency */
+  this.stat_desc = stat_desc;   /* the corresponding static tree */
+}
+
+
+
+const d_code = (dist) => {
+
+  return dist < 256 ? _dist_code[dist] : _dist_code[256 + (dist >>> 7)];
+};
+
+
+/* ===========================================================================
+ * Output a short LSB first on the stream.
+ * IN assertion: there is enough room in pendingBuf.
+ */
+const put_short = (s, w) => {
+//    put_byte(s, (uch)((w) & 0xff));
+//    put_byte(s, (uch)((ush)(w) >> 8));
+  s.pending_buf[s.pending++] = (w) & 0xff;
+  s.pending_buf[s.pending++] = (w >>> 8) & 0xff;
+};
+
+
+/* ===========================================================================
+ * Send a value on a given number of bits.
+ * IN assertion: length <= 16 and value fits in length bits.
+ */
+const send_bits = (s, value, length) => {
+
+  if (s.bi_valid > (Buf_size - length)) {
+    s.bi_buf |= (value << s.bi_valid) & 0xffff;
+    put_short(s, s.bi_buf);
+    s.bi_buf = value >> (Buf_size - s.bi_valid);
+    s.bi_valid += length - Buf_size;
+  } else {
+    s.bi_buf |= (value << s.bi_valid) & 0xffff;
+    s.bi_valid += length;
+  }
+};
+
+
+const send_code = (s, c, tree) => {
+
+  send_bits(s, tree[c * 2]/*.Code*/, tree[c * 2 + 1]/*.Len*/);
+};
+
+
+/* ===========================================================================
+ * Reverse the first len bits of a code, using straightforward code (a faster
+ * method would use a table)
+ * IN assertion: 1 <= len <= 15
+ */
+const bi_reverse = (code, len) => {
+
+  let res = 0;
+  do {
+    res |= code & 1;
+    code >>>= 1;
+    res <<= 1;
+  } while (--len > 0);
+  return res >>> 1;
+};
+
+
+/* ===========================================================================
+ * Flush the bit buffer, keeping at most 7 bits in it.
+ */
+const bi_flush = (s) => {
+
+  if (s.bi_valid === 16) {
+    put_short(s, s.bi_buf);
+    s.bi_buf = 0;
+    s.bi_valid = 0;
+
+  } else if (s.bi_valid >= 8) {
+    s.pending_buf[s.pending++] = s.bi_buf & 0xff;
+    s.bi_buf >>= 8;
+    s.bi_valid -= 8;
+  }
+};
+
+
+/* ===========================================================================
+ * Compute the optimal bit lengths for a tree and update the total bit length
+ * for the current block.
+ * IN assertion: the fields freq and dad are set, heap[heap_max] and
+ *    above are the tree nodes sorted by increasing frequency.
+ * OUT assertions: the field len is set to the optimal bit length, the
+ *     array bl_count contains the frequencies for each bit length.
+ *     The length opt_len is updated; static_len is also updated if stree is
+ *     not null.
+ */
+const gen_bitlen = (s, desc) => {
+//    deflate_state *s;
+//    tree_desc *desc;    /* the tree descriptor */
+
+  const tree            = desc.dyn_tree;
+  const max_code        = desc.max_code;
+  const stree           = desc.stat_desc.static_tree;
+  const has_stree       = desc.stat_desc.has_stree;
+  const extra           = desc.stat_desc.extra_bits;
+  const base            = desc.stat_desc.extra_base;
+  const max_length      = desc.stat_desc.max_length;
+  let h;              /* heap index */
+  let n, m;           /* iterate over the tree elements */
+  let bits;           /* bit length */
+  let xbits;          /* extra bits */
+  let f;              /* frequency */
+  let overflow = 0;   /* number of elements with bit length too large */
+
+  for (bits = 0; bits <= MAX_BITS$1; bits++) {
+    s.bl_count[bits] = 0;
+  }
+
+  /* In a first pass, compute the optimal bit lengths (which may
+   * overflow in the case of the bit length tree).
+   */
+  tree[s.heap[s.heap_max] * 2 + 1]/*.Len*/ = 0; /* root of the heap */
+
+  for (h = s.heap_max + 1; h < HEAP_SIZE$1; h++) {
+    n = s.heap[h];
+    bits = tree[tree[n * 2 + 1]/*.Dad*/ * 2 + 1]/*.Len*/ + 1;
+    if (bits > max_length) {
+      bits = max_length;
+      overflow++;
+    }
+    tree[n * 2 + 1]/*.Len*/ = bits;
+    /* We overwrite tree[n].Dad which is no longer needed */
+
+    if (n > max_code) { continue; } /* not a leaf node */
+
+    s.bl_count[bits]++;
+    xbits = 0;
+    if (n >= base) {
+      xbits = extra[n - base];
+    }
+    f = tree[n * 2]/*.Freq*/;
+    s.opt_len += f * (bits + xbits);
+    if (has_stree) {
+      s.static_len += f * (stree[n * 2 + 1]/*.Len*/ + xbits);
+    }
+  }
+  if (overflow === 0) { return; }
+
+  // Tracev((stderr,"\nbit length overflow\n"));
+  /* This happens for example on obj2 and pic of the Calgary corpus */
+
+  /* Find the first bit length which could increase: */
+  do {
+    bits = max_length - 1;
+    while (s.bl_count[bits] === 0) { bits--; }
+    s.bl_count[bits]--;      /* move one leaf down the tree */
+    s.bl_count[bits + 1] += 2; /* move one overflow item as its brother */
+    s.bl_count[max_length]--;
+    /* The brother of the overflow item also moves one step up,
+     * but this does not affect bl_count[max_length]
+     */
+    overflow -= 2;
+  } while (overflow > 0);
+
+  /* Now recompute all bit lengths, scanning in increasing frequency.
+   * h is still equal to HEAP_SIZE. (It is simpler to reconstruct all
+   * lengths instead of fixing only the wrong ones. This idea is taken
+   * from 'ar' written by Haruhiko Okumura.)
+   */
+  for (bits = max_length; bits !== 0; bits--) {
+    n = s.bl_count[bits];
+    while (n !== 0) {
+      m = s.heap[--h];
+      if (m > max_code) { continue; }
+      if (tree[m * 2 + 1]/*.Len*/ !== bits) {
+        // Tracev((stderr,"code %d bits %d->%d\n", m, tree[m].Len, bits));
+        s.opt_len += (bits - tree[m * 2 + 1]/*.Len*/) * tree[m * 2]/*.Freq*/;
+        tree[m * 2 + 1]/*.Len*/ = bits;
+      }
+      n--;
+    }
+  }
+};
+
+
+/* ===========================================================================
+ * Generate the codes for a given tree and bit counts (which need not be
+ * optimal).
+ * IN assertion: the array bl_count contains the bit length statistics for
+ * the given tree and the field len is set for all tree elements.
+ * OUT assertion: the field code is set for all tree elements of non
+ *     zero code length.
+ */
+const gen_codes = (tree, max_code, bl_count) => {
+//    ct_data *tree;             /* the tree to decorate */
+//    int max_code;              /* largest code with non zero frequency */
+//    ushf *bl_count;            /* number of codes at each bit length */
+
+  const next_code = new Array(MAX_BITS$1 + 1); /* next code value for each bit length */
+  let code = 0;              /* running code value */
+  let bits;                  /* bit index */
+  let n;                     /* code index */
+
+  /* The distribution counts are first used to generate the code values
+   * without bit reversal.
+   */
+  for (bits = 1; bits <= MAX_BITS$1; bits++) {
+    code = (code + bl_count[bits - 1]) << 1;
+    next_code[bits] = code;
+  }
+  /* Check that the bit counts in bl_count are consistent. The last code
+   * must be all ones.
+   */
+  //Assert (code + bl_count[MAX_BITS]-1 == (1<<MAX_BITS)-1,
+  //        "inconsistent bit counts");
+  //Tracev((stderr,"\ngen_codes: max_code %d ", max_code));
+
+  for (n = 0;  n <= max_code; n++) {
+    let len = tree[n * 2 + 1]/*.Len*/;
+    if (len === 0) { continue; }
+    /* Now reverse the bits */
+    tree[n * 2]/*.Code*/ = bi_reverse(next_code[len]++, len);
+
+    //Tracecv(tree != static_ltree, (stderr,"\nn %3d %c l %2d c %4x (%x) ",
+    //     n, (isgraph(n) ? n : ' '), len, tree[n].Code, next_code[len]-1));
+  }
+};
+
+
+/* ===========================================================================
+ * Initialize the various 'constant' tables.
+ */
+const tr_static_init = () => {
+
+  let n;        /* iterates over tree elements */
+  let bits;     /* bit counter */
+  let length;   /* length value */
+  let code;     /* code value */
+  let dist;     /* distance index */
+  const bl_count = new Array(MAX_BITS$1 + 1);
+  /* number of codes at each bit length for an optimal tree */
+
+  // do check in _tr_init()
+  //if (static_init_done) return;
+
+  /* For some embedded targets, global variables are not initialized: */
+/*#ifdef NO_INIT_GLOBAL_POINTERS
+  static_l_desc.static_tree = static_ltree;
+  static_l_desc.extra_bits = extra_lbits;
+  static_d_desc.static_tree = static_dtree;
+  static_d_desc.extra_bits = extra_dbits;
+  static_bl_desc.extra_bits = extra_blbits;
+#endif*/
+
+  /* Initialize the mapping length (0..255) -> length code (0..28) */
+  length = 0;
+  for (code = 0; code < LENGTH_CODES$1 - 1; code++) {
+    base_length[code] = length;
+    for (n = 0; n < (1 << extra_lbits[code]); n++) {
+      _length_code[length++] = code;
+    }
+  }
+  //Assert (length == 256, "tr_static_init: length != 256");
+  /* Note that the length 255 (match length 258) can be represented
+   * in two different ways: code 284 + 5 bits or code 285, so we
+   * overwrite length_code[255] to use the best encoding:
+   */
+  _length_code[length - 1] = code;
+
+  /* Initialize the mapping dist (0..32K) -> dist code (0..29) */
+  dist = 0;
+  for (code = 0; code < 16; code++) {
+    base_dist[code] = dist;
+    for (n = 0; n < (1 << extra_dbits[code]); n++) {
+      _dist_code[dist++] = code;
+    }
+  }
+  //Assert (dist == 256, "tr_static_init: dist != 256");
+  dist >>= 7; /* from now on, all distances are divided by 128 */
+  for (; code < D_CODES$1; code++) {
+    base_dist[code] = dist << 7;
+    for (n = 0; n < (1 << (extra_dbits[code] - 7)); n++) {
+      _dist_code[256 + dist++] = code;
+    }
+  }
+  //Assert (dist == 256, "tr_static_init: 256+dist != 512");
+
+  /* Construct the codes of the static literal tree */
+  for (bits = 0; bits <= MAX_BITS$1; bits++) {
+    bl_count[bits] = 0;
+  }
+
+  n = 0;
+  while (n <= 143) {
+    static_ltree[n * 2 + 1]/*.Len*/ = 8;
+    n++;
+    bl_count[8]++;
+  }
+  while (n <= 255) {
+    static_ltree[n * 2 + 1]/*.Len*/ = 9;
+    n++;
+    bl_count[9]++;
+  }
+  while (n <= 279) {
+    static_ltree[n * 2 + 1]/*.Len*/ = 7;
+    n++;
+    bl_count[7]++;
+  }
+  while (n <= 287) {
+    static_ltree[n * 2 + 1]/*.Len*/ = 8;
+    n++;
+    bl_count[8]++;
+  }
+  /* Codes 286 and 287 do not exist, but we must include them in the
+   * tree construction to get a canonical Huffman tree (longest code
+   * all ones)
+   */
+  gen_codes(static_ltree, L_CODES$1 + 1, bl_count);
+
+  /* The static distance tree is trivial: */
+  for (n = 0; n < D_CODES$1; n++) {
+    static_dtree[n * 2 + 1]/*.Len*/ = 5;
+    static_dtree[n * 2]/*.Code*/ = bi_reverse(n, 5);
+  }
+
+  // Now data ready and we can init static trees
+  static_l_desc = new StaticTreeDesc(static_ltree, extra_lbits, LITERALS$1 + 1, L_CODES$1, MAX_BITS$1);
+  static_d_desc = new StaticTreeDesc(static_dtree, extra_dbits, 0,          D_CODES$1, MAX_BITS$1);
+  static_bl_desc = new StaticTreeDesc(new Array(0), extra_blbits, 0,         BL_CODES$1, MAX_BL_BITS);
+
+  //static_init_done = true;
+};
+
+
+/* ===========================================================================
+ * Initialize a new block.
+ */
+const init_block = (s) => {
+
+  let n; /* iterates over tree elements */
+
+  /* Initialize the trees. */
+  for (n = 0; n < L_CODES$1;  n++) { s.dyn_ltree[n * 2]/*.Freq*/ = 0; }
+  for (n = 0; n < D_CODES$1;  n++) { s.dyn_dtree[n * 2]/*.Freq*/ = 0; }
+  for (n = 0; n < BL_CODES$1; n++) { s.bl_tree[n * 2]/*.Freq*/ = 0; }
+
+  s.dyn_ltree[END_BLOCK * 2]/*.Freq*/ = 1;
+  s.opt_len = s.static_len = 0;
+  s.sym_next = s.matches = 0;
+};
+
+
+/* ===========================================================================
+ * Flush the bit buffer and align the output on a byte boundary
+ */
+const bi_windup = (s) =>
+{
+  if (s.bi_valid > 8) {
+    put_short(s, s.bi_buf);
+  } else if (s.bi_valid > 0) {
+    //put_byte(s, (Byte)s->bi_buf);
+    s.pending_buf[s.pending++] = s.bi_buf;
+  }
+  s.bi_buf = 0;
+  s.bi_valid = 0;
+};
+
+/* ===========================================================================
+ * Compares to subtrees, using the tree depth as tie breaker when
+ * the subtrees have equal frequency. This minimizes the worst case length.
+ */
+const smaller = (tree, n, m, depth) => {
+
+  const _n2 = n * 2;
+  const _m2 = m * 2;
+  return (tree[_n2]/*.Freq*/ < tree[_m2]/*.Freq*/ ||
+         (tree[_n2]/*.Freq*/ === tree[_m2]/*.Freq*/ && depth[n] <= depth[m]));
+};
+
+/* ===========================================================================
+ * Restore the heap property by moving down the tree starting at node k,
+ * exchanging a node with the smallest of its two sons if necessary, stopping
+ * when the heap property is re-established (each father smaller than its
+ * two sons).
+ */
+const pqdownheap = (s, tree, k) => {
+//    deflate_state *s;
+//    ct_data *tree;  /* the tree to restore */
+//    int k;               /* node to move down */
+
+  const v = s.heap[k];
+  let j = k << 1;  /* left son of k */
+  while (j <= s.heap_len) {
+    /* Set j to the smallest of the two sons: */
+    if (j < s.heap_len &&
+      smaller(tree, s.heap[j + 1], s.heap[j], s.depth)) {
+      j++;
+    }
+    /* Exit if v is smaller than both sons */
+    if (smaller(tree, v, s.heap[j], s.depth)) { break; }
+
+    /* Exchange v with the smallest son */
+    s.heap[k] = s.heap[j];
+    k = j;
+
+    /* And continue down the tree, setting j to the left son of k */
+    j <<= 1;
+  }
+  s.heap[k] = v;
+};
+
+
+// inlined manually
+// const SMALLEST = 1;
+
+/* ===========================================================================
+ * Send the block data compressed using the given Huffman trees
+ */
+const compress_block = (s, ltree, dtree) => {
+//    deflate_state *s;
+//    const ct_data *ltree; /* literal tree */
+//    const ct_data *dtree; /* distance tree */
+
+  let dist;           /* distance of matched string */
+  let lc;             /* match length or unmatched char (if dist == 0) */
+  let sx = 0;         /* running index in sym_buf */
+  let code;           /* the code to send */
+  let extra;          /* number of extra bits to send */
+
+  if (s.sym_next !== 0) {
+    do {
+      dist = s.pending_buf[s.sym_buf + sx++] & 0xff;
+      dist += (s.pending_buf[s.sym_buf + sx++] & 0xff) << 8;
+      lc = s.pending_buf[s.sym_buf + sx++];
+      if (dist === 0) {
+        send_code(s, lc, ltree); /* send a literal byte */
+        //Tracecv(isgraph(lc), (stderr," '%c' ", lc));
+      } else {
+        /* Here, lc is the match length - MIN_MATCH */
+        code = _length_code[lc];
+        send_code(s, code + LITERALS$1 + 1, ltree); /* send the length code */
+        extra = extra_lbits[code];
+        if (extra !== 0) {
+          lc -= base_length[code];
+          send_bits(s, lc, extra);       /* send the extra length bits */
+        }
+        dist--; /* dist is now the match distance - 1 */
+        code = d_code(dist);
+        //Assert (code < D_CODES, "bad d_code");
+
+        send_code(s, code, dtree);       /* send the distance code */
+        extra = extra_dbits[code];
+        if (extra !== 0) {
+          dist -= base_dist[code];
+          send_bits(s, dist, extra);   /* send the extra distance bits */
+        }
+      } /* literal or match pair ? */
+
+      /* Check that the overlay between pending_buf and sym_buf is ok: */
+      //Assert(s->pending < s->lit_bufsize + sx, "pendingBuf overflow");
+
+    } while (sx < s.sym_next);
+  }
+
+  send_code(s, END_BLOCK, ltree);
+};
+
+
+/* ===========================================================================
+ * Construct one Huffman tree and assigns the code bit strings and lengths.
+ * Update the total bit length for the current block.
+ * IN assertion: the field freq is set for all tree elements.
+ * OUT assertions: the fields len and code are set to the optimal bit length
+ *     and corresponding code. The length opt_len is updated; static_len is
+ *     also updated if stree is not null. The field max_code is set.
+ */
+const build_tree = (s, desc) => {
+//    deflate_state *s;
+//    tree_desc *desc; /* the tree descriptor */
+
+  const tree     = desc.dyn_tree;
+  const stree    = desc.stat_desc.static_tree;
+  const has_stree = desc.stat_desc.has_stree;
+  const elems    = desc.stat_desc.elems;
+  let n, m;          /* iterate over heap elements */
+  let max_code = -1; /* largest code with non zero frequency */
+  let node;          /* new node being created */
+
+  /* Construct the initial heap, with least frequent element in
+   * heap[SMALLEST]. The sons of heap[n] are heap[2*n] and heap[2*n+1].
+   * heap[0] is not used.
+   */
+  s.heap_len = 0;
+  s.heap_max = HEAP_SIZE$1;
+
+  for (n = 0; n < elems; n++) {
+    if (tree[n * 2]/*.Freq*/ !== 0) {
+      s.heap[++s.heap_len] = max_code = n;
+      s.depth[n] = 0;
+
+    } else {
+      tree[n * 2 + 1]/*.Len*/ = 0;
+    }
+  }
+
+  /* The pkzip format requires that at least one distance code exists,
+   * and that at least one bit should be sent even if there is only one
+   * possible code. So to avoid special checks later on we force at least
+   * two codes of non zero frequency.
+   */
+  while (s.heap_len < 2) {
+    node = s.heap[++s.heap_len] = (max_code < 2 ? ++max_code : 0);
+    tree[node * 2]/*.Freq*/ = 1;
+    s.depth[node] = 0;
+    s.opt_len--;
+
+    if (has_stree) {
+      s.static_len -= stree[node * 2 + 1]/*.Len*/;
+    }
+    /* node is 0 or 1 so it does not have extra bits */
+  }
+  desc.max_code = max_code;
+
+  /* The elements heap[heap_len/2+1 .. heap_len] are leaves of the tree,
+   * establish sub-heaps of increasing lengths:
+   */
+  for (n = (s.heap_len >> 1/*int /2*/); n >= 1; n--) { pqdownheap(s, tree, n); }
+
+  /* Construct the Huffman tree by repeatedly combining the least two
+   * frequent nodes.
+   */
+  node = elems;              /* next internal node of the tree */
+  do {
+    //pqremove(s, tree, n);  /* n = node of least frequency */
+    /*** pqremove ***/
+    n = s.heap[1/*SMALLEST*/];
+    s.heap[1/*SMALLEST*/] = s.heap[s.heap_len--];
+    pqdownheap(s, tree, 1/*SMALLEST*/);
+    /***/
+
+    m = s.heap[1/*SMALLEST*/]; /* m = node of next least frequency */
+
+    s.heap[--s.heap_max] = n; /* keep the nodes sorted by frequency */
+    s.heap[--s.heap_max] = m;
+
+    /* Create a new node father of n and m */
+    tree[node * 2]/*.Freq*/ = tree[n * 2]/*.Freq*/ + tree[m * 2]/*.Freq*/;
+    s.depth[node] = (s.depth[n] >= s.depth[m] ? s.depth[n] : s.depth[m]) + 1;
+    tree[n * 2 + 1]/*.Dad*/ = tree[m * 2 + 1]/*.Dad*/ = node;
+
+    /* and insert the new node in the heap */
+    s.heap[1/*SMALLEST*/] = node++;
+    pqdownheap(s, tree, 1/*SMALLEST*/);
+
+  } while (s.heap_len >= 2);
+
+  s.heap[--s.heap_max] = s.heap[1/*SMALLEST*/];
+
+  /* At this point, the fields freq and dad are set. We can now
+   * generate the bit lengths.
+   */
+  gen_bitlen(s, desc);
+
+  /* The field len is now set, we can generate the bit codes */
+  gen_codes(tree, max_code, s.bl_count);
+};
+
+
+/* ===========================================================================
+ * Scan a literal or distance tree to determine the frequencies of the codes
+ * in the bit length tree.
+ */
+const scan_tree = (s, tree, max_code) => {
+//    deflate_state *s;
+//    ct_data *tree;   /* the tree to be scanned */
+//    int max_code;    /* and its largest code of non zero frequency */
+
+  let n;                     /* iterates over all tree elements */
+  let prevlen = -1;          /* last emitted length */
+  let curlen;                /* length of current code */
+
+  let nextlen = tree[0 * 2 + 1]/*.Len*/; /* length of next code */
+
+  let count = 0;             /* repeat count of the current code */
+  let max_count = 7;         /* max repeat count */
+  let min_count = 4;         /* min repeat count */
+
+  if (nextlen === 0) {
+    max_count = 138;
+    min_count = 3;
+  }
+  tree[(max_code + 1) * 2 + 1]/*.Len*/ = 0xffff; /* guard */
+
+  for (n = 0; n <= max_code; n++) {
+    curlen = nextlen;
+    nextlen = tree[(n + 1) * 2 + 1]/*.Len*/;
+
+    if (++count < max_count && curlen === nextlen) {
+      continue;
+
+    } else if (count < min_count) {
+      s.bl_tree[curlen * 2]/*.Freq*/ += count;
+
+    } else if (curlen !== 0) {
+
+      if (curlen !== prevlen) { s.bl_tree[curlen * 2]/*.Freq*/++; }
+      s.bl_tree[REP_3_6 * 2]/*.Freq*/++;
+
+    } else if (count <= 10) {
+      s.bl_tree[REPZ_3_10 * 2]/*.Freq*/++;
+
+    } else {
+      s.bl_tree[REPZ_11_138 * 2]/*.Freq*/++;
+    }
+
+    count = 0;
+    prevlen = curlen;
+
+    if (nextlen === 0) {
+      max_count = 138;
+      min_count = 3;
+
+    } else if (curlen === nextlen) {
+      max_count = 6;
+      min_count = 3;
+
+    } else {
+      max_count = 7;
+      min_count = 4;
+    }
+  }
+};
+
+
+/* ===========================================================================
+ * Send a literal or distance tree in compressed form, using the codes in
+ * bl_tree.
+ */
+const send_tree = (s, tree, max_code) => {
+//    deflate_state *s;
+//    ct_data *tree; /* the tree to be scanned */
+//    int max_code;       /* and its largest code of non zero frequency */
+
+  let n;                     /* iterates over all tree elements */
+  let prevlen = -1;          /* last emitted length */
+  let curlen;                /* length of current code */
+
+  let nextlen = tree[0 * 2 + 1]/*.Len*/; /* length of next code */
+
+  let count = 0;             /* repeat count of the current code */
+  let max_count = 7;         /* max repeat count */
+  let min_count = 4;         /* min repeat count */
+
+  /* tree[max_code+1].Len = -1; */  /* guard already set */
+  if (nextlen === 0) {
+    max_count = 138;
+    min_count = 3;
+  }
+
+  for (n = 0; n <= max_code; n++) {
+    curlen = nextlen;
+    nextlen = tree[(n + 1) * 2 + 1]/*.Len*/;
+
+    if (++count < max_count && curlen === nextlen) {
+      continue;
+
+    } else if (count < min_count) {
+      do { send_code(s, curlen, s.bl_tree); } while (--count !== 0);
+
+    } else if (curlen !== 0) {
+      if (curlen !== prevlen) {
+        send_code(s, curlen, s.bl_tree);
+        count--;
+      }
+      //Assert(count >= 3 && count <= 6, " 3_6?");
+      send_code(s, REP_3_6, s.bl_tree);
+      send_bits(s, count - 3, 2);
+
+    } else if (count <= 10) {
+      send_code(s, REPZ_3_10, s.bl_tree);
+      send_bits(s, count - 3, 3);
+
+    } else {
+      send_code(s, REPZ_11_138, s.bl_tree);
+      send_bits(s, count - 11, 7);
+    }
+
+    count = 0;
+    prevlen = curlen;
+    if (nextlen === 0) {
+      max_count = 138;
+      min_count = 3;
+
+    } else if (curlen === nextlen) {
+      max_count = 6;
+      min_count = 3;
+
+    } else {
+      max_count = 7;
+      min_count = 4;
+    }
+  }
+};
+
+
+/* ===========================================================================
+ * Construct the Huffman tree for the bit lengths and return the index in
+ * bl_order of the last bit length code to send.
+ */
+const build_bl_tree = (s) => {
+
+  let max_blindex;  /* index of last bit length code of non zero freq */
+
+  /* Determine the bit length frequencies for literal and distance trees */
+  scan_tree(s, s.dyn_ltree, s.l_desc.max_code);
+  scan_tree(s, s.dyn_dtree, s.d_desc.max_code);
+
+  /* Build the bit length tree: */
+  build_tree(s, s.bl_desc);
+  /* opt_len now includes the length of the tree representations, except
+   * the lengths of the bit lengths codes and the 5+5+4 bits for the counts.
+   */
+
+  /* Determine the number of bit length codes to send. The pkzip format
+   * requires that at least 4 bit length codes be sent. (appnote.txt says
+   * 3 but the actual value used is 4.)
+   */
+  for (max_blindex = BL_CODES$1 - 1; max_blindex >= 3; max_blindex--) {
+    if (s.bl_tree[bl_order[max_blindex] * 2 + 1]/*.Len*/ !== 0) {
+      break;
+    }
+  }
+  /* Update opt_len to include the bit length tree and counts */
+  s.opt_len += 3 * (max_blindex + 1) + 5 + 5 + 4;
+  //Tracev((stderr, "\ndyn trees: dyn %ld, stat %ld",
+  //        s->opt_len, s->static_len));
+
+  return max_blindex;
+};
+
+
+/* ===========================================================================
+ * Send the header for a block using dynamic Huffman trees: the counts, the
+ * lengths of the bit length codes, the literal tree and the distance tree.
+ * IN assertion: lcodes >= 257, dcodes >= 1, blcodes >= 4.
+ */
+const send_all_trees = (s, lcodes, dcodes, blcodes) => {
+//    deflate_state *s;
+//    int lcodes, dcodes, blcodes; /* number of codes for each tree */
+
+  let rank;                    /* index in bl_order */
+
+  //Assert (lcodes >= 257 && dcodes >= 1 && blcodes >= 4, "not enough codes");
+  //Assert (lcodes <= L_CODES && dcodes <= D_CODES && blcodes <= BL_CODES,
+  //        "too many codes");
+  //Tracev((stderr, "\nbl counts: "));
+  send_bits(s, lcodes - 257, 5); /* not +255 as stated in appnote.txt */
+  send_bits(s, dcodes - 1,   5);
+  send_bits(s, blcodes - 4,  4); /* not -3 as stated in appnote.txt */
+  for (rank = 0; rank < blcodes; rank++) {
+    //Tracev((stderr, "\nbl code %2d ", bl_order[rank]));
+    send_bits(s, s.bl_tree[bl_order[rank] * 2 + 1]/*.Len*/, 3);
+  }
+  //Tracev((stderr, "\nbl tree: sent %ld", s->bits_sent));
+
+  send_tree(s, s.dyn_ltree, lcodes - 1); /* literal tree */
+  //Tracev((stderr, "\nlit tree: sent %ld", s->bits_sent));
+
+  send_tree(s, s.dyn_dtree, dcodes - 1); /* distance tree */
+  //Tracev((stderr, "\ndist tree: sent %ld", s->bits_sent));
+};
+
+
+/* ===========================================================================
+ * Check if the data type is TEXT or BINARY, using the following algorithm:
+ * - TEXT if the two conditions below are satisfied:
+ *    a) There are no non-portable control characters belonging to the
+ *       "block list" (0..6, 14..25, 28..31).
+ *    b) There is at least one printable character belonging to the
+ *       "allow list" (9 {TAB}, 10 {LF}, 13 {CR}, 32..255).
+ * - BINARY otherwise.
+ * - The following partially-portable control characters form a
+ *   "gray list" that is ignored in this detection algorithm:
+ *   (7 {BEL}, 8 {BS}, 11 {VT}, 12 {FF}, 26 {SUB}, 27 {ESC}).
+ * IN assertion: the fields Freq of dyn_ltree are set.
+ */
+const detect_data_type = (s) => {
+  /* block_mask is the bit mask of block-listed bytes
+   * set bits 0..6, 14..25, and 28..31
+   * 0xf3ffc07f = binary 11110011111111111100000001111111
+   */
+  let block_mask = 0xf3ffc07f;
+  let n;
+
+  /* Check for non-textual ("block-listed") bytes. */
+  for (n = 0; n <= 31; n++, block_mask >>>= 1) {
+    if ((block_mask & 1) && (s.dyn_ltree[n * 2]/*.Freq*/ !== 0)) {
+      return Z_BINARY;
+    }
+  }
+
+  /* Check for textual ("allow-listed") bytes. */
+  if (s.dyn_ltree[9 * 2]/*.Freq*/ !== 0 || s.dyn_ltree[10 * 2]/*.Freq*/ !== 0 ||
+      s.dyn_ltree[13 * 2]/*.Freq*/ !== 0) {
+    return Z_TEXT;
+  }
+  for (n = 32; n < LITERALS$1; n++) {
+    if (s.dyn_ltree[n * 2]/*.Freq*/ !== 0) {
+      return Z_TEXT;
+    }
+  }
+
+  /* There are no "block-listed" or "allow-listed" bytes:
+   * this stream either is empty or has tolerated ("gray-listed") bytes only.
+   */
+  return Z_BINARY;
+};
+
+
+let static_init_done = false;
+
+/* ===========================================================================
+ * Initialize the tree data structures for a new zlib stream.
+ */
+const _tr_init$1 = (s) =>
+{
+
+  if (!static_init_done) {
+    tr_static_init();
+    static_init_done = true;
+  }
+
+  s.l_desc  = new TreeDesc(s.dyn_ltree, static_l_desc);
+  s.d_desc  = new TreeDesc(s.dyn_dtree, static_d_desc);
+  s.bl_desc = new TreeDesc(s.bl_tree, static_bl_desc);
+
+  s.bi_buf = 0;
+  s.bi_valid = 0;
+
+  /* Initialize the first block of the first file: */
+  init_block(s);
+};
+
+
+/* ===========================================================================
+ * Send a stored block
+ */
+const _tr_stored_block$1 = (s, buf, stored_len, last) => {
+//DeflateState *s;
+//charf *buf;       /* input block */
+//ulg stored_len;   /* length of input block */
+//int last;         /* one if this is the last block for a file */
+
+  send_bits(s, (STORED_BLOCK << 1) + (last ? 1 : 0), 3);    /* send block type */
+  bi_windup(s);        /* align on byte boundary */
+  put_short(s, stored_len);
+  put_short(s, ~stored_len);
+  if (stored_len) {
+    s.pending_buf.set(s.window.subarray(buf, buf + stored_len), s.pending);
+  }
+  s.pending += stored_len;
+};
+
+
+/* ===========================================================================
+ * Send one empty static block to give enough lookahead for inflate.
+ * This takes 10 bits, of which 7 may remain in the bit buffer.
+ */
+const _tr_align$1 = (s) => {
+  send_bits(s, STATIC_TREES << 1, 3);
+  send_code(s, END_BLOCK, static_ltree);
+  bi_flush(s);
+};
+
+
+/* ===========================================================================
+ * Determine the best encoding for the current block: dynamic trees, static
+ * trees or store, and write out the encoded block.
+ */
+const _tr_flush_block$1 = (s, buf, stored_len, last) => {
+//DeflateState *s;
+//charf *buf;       /* input block, or NULL if too old */
+//ulg stored_len;   /* length of input block */
+//int last;         /* one if this is the last block for a file */
+
+  let opt_lenb, static_lenb;  /* opt_len and static_len in bytes */
+  let max_blindex = 0;        /* index of last bit length code of non zero freq */
+
+  /* Build the Huffman trees unless a stored block is forced */
+  if (s.level > 0) {
+
+    /* Check if the file is binary or text */
+    if (s.strm.data_type === Z_UNKNOWN$1) {
+      s.strm.data_type = detect_data_type(s);
+    }
+
+    /* Construct the literal and distance trees */
+    build_tree(s, s.l_desc);
+    // Tracev((stderr, "\nlit data: dyn %ld, stat %ld", s->opt_len,
+    //        s->static_len));
+
+    build_tree(s, s.d_desc);
+    // Tracev((stderr, "\ndist data: dyn %ld, stat %ld", s->opt_len,
+    //        s->static_len));
+    /* At this point, opt_len and static_len are the total bit lengths of
+     * the compressed block data, excluding the tree representations.
+     */
+
+    /* Build the bit length tree for the above two trees, and get the index
+     * in bl_order of the last bit length code to send.
+     */
+    max_blindex = build_bl_tree(s);
+
+    /* Determine the best encoding. Compute the block lengths in bytes. */
+    opt_lenb = (s.opt_len + 3 + 7) >>> 3;
+    static_lenb = (s.static_len + 3 + 7) >>> 3;
+
+    // Tracev((stderr, "\nopt %lu(%lu) stat %lu(%lu) stored %lu lit %u ",
+    //        opt_lenb, s->opt_len, static_lenb, s->static_len, stored_len,
+    //        s->sym_next / 3));
+
+    if (static_lenb <= opt_lenb) { opt_lenb = static_lenb; }
+
+  } else {
+    // Assert(buf != (char*)0, "lost buf");
+    opt_lenb = static_lenb = stored_len + 5; /* force a stored block */
+  }
+
+  if ((stored_len + 4 <= opt_lenb) && (buf !== -1)) {
+    /* 4: two words for the lengths */
+
+    /* The test buf != NULL is only necessary if LIT_BUFSIZE > WSIZE.
+     * Otherwise we can't have processed more than WSIZE input bytes since
+     * the last block flush, because compression would have been
+     * successful. If LIT_BUFSIZE <= WSIZE, it is never too late to
+     * transform a block into a stored block.
+     */
+    _tr_stored_block$1(s, buf, stored_len, last);
+
+  } else if (s.strategy === Z_FIXED$1 || static_lenb === opt_lenb) {
+
+    send_bits(s, (STATIC_TREES << 1) + (last ? 1 : 0), 3);
+    compress_block(s, static_ltree, static_dtree);
+
+  } else {
+    send_bits(s, (DYN_TREES << 1) + (last ? 1 : 0), 3);
+    send_all_trees(s, s.l_desc.max_code + 1, s.d_desc.max_code + 1, max_blindex + 1);
+    compress_block(s, s.dyn_ltree, s.dyn_dtree);
+  }
+  // Assert (s->compressed_len == s->bits_sent, "bad compressed size");
+  /* The above check is made mod 2^32, for files larger than 512 MB
+   * and uLong implemented on 32 bits.
+   */
+  init_block(s);
+
+  if (last) {
+    bi_windup(s);
+  }
+  // Tracev((stderr,"\ncomprlen %lu(%lu) ", s->compressed_len>>3,
+  //       s->compressed_len-7*last));
+};
+
+/* ===========================================================================
+ * Save the match info and tally the frequency counts. Return true if
+ * the current block must be flushed.
+ */
+const _tr_tally$1 = (s, dist, lc) => {
+//    deflate_state *s;
+//    unsigned dist;  /* distance of matched string */
+//    unsigned lc;    /* match length-MIN_MATCH or unmatched char (if dist==0) */
+
+  s.pending_buf[s.sym_buf + s.sym_next++] = dist;
+  s.pending_buf[s.sym_buf + s.sym_next++] = dist >> 8;
+  s.pending_buf[s.sym_buf + s.sym_next++] = lc;
+  if (dist === 0) {
+    /* lc is the unmatched char */
+    s.dyn_ltree[lc * 2]/*.Freq*/++;
+  } else {
+    s.matches++;
+    /* Here, lc is the match length - MIN_MATCH */
+    dist--;             /* dist = match distance - 1 */
+    //Assert((ush)dist < (ush)MAX_DIST(s) &&
+    //       (ush)lc <= (ush)(MAX_MATCH-MIN_MATCH) &&
+    //       (ush)d_code(dist) < (ush)D_CODES,  "_tr_tally: bad match");
+
+    s.dyn_ltree[(_length_code[lc] + LITERALS$1 + 1) * 2]/*.Freq*/++;
+    s.dyn_dtree[d_code(dist) * 2]/*.Freq*/++;
+  }
+
+  return (s.sym_next === s.sym_end);
+};
+
+var _tr_init_1  = _tr_init$1;
+var _tr_stored_block_1 = _tr_stored_block$1;
+var _tr_flush_block_1  = _tr_flush_block$1;
+var _tr_tally_1 = _tr_tally$1;
+var _tr_align_1 = _tr_align$1;
+
+var trees = {
+	_tr_init: _tr_init_1,
+	_tr_stored_block: _tr_stored_block_1,
+	_tr_flush_block: _tr_flush_block_1,
+	_tr_tally: _tr_tally_1,
+	_tr_align: _tr_align_1
+};
+
+// Note: adler32 takes 12% for level 0 and 2% for level 6.
+// It isn't worth it to make additional optimizations as in original.
+// Small size is preferable.
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
+const adler32 = (adler, buf, len, pos) => {
+  let s1 = (adler & 0xffff) |0,
+      s2 = ((adler >>> 16) & 0xffff) |0,
+      n = 0;
+
+  while (len !== 0) {
+    // Set limit ~ twice less than 5552, to keep
+    // s2 in 31-bits, because we force signed ints.
+    // in other case %= will fail.
+    n = len > 2000 ? 2000 : len;
+    len -= n;
+
+    do {
+      s1 = (s1 + buf[pos++]) |0;
+      s2 = (s2 + s1) |0;
+    } while (--n);
+
+    s1 %= 65521;
+    s2 %= 65521;
+  }
+
+  return (s1 | (s2 << 16)) |0;
+};
+
+
+var adler32_1 = adler32;
+
+// Note: we can't get significant speed boost here.
+// So write code to minimize size - no pregenerated tables
+// and array tools dependencies.
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
+// Use ordinary array, since untyped makes no boost here
+const makeTable = () => {
+  let c, table = [];
+
+  for (var n = 0; n < 256; n++) {
+    c = n;
+    for (var k = 0; k < 8; k++) {
+      c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+    }
+    table[n] = c;
+  }
+
+  return table;
+};
+
+// Create table on load. Just 255 signed longs. Not a problem.
+const crcTable = new Uint32Array(makeTable());
+
+
+const crc32 = (crc, buf, len, pos) => {
+  const t = crcTable;
+  const end = pos + len;
+
+  crc ^= -1;
+
+  for (let i = pos; i < end; i++) {
+    crc = (crc >>> 8) ^ t[(crc ^ buf[i]) & 0xFF];
+  }
+
+  return (crc ^ (-1)); // >>> 0;
+};
+
+
+var crc32_1 = crc32;
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
+var messages = {
+  2:      'need dictionary',     /* Z_NEED_DICT       2  */
+  1:      'stream end',          /* Z_STREAM_END      1  */
+  0:      '',                    /* Z_OK              0  */
+  '-1':   'file error',          /* Z_ERRNO         (-1) */
+  '-2':   'stream error',        /* Z_STREAM_ERROR  (-2) */
+  '-3':   'data error',          /* Z_DATA_ERROR    (-3) */
+  '-4':   'insufficient memory', /* Z_MEM_ERROR     (-4) */
+  '-5':   'buffer error',        /* Z_BUF_ERROR     (-5) */
+  '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
+};
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
+var constants$2 = {
+
+  /* Allowed flush values; see deflate() and inflate() below for details */
+  Z_NO_FLUSH:         0,
+  Z_PARTIAL_FLUSH:    1,
+  Z_SYNC_FLUSH:       2,
+  Z_FULL_FLUSH:       3,
+  Z_FINISH:           4,
+  Z_BLOCK:            5,
+  Z_TREES:            6,
+
+  /* Return codes for the compression/decompression functions. Negative values
+  * are errors, positive values are used for special but normal events.
+  */
+  Z_OK:               0,
+  Z_STREAM_END:       1,
+  Z_NEED_DICT:        2,
+  Z_ERRNO:           -1,
+  Z_STREAM_ERROR:    -2,
+  Z_DATA_ERROR:      -3,
+  Z_MEM_ERROR:       -4,
+  Z_BUF_ERROR:       -5,
+  //Z_VERSION_ERROR: -6,
+
+  /* compression levels */
+  Z_NO_COMPRESSION:         0,
+  Z_BEST_SPEED:             1,
+  Z_BEST_COMPRESSION:       9,
+  Z_DEFAULT_COMPRESSION:   -1,
+
+
+  Z_FILTERED:               1,
+  Z_HUFFMAN_ONLY:           2,
+  Z_RLE:                    3,
+  Z_FIXED:                  4,
+  Z_DEFAULT_STRATEGY:       0,
+
+  /* Possible values of the data_type field (though see inflate()) */
+  Z_BINARY:                 0,
+  Z_TEXT:                   1,
+  //Z_ASCII:                1, // = Z_TEXT (deprecated)
+  Z_UNKNOWN:                2,
+
+  /* The deflate compression method */
+  Z_DEFLATED:               8
+  //Z_NULL:                 null // Use -1 or null inline, depending on var type
+};
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
+const { _tr_init, _tr_stored_block, _tr_flush_block, _tr_tally, _tr_align } = trees;
+
+
+
+
+/* Public constants ==========================================================*/
+/* ===========================================================================*/
+
+const {
+  Z_NO_FLUSH: Z_NO_FLUSH$2, Z_PARTIAL_FLUSH, Z_FULL_FLUSH: Z_FULL_FLUSH$1, Z_FINISH: Z_FINISH$3, Z_BLOCK: Z_BLOCK$1,
+  Z_OK: Z_OK$3, Z_STREAM_END: Z_STREAM_END$3, Z_STREAM_ERROR: Z_STREAM_ERROR$2, Z_DATA_ERROR: Z_DATA_ERROR$2, Z_BUF_ERROR: Z_BUF_ERROR$1,
+  Z_DEFAULT_COMPRESSION: Z_DEFAULT_COMPRESSION$1,
+  Z_FILTERED, Z_HUFFMAN_ONLY, Z_RLE, Z_FIXED, Z_DEFAULT_STRATEGY: Z_DEFAULT_STRATEGY$1,
+  Z_UNKNOWN,
+  Z_DEFLATED: Z_DEFLATED$2
+} = constants$2;
+
+/*============================================================================*/
+
+
+const MAX_MEM_LEVEL = 9;
+/* Maximum value for memLevel in deflateInit2 */
+const MAX_WBITS$1 = 15;
+/* 32K LZ77 window */
+const DEF_MEM_LEVEL = 8;
+
+
+const LENGTH_CODES  = 29;
+/* number of length codes, not counting the special END_BLOCK code */
+const LITERALS      = 256;
+/* number of literal bytes 0..255 */
+const L_CODES       = LITERALS + 1 + LENGTH_CODES;
+/* number of Literal or Length codes, including the END_BLOCK code */
+const D_CODES       = 30;
+/* number of distance codes */
+const BL_CODES      = 19;
+/* number of codes used to transfer the bit lengths */
+const HEAP_SIZE     = 2 * L_CODES + 1;
+/* maximum heap size */
+const MAX_BITS  = 15;
+/* All codes must not exceed MAX_BITS bits */
+
+const MIN_MATCH = 3;
+const MAX_MATCH = 258;
+const MIN_LOOKAHEAD = (MAX_MATCH + MIN_MATCH + 1);
+
+const PRESET_DICT = 0x20;
+
+const INIT_STATE    =  42;    /* zlib header -> BUSY_STATE */
+//#ifdef GZIP
+const GZIP_STATE    =  57;    /* gzip header -> BUSY_STATE | EXTRA_STATE */
+//#endif
+const EXTRA_STATE   =  69;    /* gzip extra block -> NAME_STATE */
+const NAME_STATE    =  73;    /* gzip file name -> COMMENT_STATE */
+const COMMENT_STATE =  91;    /* gzip comment -> HCRC_STATE */
+const HCRC_STATE    = 103;    /* gzip header CRC -> BUSY_STATE */
+const BUSY_STATE    = 113;    /* deflate -> FINISH_STATE */
+const FINISH_STATE  = 666;    /* stream complete */
+
+const BS_NEED_MORE      = 1; /* block not completed, need more input or more output */
+const BS_BLOCK_DONE     = 2; /* block flush performed */
+const BS_FINISH_STARTED = 3; /* finish started, need only more output at next deflate */
+const BS_FINISH_DONE    = 4; /* finish done, accept no more input or output */
+
+const OS_CODE = 0x03; // Unix :) . Don't detect, use this default.
+
+const err = (strm, errorCode) => {
+  strm.msg = messages[errorCode];
+  return errorCode;
+};
+
+const rank = (f) => {
+  return ((f) * 2) - ((f) > 4 ? 9 : 0);
+};
+
+const zero = (buf) => {
+  let len = buf.length; while (--len >= 0) { buf[len] = 0; }
+};
+
+/* ===========================================================================
+ * Slide the hash table when sliding the window down (could be avoided with 32
+ * bit values at the expense of memory usage). We slide even when level == 0 to
+ * keep the hash table consistent if we switch back to level > 0 later.
+ */
+const slide_hash = (s) => {
+  let n, m;
+  let p;
+  let wsize = s.w_size;
+
+  n = s.hash_size;
+  p = n;
+  do {
+    m = s.head[--p];
+    s.head[p] = (m >= wsize ? m - wsize : 0);
+  } while (--n);
+  n = wsize;
+//#ifndef FASTEST
+  p = n;
+  do {
+    m = s.prev[--p];
+    s.prev[p] = (m >= wsize ? m - wsize : 0);
+    /* If n is not on any hash chain, prev[n] is garbage but
+     * its value will never be used.
+     */
+  } while (--n);
+//#endif
+};
+
+/* eslint-disable new-cap */
+let HASH_ZLIB = (s, prev, data) => ((prev << s.hash_shift) ^ data) & s.hash_mask;
+// This hash causes less collisions, https://github.com/nodeca/pako/issues/135
+// But breaks binary compatibility
+//let HASH_FAST = (s, prev, data) => ((prev << 8) + (prev >> 8) + (data << 4)) & s.hash_mask;
+let HASH = HASH_ZLIB;
+
+
+/* =========================================================================
+ * Flush as much pending output as possible. All deflate() output, except for
+ * some deflate_stored() output, goes through this function so some
+ * applications may wish to modify it to avoid allocating a large
+ * strm->next_out buffer and copying into it. (See also read_buf()).
+ */
+const flush_pending = (strm) => {
+  const s = strm.state;
+
+  //_tr_flush_bits(s);
+  let len = s.pending;
+  if (len > strm.avail_out) {
+    len = strm.avail_out;
+  }
+  if (len === 0) { return; }
+
+  strm.output.set(s.pending_buf.subarray(s.pending_out, s.pending_out + len), strm.next_out);
+  strm.next_out  += len;
+  s.pending_out  += len;
+  strm.total_out += len;
+  strm.avail_out -= len;
+  s.pending      -= len;
+  if (s.pending === 0) {
+    s.pending_out = 0;
+  }
+};
+
+
+const flush_block_only = (s, last) => {
+  _tr_flush_block(s, (s.block_start >= 0 ? s.block_start : -1), s.strstart - s.block_start, last);
+  s.block_start = s.strstart;
+  flush_pending(s.strm);
+};
+
+
+const put_byte = (s, b) => {
+  s.pending_buf[s.pending++] = b;
+};
+
+
+/* =========================================================================
+ * Put a short in the pending buffer. The 16-bit value is put in MSB order.
+ * IN assertion: the stream state is correct and there is enough room in
+ * pending_buf.
+ */
+const putShortMSB = (s, b) => {
+
+  //  put_byte(s, (Byte)(b >> 8));
+//  put_byte(s, (Byte)(b & 0xff));
+  s.pending_buf[s.pending++] = (b >>> 8) & 0xff;
+  s.pending_buf[s.pending++] = b & 0xff;
+};
+
+
+/* ===========================================================================
+ * Read a new buffer from the current input stream, update the adler32
+ * and total number of bytes read.  All deflate() input goes through
+ * this function so some applications may wish to modify it to avoid
+ * allocating a large strm->input buffer and copying from it.
+ * (See also flush_pending()).
+ */
+const read_buf = (strm, buf, start, size) => {
+
+  let len = strm.avail_in;
+
+  if (len > size) { len = size; }
+  if (len === 0) { return 0; }
+
+  strm.avail_in -= len;
+
+  // zmemcpy(buf, strm->next_in, len);
+  buf.set(strm.input.subarray(strm.next_in, strm.next_in + len), start);
+  if (strm.state.wrap === 1) {
+    strm.adler = adler32_1(strm.adler, buf, len, start);
+  }
+
+  else if (strm.state.wrap === 2) {
+    strm.adler = crc32_1(strm.adler, buf, len, start);
+  }
+
+  strm.next_in += len;
+  strm.total_in += len;
+
+  return len;
+};
+
+
+/* ===========================================================================
+ * Set match_start to the longest match starting at the given string and
+ * return its length. Matches shorter or equal to prev_length are discarded,
+ * in which case the result is equal to prev_length and match_start is
+ * garbage.
+ * IN assertions: cur_match is the head of the hash chain for the current
+ *   string (strstart) and its distance is <= MAX_DIST, and prev_length >= 1
+ * OUT assertion: the match length is not greater than s->lookahead.
+ */
+const longest_match = (s, cur_match) => {
+
+  let chain_length = s.max_chain_length;      /* max hash chain length */
+  let scan = s.strstart; /* current string */
+  let match;                       /* matched string */
+  let len;                           /* length of current match */
+  let best_len = s.prev_length;              /* best match length so far */
+  let nice_match = s.nice_match;             /* stop if match long enough */
+  const limit = (s.strstart > (s.w_size - MIN_LOOKAHEAD)) ?
+      s.strstart - (s.w_size - MIN_LOOKAHEAD) : 0/*NIL*/;
+
+  const _win = s.window; // shortcut
+
+  const wmask = s.w_mask;
+  const prev  = s.prev;
+
+  /* Stop when cur_match becomes <= limit. To simplify the code,
+   * we prevent matches with the string of window index 0.
+   */
+
+  const strend = s.strstart + MAX_MATCH;
+  let scan_end1  = _win[scan + best_len - 1];
+  let scan_end   = _win[scan + best_len];
+
+  /* The code is optimized for HASH_BITS >= 8 and MAX_MATCH-2 multiple of 16.
+   * It is easy to get rid of this optimization if necessary.
+   */
+  // Assert(s->hash_bits >= 8 && MAX_MATCH == 258, "Code too clever");
+
+  /* Do not waste too much time if we already have a good match: */
+  if (s.prev_length >= s.good_match) {
+    chain_length >>= 2;
+  }
+  /* Do not look for matches beyond the end of the input. This is necessary
+   * to make deflate deterministic.
+   */
+  if (nice_match > s.lookahead) { nice_match = s.lookahead; }
+
+  // Assert((ulg)s->strstart <= s->window_size-MIN_LOOKAHEAD, "need lookahead");
+
+  do {
+    // Assert(cur_match < s->strstart, "no future");
+    match = cur_match;
+
+    /* Skip to next match if the match length cannot increase
+     * or if the match length is less than 2.  Note that the checks below
+     * for insufficient lookahead only occur occasionally for performance
+     * reasons.  Therefore uninitialized memory will be accessed, and
+     * conditional jumps will be made that depend on those values.
+     * However the length of the match is limited to the lookahead, so
+     * the output of deflate is not affected by the uninitialized values.
+     */
+
+    if (_win[match + best_len]     !== scan_end  ||
+        _win[match + best_len - 1] !== scan_end1 ||
+        _win[match]                !== _win[scan] ||
+        _win[++match]              !== _win[scan + 1]) {
+      continue;
+    }
+
+    /* The check at best_len-1 can be removed because it will be made
+     * again later. (This heuristic is not always a win.)
+     * It is not necessary to compare scan[2] and match[2] since they
+     * are always equal when the other bytes match, given that
+     * the hash keys are equal and that HASH_BITS >= 8.
+     */
+    scan += 2;
+    match++;
+    // Assert(*scan == *match, "match[2]?");
+
+    /* We check for insufficient lookahead only every 8th comparison;
+     * the 256th check will be made at strstart+258.
+     */
+    do {
+      /*jshint noempty:false*/
+    } while (_win[++scan] === _win[++match] && _win[++scan] === _win[++match] &&
+             _win[++scan] === _win[++match] && _win[++scan] === _win[++match] &&
+             _win[++scan] === _win[++match] && _win[++scan] === _win[++match] &&
+             _win[++scan] === _win[++match] && _win[++scan] === _win[++match] &&
+             scan < strend);
+
+    // Assert(scan <= s->window+(unsigned)(s->window_size-1), "wild scan");
+
+    len = MAX_MATCH - (strend - scan);
+    scan = strend - MAX_MATCH;
+
+    if (len > best_len) {
+      s.match_start = cur_match;
+      best_len = len;
+      if (len >= nice_match) {
+        break;
+      }
+      scan_end1  = _win[scan + best_len - 1];
+      scan_end   = _win[scan + best_len];
+    }
+  } while ((cur_match = prev[cur_match & wmask]) > limit && --chain_length !== 0);
+
+  if (best_len <= s.lookahead) {
+    return best_len;
+  }
+  return s.lookahead;
+};
+
+
+/* ===========================================================================
+ * Fill the window when the lookahead becomes insufficient.
+ * Updates strstart and lookahead.
+ *
+ * IN assertion: lookahead < MIN_LOOKAHEAD
+ * OUT assertions: strstart <= window_size-MIN_LOOKAHEAD
+ *    At least one byte has been read, or avail_in == 0; reads are
+ *    performed for at least two bytes (required for the zip translate_eol
+ *    option -- not supported here).
+ */
+const fill_window = (s) => {
+
+  const _w_size = s.w_size;
+  let n, more, str;
+
+  //Assert(s->lookahead < MIN_LOOKAHEAD, "already enough lookahead");
+
+  do {
+    more = s.window_size - s.lookahead - s.strstart;
+
+    // JS ints have 32 bit, block below not needed
+    /* Deal with !@#$% 64K limit: */
+    //if (sizeof(int) <= 2) {
+    //    if (more == 0 && s->strstart == 0 && s->lookahead == 0) {
+    //        more = wsize;
+    //
+    //  } else if (more == (unsigned)(-1)) {
+    //        /* Very unlikely, but possible on 16 bit machine if
+    //         * strstart == 0 && lookahead == 1 (input done a byte at time)
+    //         */
+    //        more--;
+    //    }
+    //}
+
+
+    /* If the window is almost full and there is insufficient lookahead,
+     * move the upper half to the lower one to make room in the upper half.
+     */
+    if (s.strstart >= _w_size + (_w_size - MIN_LOOKAHEAD)) {
+
+      s.window.set(s.window.subarray(_w_size, _w_size + _w_size - more), 0);
+      s.match_start -= _w_size;
+      s.strstart -= _w_size;
+      /* we now have strstart >= MAX_DIST */
+      s.block_start -= _w_size;
+      if (s.insert > s.strstart) {
+        s.insert = s.strstart;
+      }
+      slide_hash(s);
+      more += _w_size;
+    }
+    if (s.strm.avail_in === 0) {
+      break;
+    }
+
+    /* If there was no sliding:
+     *    strstart <= WSIZE+MAX_DIST-1 && lookahead <= MIN_LOOKAHEAD - 1 &&
+     *    more == window_size - lookahead - strstart
+     * => more >= window_size - (MIN_LOOKAHEAD-1 + WSIZE + MAX_DIST-1)
+     * => more >= window_size - 2*WSIZE + 2
+     * In the BIG_MEM or MMAP case (not yet supported),
+     *   window_size == input_size + MIN_LOOKAHEAD  &&
+     *   strstart + s->lookahead <= input_size => more >= MIN_LOOKAHEAD.
+     * Otherwise, window_size == 2*WSIZE so more >= 2.
+     * If there was sliding, more >= WSIZE. So in all cases, more >= 2.
+     */
+    //Assert(more >= 2, "more < 2");
+    n = read_buf(s.strm, s.window, s.strstart + s.lookahead, more);
+    s.lookahead += n;
+
+    /* Initialize the hash value now that we have some input: */
+    if (s.lookahead + s.insert >= MIN_MATCH) {
+      str = s.strstart - s.insert;
+      s.ins_h = s.window[str];
+
+      /* UPDATE_HASH(s, s->ins_h, s->window[str + 1]); */
+      s.ins_h = HASH(s, s.ins_h, s.window[str + 1]);
+//#if MIN_MATCH != 3
+//        Call update_hash() MIN_MATCH-3 more times
+//#endif
+      while (s.insert) {
+        /* UPDATE_HASH(s, s->ins_h, s->window[str + MIN_MATCH-1]); */
+        s.ins_h = HASH(s, s.ins_h, s.window[str + MIN_MATCH - 1]);
+
+        s.prev[str & s.w_mask] = s.head[s.ins_h];
+        s.head[s.ins_h] = str;
+        str++;
+        s.insert--;
+        if (s.lookahead + s.insert < MIN_MATCH) {
+          break;
+        }
+      }
+    }
+    /* If the whole input has less than MIN_MATCH bytes, ins_h is garbage,
+     * but this is not important since only literal bytes will be emitted.
+     */
+
+  } while (s.lookahead < MIN_LOOKAHEAD && s.strm.avail_in !== 0);
+
+  /* If the WIN_INIT bytes after the end of the current data have never been
+   * written, then zero those bytes in order to avoid memory check reports of
+   * the use of uninitialized (or uninitialised as Julian writes) bytes by
+   * the longest match routines.  Update the high water mark for the next
+   * time through here.  WIN_INIT is set to MAX_MATCH since the longest match
+   * routines allow scanning to strstart + MAX_MATCH, ignoring lookahead.
+   */
+//  if (s.high_water < s.window_size) {
+//    const curr = s.strstart + s.lookahead;
+//    let init = 0;
+//
+//    if (s.high_water < curr) {
+//      /* Previous high water mark below current data -- zero WIN_INIT
+//       * bytes or up to end of window, whichever is less.
+//       */
+//      init = s.window_size - curr;
+//      if (init > WIN_INIT)
+//        init = WIN_INIT;
+//      zmemzero(s->window + curr, (unsigned)init);
+//      s->high_water = curr + init;
+//    }
+//    else if (s->high_water < (ulg)curr + WIN_INIT) {
+//      /* High water mark at or above current data, but below current data
+//       * plus WIN_INIT -- zero out to current data plus WIN_INIT, or up
+//       * to end of window, whichever is less.
+//       */
+//      init = (ulg)curr + WIN_INIT - s->high_water;
+//      if (init > s->window_size - s->high_water)
+//        init = s->window_size - s->high_water;
+//      zmemzero(s->window + s->high_water, (unsigned)init);
+//      s->high_water += init;
+//    }
+//  }
+//
+//  Assert((ulg)s->strstart <= s->window_size - MIN_LOOKAHEAD,
+//    "not enough room for search");
+};
+
+/* ===========================================================================
+ * Copy without compression as much as possible from the input stream, return
+ * the current block state.
+ *
+ * In case deflateParams() is used to later switch to a non-zero compression
+ * level, s->matches (otherwise unused when storing) keeps track of the number
+ * of hash table slides to perform. If s->matches is 1, then one hash table
+ * slide will be done when switching. If s->matches is 2, the maximum value
+ * allowed here, then the hash table will be cleared, since two or more slides
+ * is the same as a clear.
+ *
+ * deflate_stored() is written to minimize the number of times an input byte is
+ * copied. It is most efficient with large input and output buffers, which
+ * maximizes the opportunites to have a single copy from next_in to next_out.
+ */
+const deflate_stored = (s, flush) => {
+
+  /* Smallest worthy block size when not flushing or finishing. By default
+   * this is 32K. This can be as small as 507 bytes for memLevel == 1. For
+   * large input and output buffers, the stored block size will be larger.
+   */
+  let min_block = s.pending_buf_size - 5 > s.w_size ? s.w_size : s.pending_buf_size - 5;
+
+  /* Copy as many min_block or larger stored blocks directly to next_out as
+   * possible. If flushing, copy the remaining available input to next_out as
+   * stored blocks, if there is enough space.
+   */
+  let len, left, have, last = 0;
+  let used = s.strm.avail_in;
+  do {
+    /* Set len to the maximum size block that we can copy directly with the
+     * available input data and output space. Set left to how much of that
+     * would be copied from what's left in the window.
+     */
+    len = 65535/* MAX_STORED */;     /* maximum deflate stored block length */
+    have = (s.bi_valid + 42) >> 3;     /* number of header bytes */
+    if (s.strm.avail_out < have) {         /* need room for header */
+      break;
+    }
+      /* maximum stored block length that will fit in avail_out: */
+    have = s.strm.avail_out - have;
+    left = s.strstart - s.block_start;  /* bytes left in window */
+    if (len > left + s.strm.avail_in) {
+      len = left + s.strm.avail_in;   /* limit len to the input */
+    }
+    if (len > have) {
+      len = have;             /* limit len to the output */
+    }
+
+    /* If the stored block would be less than min_block in length, or if
+     * unable to copy all of the available input when flushing, then try
+     * copying to the window and the pending buffer instead. Also don't
+     * write an empty block when flushing -- deflate() does that.
+     */
+    if (len < min_block && ((len === 0 && flush !== Z_FINISH$3) ||
+                        flush === Z_NO_FLUSH$2 ||
+                        len !== left + s.strm.avail_in)) {
+      break;
+    }
+
+    /* Make a dummy stored block in pending to get the header bytes,
+     * including any pending bits. This also updates the debugging counts.
+     */
+    last = flush === Z_FINISH$3 && len === left + s.strm.avail_in ? 1 : 0;
+    _tr_stored_block(s, 0, 0, last);
+
+    /* Replace the lengths in the dummy stored block with len. */
+    s.pending_buf[s.pending - 4] = len;
+    s.pending_buf[s.pending - 3] = len >> 8;
+    s.pending_buf[s.pending - 2] = ~len;
+    s.pending_buf[s.pending - 1] = ~len >> 8;
+
+    /* Write the stored block header bytes. */
+    flush_pending(s.strm);
+
+//#ifdef ZLIB_DEBUG
+//    /* Update debugging counts for the data about to be copied. */
+//    s->compressed_len += len << 3;
+//    s->bits_sent += len << 3;
+//#endif
+
+    /* Copy uncompressed bytes from the window to next_out. */
+    if (left) {
+      if (left > len) {
+        left = len;
+      }
+      //zmemcpy(s->strm->next_out, s->window + s->block_start, left);
+      s.strm.output.set(s.window.subarray(s.block_start, s.block_start + left), s.strm.next_out);
+      s.strm.next_out += left;
+      s.strm.avail_out -= left;
+      s.strm.total_out += left;
+      s.block_start += left;
+      len -= left;
+    }
+
+    /* Copy uncompressed bytes directly from next_in to next_out, updating
+     * the check value.
+     */
+    if (len) {
+      read_buf(s.strm, s.strm.output, s.strm.next_out, len);
+      s.strm.next_out += len;
+      s.strm.avail_out -= len;
+      s.strm.total_out += len;
+    }
+  } while (last === 0);
+
+  /* Update the sliding window with the last s->w_size bytes of the copied
+   * data, or append all of the copied data to the existing window if less
+   * than s->w_size bytes were copied. Also update the number of bytes to
+   * insert in the hash tables, in the event that deflateParams() switches to
+   * a non-zero compression level.
+   */
+  used -= s.strm.avail_in;    /* number of input bytes directly copied */
+  if (used) {
+    /* If any input was used, then no unused input remains in the window,
+     * therefore s->block_start == s->strstart.
+     */
+    if (used >= s.w_size) {  /* supplant the previous history */
+      s.matches = 2;     /* clear hash */
+      //zmemcpy(s->window, s->strm->next_in - s->w_size, s->w_size);
+      s.window.set(s.strm.input.subarray(s.strm.next_in - s.w_size, s.strm.next_in), 0);
+      s.strstart = s.w_size;
+      s.insert = s.strstart;
+    }
+    else {
+      if (s.window_size - s.strstart <= used) {
+        /* Slide the window down. */
+        s.strstart -= s.w_size;
+        //zmemcpy(s->window, s->window + s->w_size, s->strstart);
+        s.window.set(s.window.subarray(s.w_size, s.w_size + s.strstart), 0);
+        if (s.matches < 2) {
+          s.matches++;   /* add a pending slide_hash() */
+        }
+        if (s.insert > s.strstart) {
+          s.insert = s.strstart;
+        }
+      }
+      //zmemcpy(s->window + s->strstart, s->strm->next_in - used, used);
+      s.window.set(s.strm.input.subarray(s.strm.next_in - used, s.strm.next_in), s.strstart);
+      s.strstart += used;
+      s.insert += used > s.w_size - s.insert ? s.w_size - s.insert : used;
+    }
+    s.block_start = s.strstart;
+  }
+  if (s.high_water < s.strstart) {
+    s.high_water = s.strstart;
+  }
+
+  /* If the last block was written to next_out, then done. */
+  if (last) {
+    return BS_FINISH_DONE;
+  }
+
+  /* If flushing and all input has been consumed, then done. */
+  if (flush !== Z_NO_FLUSH$2 && flush !== Z_FINISH$3 &&
+    s.strm.avail_in === 0 && s.strstart === s.block_start) {
+    return BS_BLOCK_DONE;
+  }
+
+  /* Fill the window with any remaining input. */
+  have = s.window_size - s.strstart;
+  if (s.strm.avail_in > have && s.block_start >= s.w_size) {
+    /* Slide the window down. */
+    s.block_start -= s.w_size;
+    s.strstart -= s.w_size;
+    //zmemcpy(s->window, s->window + s->w_size, s->strstart);
+    s.window.set(s.window.subarray(s.w_size, s.w_size + s.strstart), 0);
+    if (s.matches < 2) {
+      s.matches++;       /* add a pending slide_hash() */
+    }
+    have += s.w_size;      /* more space now */
+    if (s.insert > s.strstart) {
+      s.insert = s.strstart;
+    }
+  }
+  if (have > s.strm.avail_in) {
+    have = s.strm.avail_in;
+  }
+  if (have) {
+    read_buf(s.strm, s.window, s.strstart, have);
+    s.strstart += have;
+    s.insert += have > s.w_size - s.insert ? s.w_size - s.insert : have;
+  }
+  if (s.high_water < s.strstart) {
+    s.high_water = s.strstart;
+  }
+
+  /* There was not enough avail_out to write a complete worthy or flushed
+   * stored block to next_out. Write a stored block to pending instead, if we
+   * have enough input for a worthy block, or if flushing and there is enough
+   * room for the remaining input as a stored block in the pending buffer.
+   */
+  have = (s.bi_valid + 42) >> 3;     /* number of header bytes */
+    /* maximum stored block length that will fit in pending: */
+  have = s.pending_buf_size - have > 65535/* MAX_STORED */ ? 65535/* MAX_STORED */ : s.pending_buf_size - have;
+  min_block = have > s.w_size ? s.w_size : have;
+  left = s.strstart - s.block_start;
+  if (left >= min_block ||
+     ((left || flush === Z_FINISH$3) && flush !== Z_NO_FLUSH$2 &&
+     s.strm.avail_in === 0 && left <= have)) {
+    len = left > have ? have : left;
+    last = flush === Z_FINISH$3 && s.strm.avail_in === 0 &&
+         len === left ? 1 : 0;
+    _tr_stored_block(s, s.block_start, len, last);
+    s.block_start += len;
+    flush_pending(s.strm);
+  }
+
+  /* We've done all we can with the available input and output. */
+  return last ? BS_FINISH_STARTED : BS_NEED_MORE;
+};
+
+
+/* ===========================================================================
+ * Compress as much as possible from the input stream, return the current
+ * block state.
+ * This function does not perform lazy evaluation of matches and inserts
+ * new strings in the dictionary only for unmatched strings or for short
+ * matches. It is used only for the fast compression options.
+ */
+const deflate_fast = (s, flush) => {
+
+  let hash_head;        /* head of the hash chain */
+  let bflush;           /* set if current block must be flushed */
+
+  for (;;) {
+    /* Make sure that we always have enough lookahead, except
+     * at the end of the input file. We need MAX_MATCH bytes
+     * for the next match, plus MIN_MATCH bytes to insert the
+     * string following the next match.
+     */
+    if (s.lookahead < MIN_LOOKAHEAD) {
+      fill_window(s);
+      if (s.lookahead < MIN_LOOKAHEAD && flush === Z_NO_FLUSH$2) {
+        return BS_NEED_MORE;
+      }
+      if (s.lookahead === 0) {
+        break; /* flush the current block */
+      }
+    }
+
+    /* Insert the string window[strstart .. strstart+2] in the
+     * dictionary, and set hash_head to the head of the hash chain:
+     */
+    hash_head = 0/*NIL*/;
+    if (s.lookahead >= MIN_MATCH) {
+      /*** INSERT_STRING(s, s.strstart, hash_head); ***/
+      s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + MIN_MATCH - 1]);
+      hash_head = s.prev[s.strstart & s.w_mask] = s.head[s.ins_h];
+      s.head[s.ins_h] = s.strstart;
+      /***/
+    }
+
+    /* Find the longest match, discarding those <= prev_length.
+     * At this point we have always match_length < MIN_MATCH
+     */
+    if (hash_head !== 0/*NIL*/ && ((s.strstart - hash_head) <= (s.w_size - MIN_LOOKAHEAD))) {
+      /* To simplify the code, we prevent matches with the string
+       * of window index 0 (in particular we have to avoid a match
+       * of the string with itself at the start of the input file).
+       */
+      s.match_length = longest_match(s, hash_head);
+      /* longest_match() sets match_start */
+    }
+    if (s.match_length >= MIN_MATCH) {
+      // check_match(s, s.strstart, s.match_start, s.match_length); // for debug only
+
+      /*** _tr_tally_dist(s, s.strstart - s.match_start,
+                     s.match_length - MIN_MATCH, bflush); ***/
+      bflush = _tr_tally(s, s.strstart - s.match_start, s.match_length - MIN_MATCH);
+
+      s.lookahead -= s.match_length;
+
+      /* Insert new strings in the hash table only if the match length
+       * is not too large. This saves time but degrades compression.
+       */
+      if (s.match_length <= s.max_lazy_match/*max_insert_length*/ && s.lookahead >= MIN_MATCH) {
+        s.match_length--; /* string at strstart already in table */
+        do {
+          s.strstart++;
+          /*** INSERT_STRING(s, s.strstart, hash_head); ***/
+          s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + MIN_MATCH - 1]);
+          hash_head = s.prev[s.strstart & s.w_mask] = s.head[s.ins_h];
+          s.head[s.ins_h] = s.strstart;
+          /***/
+          /* strstart never exceeds WSIZE-MAX_MATCH, so there are
+           * always MIN_MATCH bytes ahead.
+           */
+        } while (--s.match_length !== 0);
+        s.strstart++;
+      } else
+      {
+        s.strstart += s.match_length;
+        s.match_length = 0;
+        s.ins_h = s.window[s.strstart];
+        /* UPDATE_HASH(s, s.ins_h, s.window[s.strstart+1]); */
+        s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + 1]);
+
+//#if MIN_MATCH != 3
+//                Call UPDATE_HASH() MIN_MATCH-3 more times
+//#endif
+        /* If lookahead < MIN_MATCH, ins_h is garbage, but it does not
+         * matter since it will be recomputed at next deflate call.
+         */
+      }
+    } else {
+      /* No match, output a literal byte */
+      //Tracevv((stderr,"%c", s.window[s.strstart]));
+      /*** _tr_tally_lit(s, s.window[s.strstart], bflush); ***/
+      bflush = _tr_tally(s, 0, s.window[s.strstart]);
+
+      s.lookahead--;
+      s.strstart++;
+    }
+    if (bflush) {
+      /*** FLUSH_BLOCK(s, 0); ***/
+      flush_block_only(s, false);
+      if (s.strm.avail_out === 0) {
+        return BS_NEED_MORE;
+      }
+      /***/
+    }
+  }
+  s.insert = ((s.strstart < (MIN_MATCH - 1)) ? s.strstart : MIN_MATCH - 1);
+  if (flush === Z_FINISH$3) {
+    /*** FLUSH_BLOCK(s, 1); ***/
+    flush_block_only(s, true);
+    if (s.strm.avail_out === 0) {
+      return BS_FINISH_STARTED;
+    }
+    /***/
+    return BS_FINISH_DONE;
+  }
+  if (s.sym_next) {
+    /*** FLUSH_BLOCK(s, 0); ***/
+    flush_block_only(s, false);
+    if (s.strm.avail_out === 0) {
+      return BS_NEED_MORE;
+    }
+    /***/
+  }
+  return BS_BLOCK_DONE;
+};
+
+/* ===========================================================================
+ * Same as above, but achieves better compression. We use a lazy
+ * evaluation for matches: a match is finally adopted only if there is
+ * no better match at the next window position.
+ */
+const deflate_slow = (s, flush) => {
+
+  let hash_head;          /* head of hash chain */
+  let bflush;              /* set if current block must be flushed */
+
+  let max_insert;
+
+  /* Process the input block. */
+  for (;;) {
+    /* Make sure that we always have enough lookahead, except
+     * at the end of the input file. We need MAX_MATCH bytes
+     * for the next match, plus MIN_MATCH bytes to insert the
+     * string following the next match.
+     */
+    if (s.lookahead < MIN_LOOKAHEAD) {
+      fill_window(s);
+      if (s.lookahead < MIN_LOOKAHEAD && flush === Z_NO_FLUSH$2) {
+        return BS_NEED_MORE;
+      }
+      if (s.lookahead === 0) { break; } /* flush the current block */
+    }
+
+    /* Insert the string window[strstart .. strstart+2] in the
+     * dictionary, and set hash_head to the head of the hash chain:
+     */
+    hash_head = 0/*NIL*/;
+    if (s.lookahead >= MIN_MATCH) {
+      /*** INSERT_STRING(s, s.strstart, hash_head); ***/
+      s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + MIN_MATCH - 1]);
+      hash_head = s.prev[s.strstart & s.w_mask] = s.head[s.ins_h];
+      s.head[s.ins_h] = s.strstart;
+      /***/
+    }
+
+    /* Find the longest match, discarding those <= prev_length.
+     */
+    s.prev_length = s.match_length;
+    s.prev_match = s.match_start;
+    s.match_length = MIN_MATCH - 1;
+
+    if (hash_head !== 0/*NIL*/ && s.prev_length < s.max_lazy_match &&
+        s.strstart - hash_head <= (s.w_size - MIN_LOOKAHEAD)/*MAX_DIST(s)*/) {
+      /* To simplify the code, we prevent matches with the string
+       * of window index 0 (in particular we have to avoid a match
+       * of the string with itself at the start of the input file).
+       */
+      s.match_length = longest_match(s, hash_head);
+      /* longest_match() sets match_start */
+
+      if (s.match_length <= 5 &&
+         (s.strategy === Z_FILTERED || (s.match_length === MIN_MATCH && s.strstart - s.match_start > 4096/*TOO_FAR*/))) {
+
+        /* If prev_match is also MIN_MATCH, match_start is garbage
+         * but we will ignore the current match anyway.
+         */
+        s.match_length = MIN_MATCH - 1;
+      }
+    }
+    /* If there was a match at the previous step and the current
+     * match is not better, output the previous match:
+     */
+    if (s.prev_length >= MIN_MATCH && s.match_length <= s.prev_length) {
+      max_insert = s.strstart + s.lookahead - MIN_MATCH;
+      /* Do not insert strings in hash table beyond this. */
+
+      //check_match(s, s.strstart-1, s.prev_match, s.prev_length);
+
+      /***_tr_tally_dist(s, s.strstart - 1 - s.prev_match,
+                     s.prev_length - MIN_MATCH, bflush);***/
+      bflush = _tr_tally(s, s.strstart - 1 - s.prev_match, s.prev_length - MIN_MATCH);
+      /* Insert in hash table all strings up to the end of the match.
+       * strstart-1 and strstart are already inserted. If there is not
+       * enough lookahead, the last two strings are not inserted in
+       * the hash table.
+       */
+      s.lookahead -= s.prev_length - 1;
+      s.prev_length -= 2;
+      do {
+        if (++s.strstart <= max_insert) {
+          /*** INSERT_STRING(s, s.strstart, hash_head); ***/
+          s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + MIN_MATCH - 1]);
+          hash_head = s.prev[s.strstart & s.w_mask] = s.head[s.ins_h];
+          s.head[s.ins_h] = s.strstart;
+          /***/
+        }
+      } while (--s.prev_length !== 0);
+      s.match_available = 0;
+      s.match_length = MIN_MATCH - 1;
+      s.strstart++;
+
+      if (bflush) {
+        /*** FLUSH_BLOCK(s, 0); ***/
+        flush_block_only(s, false);
+        if (s.strm.avail_out === 0) {
+          return BS_NEED_MORE;
+        }
+        /***/
+      }
+
+    } else if (s.match_available) {
+      /* If there was no match at the previous position, output a
+       * single literal. If there was a match but the current match
+       * is longer, truncate the previous match to a single literal.
+       */
+      //Tracevv((stderr,"%c", s->window[s->strstart-1]));
+      /*** _tr_tally_lit(s, s.window[s.strstart-1], bflush); ***/
+      bflush = _tr_tally(s, 0, s.window[s.strstart - 1]);
+
+      if (bflush) {
+        /*** FLUSH_BLOCK_ONLY(s, 0) ***/
+        flush_block_only(s, false);
+        /***/
+      }
+      s.strstart++;
+      s.lookahead--;
+      if (s.strm.avail_out === 0) {
+        return BS_NEED_MORE;
+      }
+    } else {
+      /* There is no previous match to compare with, wait for
+       * the next step to decide.
+       */
+      s.match_available = 1;
+      s.strstart++;
+      s.lookahead--;
+    }
+  }
+  //Assert (flush != Z_NO_FLUSH, "no flush?");
+  if (s.match_available) {
+    //Tracevv((stderr,"%c", s->window[s->strstart-1]));
+    /*** _tr_tally_lit(s, s.window[s.strstart-1], bflush); ***/
+    bflush = _tr_tally(s, 0, s.window[s.strstart - 1]);
+
+    s.match_available = 0;
+  }
+  s.insert = s.strstart < MIN_MATCH - 1 ? s.strstart : MIN_MATCH - 1;
+  if (flush === Z_FINISH$3) {
+    /*** FLUSH_BLOCK(s, 1); ***/
+    flush_block_only(s, true);
+    if (s.strm.avail_out === 0) {
+      return BS_FINISH_STARTED;
+    }
+    /***/
+    return BS_FINISH_DONE;
+  }
+  if (s.sym_next) {
+    /*** FLUSH_BLOCK(s, 0); ***/
+    flush_block_only(s, false);
+    if (s.strm.avail_out === 0) {
+      return BS_NEED_MORE;
+    }
+    /***/
+  }
+
+  return BS_BLOCK_DONE;
+};
+
+
+/* ===========================================================================
+ * For Z_RLE, simply look for runs of bytes, generate matches only of distance
+ * one.  Do not maintain a hash table.  (It will be regenerated if this run of
+ * deflate switches away from Z_RLE.)
+ */
+const deflate_rle = (s, flush) => {
+
+  let bflush;            /* set if current block must be flushed */
+  let prev;              /* byte at distance one to match */
+  let scan, strend;      /* scan goes up to strend for length of run */
+
+  const _win = s.window;
+
+  for (;;) {
+    /* Make sure that we always have enough lookahead, except
+     * at the end of the input file. We need MAX_MATCH bytes
+     * for the longest run, plus one for the unrolled loop.
+     */
+    if (s.lookahead <= MAX_MATCH) {
+      fill_window(s);
+      if (s.lookahead <= MAX_MATCH && flush === Z_NO_FLUSH$2) {
+        return BS_NEED_MORE;
+      }
+      if (s.lookahead === 0) { break; } /* flush the current block */
+    }
+
+    /* See how many times the previous byte repeats */
+    s.match_length = 0;
+    if (s.lookahead >= MIN_MATCH && s.strstart > 0) {
+      scan = s.strstart - 1;
+      prev = _win[scan];
+      if (prev === _win[++scan] && prev === _win[++scan] && prev === _win[++scan]) {
+        strend = s.strstart + MAX_MATCH;
+        do {
+          /*jshint noempty:false*/
+        } while (prev === _win[++scan] && prev === _win[++scan] &&
+                 prev === _win[++scan] && prev === _win[++scan] &&
+                 prev === _win[++scan] && prev === _win[++scan] &&
+                 prev === _win[++scan] && prev === _win[++scan] &&
+                 scan < strend);
+        s.match_length = MAX_MATCH - (strend - scan);
+        if (s.match_length > s.lookahead) {
+          s.match_length = s.lookahead;
+        }
+      }
+      //Assert(scan <= s->window+(uInt)(s->window_size-1), "wild scan");
+    }
+
+    /* Emit match if have run of MIN_MATCH or longer, else emit literal */
+    if (s.match_length >= MIN_MATCH) {
+      //check_match(s, s.strstart, s.strstart - 1, s.match_length);
+
+      /*** _tr_tally_dist(s, 1, s.match_length - MIN_MATCH, bflush); ***/
+      bflush = _tr_tally(s, 1, s.match_length - MIN_MATCH);
+
+      s.lookahead -= s.match_length;
+      s.strstart += s.match_length;
+      s.match_length = 0;
+    } else {
+      /* No match, output a literal byte */
+      //Tracevv((stderr,"%c", s->window[s->strstart]));
+      /*** _tr_tally_lit(s, s.window[s.strstart], bflush); ***/
+      bflush = _tr_tally(s, 0, s.window[s.strstart]);
+
+      s.lookahead--;
+      s.strstart++;
+    }
+    if (bflush) {
+      /*** FLUSH_BLOCK(s, 0); ***/
+      flush_block_only(s, false);
+      if (s.strm.avail_out === 0) {
+        return BS_NEED_MORE;
+      }
+      /***/
+    }
+  }
+  s.insert = 0;
+  if (flush === Z_FINISH$3) {
+    /*** FLUSH_BLOCK(s, 1); ***/
+    flush_block_only(s, true);
+    if (s.strm.avail_out === 0) {
+      return BS_FINISH_STARTED;
+    }
+    /***/
+    return BS_FINISH_DONE;
+  }
+  if (s.sym_next) {
+    /*** FLUSH_BLOCK(s, 0); ***/
+    flush_block_only(s, false);
+    if (s.strm.avail_out === 0) {
+      return BS_NEED_MORE;
+    }
+    /***/
+  }
+  return BS_BLOCK_DONE;
+};
+
+/* ===========================================================================
+ * For Z_HUFFMAN_ONLY, do not look for matches.  Do not maintain a hash table.
+ * (It will be regenerated if this run of deflate switches away from Huffman.)
+ */
+const deflate_huff = (s, flush) => {
+
+  let bflush;             /* set if current block must be flushed */
+
+  for (;;) {
+    /* Make sure that we have a literal to write. */
+    if (s.lookahead === 0) {
+      fill_window(s);
+      if (s.lookahead === 0) {
+        if (flush === Z_NO_FLUSH$2) {
+          return BS_NEED_MORE;
+        }
+        break;      /* flush the current block */
+      }
+    }
+
+    /* Output a literal byte */
+    s.match_length = 0;
+    //Tracevv((stderr,"%c", s->window[s->strstart]));
+    /*** _tr_tally_lit(s, s.window[s.strstart], bflush); ***/
+    bflush = _tr_tally(s, 0, s.window[s.strstart]);
+    s.lookahead--;
+    s.strstart++;
+    if (bflush) {
+      /*** FLUSH_BLOCK(s, 0); ***/
+      flush_block_only(s, false);
+      if (s.strm.avail_out === 0) {
+        return BS_NEED_MORE;
+      }
+      /***/
+    }
+  }
+  s.insert = 0;
+  if (flush === Z_FINISH$3) {
+    /*** FLUSH_BLOCK(s, 1); ***/
+    flush_block_only(s, true);
+    if (s.strm.avail_out === 0) {
+      return BS_FINISH_STARTED;
+    }
+    /***/
+    return BS_FINISH_DONE;
+  }
+  if (s.sym_next) {
+    /*** FLUSH_BLOCK(s, 0); ***/
+    flush_block_only(s, false);
+    if (s.strm.avail_out === 0) {
+      return BS_NEED_MORE;
+    }
+    /***/
+  }
+  return BS_BLOCK_DONE;
+};
+
+/* Values for max_lazy_match, good_match and max_chain_length, depending on
+ * the desired pack level (0..9). The values given below have been tuned to
+ * exclude worst case performance for pathological files. Better values may be
+ * found for specific files.
+ */
+function Config(good_length, max_lazy, nice_length, max_chain, func) {
+
+  this.good_length = good_length;
+  this.max_lazy = max_lazy;
+  this.nice_length = nice_length;
+  this.max_chain = max_chain;
+  this.func = func;
+}
+
+const configuration_table = [
+  /*      good lazy nice chain */
+  new Config(0, 0, 0, 0, deflate_stored),          /* 0 store only */
+  new Config(4, 4, 8, 4, deflate_fast),            /* 1 max speed, no lazy matches */
+  new Config(4, 5, 16, 8, deflate_fast),           /* 2 */
+  new Config(4, 6, 32, 32, deflate_fast),          /* 3 */
+
+  new Config(4, 4, 16, 16, deflate_slow),          /* 4 lazy matches */
+  new Config(8, 16, 32, 32, deflate_slow),         /* 5 */
+  new Config(8, 16, 128, 128, deflate_slow),       /* 6 */
+  new Config(8, 32, 128, 256, deflate_slow),       /* 7 */
+  new Config(32, 128, 258, 1024, deflate_slow),    /* 8 */
+  new Config(32, 258, 258, 4096, deflate_slow)     /* 9 max compression */
+];
+
+
+/* ===========================================================================
+ * Initialize the "longest match" routines for a new zlib stream
+ */
+const lm_init = (s) => {
+
+  s.window_size = 2 * s.w_size;
+
+  /*** CLEAR_HASH(s); ***/
+  zero(s.head); // Fill with NIL (= 0);
+
+  /* Set the default configuration parameters:
+   */
+  s.max_lazy_match = configuration_table[s.level].max_lazy;
+  s.good_match = configuration_table[s.level].good_length;
+  s.nice_match = configuration_table[s.level].nice_length;
+  s.max_chain_length = configuration_table[s.level].max_chain;
+
+  s.strstart = 0;
+  s.block_start = 0;
+  s.lookahead = 0;
+  s.insert = 0;
+  s.match_length = s.prev_length = MIN_MATCH - 1;
+  s.match_available = 0;
+  s.ins_h = 0;
+};
+
+
+function DeflateState() {
+  this.strm = null;            /* pointer back to this zlib stream */
+  this.status = 0;            /* as the name implies */
+  this.pending_buf = null;      /* output still pending */
+  this.pending_buf_size = 0;  /* size of pending_buf */
+  this.pending_out = 0;       /* next pending byte to output to the stream */
+  this.pending = 0;           /* nb of bytes in the pending buffer */
+  this.wrap = 0;              /* bit 0 true for zlib, bit 1 true for gzip */
+  this.gzhead = null;         /* gzip header information to write */
+  this.gzindex = 0;           /* where in extra, name, or comment */
+  this.method = Z_DEFLATED$2; /* can only be DEFLATED */
+  this.last_flush = -1;   /* value of flush param for previous deflate call */
+
+  this.w_size = 0;  /* LZ77 window size (32K by default) */
+  this.w_bits = 0;  /* log2(w_size)  (8..16) */
+  this.w_mask = 0;  /* w_size - 1 */
+
+  this.window = null;
+  /* Sliding window. Input bytes are read into the second half of the window,
+   * and move to the first half later to keep a dictionary of at least wSize
+   * bytes. With this organization, matches are limited to a distance of
+   * wSize-MAX_MATCH bytes, but this ensures that IO is always
+   * performed with a length multiple of the block size.
+   */
+
+  this.window_size = 0;
+  /* Actual size of window: 2*wSize, except when the user input buffer
+   * is directly used as sliding window.
+   */
+
+  this.prev = null;
+  /* Link to older string with same hash index. To limit the size of this
+   * array to 64K, this link is maintained only for the last 32K strings.
+   * An index in this array is thus a window index modulo 32K.
+   */
+
+  this.head = null;   /* Heads of the hash chains or NIL. */
+
+  this.ins_h = 0;       /* hash index of string to be inserted */
+  this.hash_size = 0;   /* number of elements in hash table */
+  this.hash_bits = 0;   /* log2(hash_size) */
+  this.hash_mask = 0;   /* hash_size-1 */
+
+  this.hash_shift = 0;
+  /* Number of bits by which ins_h must be shifted at each input
+   * step. It must be such that after MIN_MATCH steps, the oldest
+   * byte no longer takes part in the hash key, that is:
+   *   hash_shift * MIN_MATCH >= hash_bits
+   */
+
+  this.block_start = 0;
+  /* Window position at the beginning of the current output block. Gets
+   * negative when the window is moved backwards.
+   */
+
+  this.match_length = 0;      /* length of best match */
+  this.prev_match = 0;        /* previous match */
+  this.match_available = 0;   /* set if previous match exists */
+  this.strstart = 0;          /* start of string to insert */
+  this.match_start = 0;       /* start of matching string */
+  this.lookahead = 0;         /* number of valid bytes ahead in window */
+
+  this.prev_length = 0;
+  /* Length of the best match at previous step. Matches not greater than this
+   * are discarded. This is used in the lazy match evaluation.
+   */
+
+  this.max_chain_length = 0;
+  /* To speed up deflation, hash chains are never searched beyond this
+   * length.  A higher limit improves compression ratio but degrades the
+   * speed.
+   */
+
+  this.max_lazy_match = 0;
+  /* Attempt to find a better match only when the current match is strictly
+   * smaller than this value. This mechanism is used only for compression
+   * levels >= 4.
+   */
+  // That's alias to max_lazy_match, don't use directly
+  //this.max_insert_length = 0;
+  /* Insert new strings in the hash table only if the match length is not
+   * greater than this length. This saves time but degrades compression.
+   * max_insert_length is used only for compression levels <= 3.
+   */
+
+  this.level = 0;     /* compression level (1..9) */
+  this.strategy = 0;  /* favor or force Huffman coding*/
+
+  this.good_match = 0;
+  /* Use a faster search when the previous match is longer than this */
+
+  this.nice_match = 0; /* Stop searching when current match exceeds this */
+
+              /* used by trees.c: */
+
+  /* Didn't use ct_data typedef below to suppress compiler warning */
+
+  // struct ct_data_s dyn_ltree[HEAP_SIZE];   /* literal and length tree */
+  // struct ct_data_s dyn_dtree[2*D_CODES+1]; /* distance tree */
+  // struct ct_data_s bl_tree[2*BL_CODES+1];  /* Huffman tree for bit lengths */
+
+  // Use flat array of DOUBLE size, with interleaved fata,
+  // because JS does not support effective
+  this.dyn_ltree  = new Uint16Array(HEAP_SIZE * 2);
+  this.dyn_dtree  = new Uint16Array((2 * D_CODES + 1) * 2);
+  this.bl_tree    = new Uint16Array((2 * BL_CODES + 1) * 2);
+  zero(this.dyn_ltree);
+  zero(this.dyn_dtree);
+  zero(this.bl_tree);
+
+  this.l_desc   = null;         /* desc. for literal tree */
+  this.d_desc   = null;         /* desc. for distance tree */
+  this.bl_desc  = null;         /* desc. for bit length tree */
+
+  //ush bl_count[MAX_BITS+1];
+  this.bl_count = new Uint16Array(MAX_BITS + 1);
+  /* number of codes at each bit length for an optimal tree */
+
+  //int heap[2*L_CODES+1];      /* heap used to build the Huffman trees */
+  this.heap = new Uint16Array(2 * L_CODES + 1);  /* heap used to build the Huffman trees */
+  zero(this.heap);
+
+  this.heap_len = 0;               /* number of elements in the heap */
+  this.heap_max = 0;               /* element of largest frequency */
+  /* The sons of heap[n] are heap[2*n] and heap[2*n+1]. heap[0] is not used.
+   * The same heap array is used to build all trees.
+   */
+
+  this.depth = new Uint16Array(2 * L_CODES + 1); //uch depth[2*L_CODES+1];
+  zero(this.depth);
+  /* Depth of each subtree used as tie breaker for trees of equal frequency
+   */
+
+  this.sym_buf = 0;        /* buffer for distances and literals/lengths */
+
+  this.lit_bufsize = 0;
+  /* Size of match buffer for literals/lengths.  There are 4 reasons for
+   * limiting lit_bufsize to 64K:
+   *   - frequencies can be kept in 16 bit counters
+   *   - if compression is not successful for the first block, all input
+   *     data is still in the window so we can still emit a stored block even
+   *     when input comes from standard input.  (This can also be done for
+   *     all blocks if lit_bufsize is not greater than 32K.)
+   *   - if compression is not successful for a file smaller than 64K, we can
+   *     even emit a stored file instead of a stored block (saving 5 bytes).
+   *     This is applicable only for zip (not gzip or zlib).
+   *   - creating new Huffman trees less frequently may not provide fast
+   *     adaptation to changes in the input data statistics. (Take for
+   *     example a binary file with poorly compressible code followed by
+   *     a highly compressible string table.) Smaller buffer sizes give
+   *     fast adaptation but have of course the overhead of transmitting
+   *     trees more frequently.
+   *   - I can't count above 4
+   */
+
+  this.sym_next = 0;      /* running index in sym_buf */
+  this.sym_end = 0;       /* symbol table full when sym_next reaches this */
+
+  this.opt_len = 0;       /* bit length of current block with optimal trees */
+  this.static_len = 0;    /* bit length of current block with static trees */
+  this.matches = 0;       /* number of string matches in current block */
+  this.insert = 0;        /* bytes at end of window left to insert */
+
+
+  this.bi_buf = 0;
+  /* Output buffer. bits are inserted starting at the bottom (least
+   * significant bits).
+   */
+  this.bi_valid = 0;
+  /* Number of valid bits in bi_buf.  All bits above the last valid bit
+   * are always zero.
+   */
+
+  // Used for window memory init. We safely ignore it for JS. That makes
+  // sense only for pointers and memory check tools.
+  //this.high_water = 0;
+  /* High water mark offset in window for initialized bytes -- bytes above
+   * this are set to zero in order to avoid memory check warnings when
+   * longest match routines access bytes past the input.  This is then
+   * updated to the new high water mark.
+   */
+}
+
+
+/* =========================================================================
+ * Check for a valid deflate stream state. Return 0 if ok, 1 if not.
+ */
+const deflateStateCheck = (strm) => {
+
+  if (!strm) {
+    return 1;
+  }
+  const s = strm.state;
+  if (!s || s.strm !== strm || (s.status !== INIT_STATE &&
+//#ifdef GZIP
+                                s.status !== GZIP_STATE &&
+//#endif
+                                s.status !== EXTRA_STATE &&
+                                s.status !== NAME_STATE &&
+                                s.status !== COMMENT_STATE &&
+                                s.status !== HCRC_STATE &&
+                                s.status !== BUSY_STATE &&
+                                s.status !== FINISH_STATE)) {
+    return 1;
+  }
+  return 0;
+};
+
+
+const deflateResetKeep = (strm) => {
+
+  if (deflateStateCheck(strm)) {
+    return err(strm, Z_STREAM_ERROR$2);
+  }
+
+  strm.total_in = strm.total_out = 0;
+  strm.data_type = Z_UNKNOWN;
+
+  const s = strm.state;
+  s.pending = 0;
+  s.pending_out = 0;
+
+  if (s.wrap < 0) {
+    s.wrap = -s.wrap;
+    /* was made negative by deflate(..., Z_FINISH); */
+  }
+  s.status =
+//#ifdef GZIP
+    s.wrap === 2 ? GZIP_STATE :
+//#endif
+    s.wrap ? INIT_STATE : BUSY_STATE;
+  strm.adler = (s.wrap === 2) ?
+    0  // crc32(0, Z_NULL, 0)
+  :
+    1; // adler32(0, Z_NULL, 0)
+  s.last_flush = -2;
+  _tr_init(s);
+  return Z_OK$3;
+};
+
+
+const deflateReset = (strm) => {
+
+  const ret = deflateResetKeep(strm);
+  if (ret === Z_OK$3) {
+    lm_init(strm.state);
+  }
+  return ret;
+};
+
+
+const deflateSetHeader = (strm, head) => {
+
+  if (deflateStateCheck(strm) || strm.state.wrap !== 2) {
+    return Z_STREAM_ERROR$2;
+  }
+  strm.state.gzhead = head;
+  return Z_OK$3;
+};
+
+
+const deflateInit2 = (strm, level, method, windowBits, memLevel, strategy) => {
+
+  if (!strm) { // === Z_NULL
+    return Z_STREAM_ERROR$2;
+  }
+  let wrap = 1;
+
+  if (level === Z_DEFAULT_COMPRESSION$1) {
+    level = 6;
+  }
+
+  if (windowBits < 0) { /* suppress zlib wrapper */
+    wrap = 0;
+    windowBits = -windowBits;
+  }
+
+  else if (windowBits > 15) {
+    wrap = 2;           /* write gzip wrapper instead */
+    windowBits -= 16;
+  }
+
+
+  if (memLevel < 1 || memLevel > MAX_MEM_LEVEL || method !== Z_DEFLATED$2 ||
+    windowBits < 8 || windowBits > 15 || level < 0 || level > 9 ||
+    strategy < 0 || strategy > Z_FIXED || (windowBits === 8 && wrap !== 1)) {
+    return err(strm, Z_STREAM_ERROR$2);
+  }
+
+
+  if (windowBits === 8) {
+    windowBits = 9;
+  }
+  /* until 256-byte window bug fixed */
+
+  const s = new DeflateState();
+
+  strm.state = s;
+  s.strm = strm;
+  s.status = INIT_STATE;     /* to pass state test in deflateReset() */
+
+  s.wrap = wrap;
+  s.gzhead = null;
+  s.w_bits = windowBits;
+  s.w_size = 1 << s.w_bits;
+  s.w_mask = s.w_size - 1;
+
+  s.hash_bits = memLevel + 7;
+  s.hash_size = 1 << s.hash_bits;
+  s.hash_mask = s.hash_size - 1;
+  s.hash_shift = ~~((s.hash_bits + MIN_MATCH - 1) / MIN_MATCH);
+
+  s.window = new Uint8Array(s.w_size * 2);
+  s.head = new Uint16Array(s.hash_size);
+  s.prev = new Uint16Array(s.w_size);
+
+  // Don't need mem init magic for JS.
+  //s.high_water = 0;  /* nothing written to s->window yet */
+
+  s.lit_bufsize = 1 << (memLevel + 6); /* 16K elements by default */
+
+  /* We overlay pending_buf and sym_buf. This works since the average size
+   * for length/distance pairs over any compressed block is assured to be 31
+   * bits or less.
+   *
+   * Analysis: The longest fixed codes are a length code of 8 bits plus 5
+   * extra bits, for lengths 131 to 257. The longest fixed distance codes are
+   * 5 bits plus 13 extra bits, for distances 16385 to 32768. The longest
+   * possible fixed-codes length/distance pair is then 31 bits total.
+   *
+   * sym_buf starts one-fourth of the way into pending_buf. So there are
+   * three bytes in sym_buf for every four bytes in pending_buf. Each symbol
+   * in sym_buf is three bytes -- two for the distance and one for the
+   * literal/length. As each symbol is consumed, the pointer to the next
+   * sym_buf value to read moves forward three bytes. From that symbol, up to
+   * 31 bits are written to pending_buf. The closest the written pending_buf
+   * bits gets to the next sym_buf symbol to read is just before the last
+   * code is written. At that time, 31*(n-2) bits have been written, just
+   * after 24*(n-2) bits have been consumed from sym_buf. sym_buf starts at
+   * 8*n bits into pending_buf. (Note that the symbol buffer fills when n-1
+   * symbols are written.) The closest the writing gets to what is unread is
+   * then n+14 bits. Here n is lit_bufsize, which is 16384 by default, and
+   * can range from 128 to 32768.
+   *
+   * Therefore, at a minimum, there are 142 bits of space between what is
+   * written and what is read in the overlain buffers, so the symbols cannot
+   * be overwritten by the compressed data. That space is actually 139 bits,
+   * due to the three-bit fixed-code block header.
+   *
+   * That covers the case where either Z_FIXED is specified, forcing fixed
+   * codes, or when the use of fixed codes is chosen, because that choice
+   * results in a smaller compressed block than dynamic codes. That latter
+   * condition then assures that the above analysis also covers all dynamic
+   * blocks. A dynamic-code block will only be chosen to be emitted if it has
+   * fewer bits than a fixed-code block would for the same set of symbols.
+   * Therefore its average symbol length is assured to be less than 31. So
+   * the compressed data for a dynamic block also cannot overwrite the
+   * symbols from which it is being constructed.
+   */
+
+  s.pending_buf_size = s.lit_bufsize * 4;
+  s.pending_buf = new Uint8Array(s.pending_buf_size);
+
+  // It is offset from `s.pending_buf` (size is `s.lit_bufsize * 2`)
+  //s->sym_buf = s->pending_buf + s->lit_bufsize;
+  s.sym_buf = s.lit_bufsize;
+
+  //s->sym_end = (s->lit_bufsize - 1) * 3;
+  s.sym_end = (s.lit_bufsize - 1) * 3;
+  /* We avoid equality with lit_bufsize*3 because of wraparound at 64K
+   * on 16 bit machines and because stored blocks are restricted to
+   * 64K-1 bytes.
+   */
+
+  s.level = level;
+  s.strategy = strategy;
+  s.method = method;
+
+  return deflateReset(strm);
+};
+
+const deflateInit = (strm, level) => {
+
+  return deflateInit2(strm, level, Z_DEFLATED$2, MAX_WBITS$1, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY$1);
+};
+
+
+/* ========================================================================= */
+const deflate$2 = (strm, flush) => {
+
+  if (deflateStateCheck(strm) || flush > Z_BLOCK$1 || flush < 0) {
+    return strm ? err(strm, Z_STREAM_ERROR$2) : Z_STREAM_ERROR$2;
+  }
+
+  const s = strm.state;
+
+  if (!strm.output ||
+      (strm.avail_in !== 0 && !strm.input) ||
+      (s.status === FINISH_STATE && flush !== Z_FINISH$3)) {
+    return err(strm, (strm.avail_out === 0) ? Z_BUF_ERROR$1 : Z_STREAM_ERROR$2);
+  }
+
+  const old_flush = s.last_flush;
+  s.last_flush = flush;
+
+  /* Flush as much pending output as possible */
+  if (s.pending !== 0) {
+    flush_pending(strm);
+    if (strm.avail_out === 0) {
+      /* Since avail_out is 0, deflate will be called again with
+       * more output space, but possibly with both pending and
+       * avail_in equal to zero. There won't be anything to do,
+       * but this is not an error situation so make sure we
+       * return OK instead of BUF_ERROR at next call of deflate:
+       */
+      s.last_flush = -1;
+      return Z_OK$3;
+    }
+
+    /* Make sure there is something to do and avoid duplicate consecutive
+     * flushes. For repeated and useless calls with Z_FINISH, we keep
+     * returning Z_STREAM_END instead of Z_BUF_ERROR.
+     */
+  } else if (strm.avail_in === 0 && rank(flush) <= rank(old_flush) &&
+    flush !== Z_FINISH$3) {
+    return err(strm, Z_BUF_ERROR$1);
+  }
+
+  /* User must not provide more input after the first FINISH: */
+  if (s.status === FINISH_STATE && strm.avail_in !== 0) {
+    return err(strm, Z_BUF_ERROR$1);
+  }
+
+  /* Write the header */
+  if (s.status === INIT_STATE && s.wrap === 0) {
+    s.status = BUSY_STATE;
+  }
+  if (s.status === INIT_STATE) {
+    /* zlib header */
+    let header = (Z_DEFLATED$2 + ((s.w_bits - 8) << 4)) << 8;
+    let level_flags = -1;
+
+    if (s.strategy >= Z_HUFFMAN_ONLY || s.level < 2) {
+      level_flags = 0;
+    } else if (s.level < 6) {
+      level_flags = 1;
+    } else if (s.level === 6) {
+      level_flags = 2;
+    } else {
+      level_flags = 3;
+    }
+    header |= (level_flags << 6);
+    if (s.strstart !== 0) { header |= PRESET_DICT; }
+    header += 31 - (header % 31);
+
+    putShortMSB(s, header);
+
+    /* Save the adler32 of the preset dictionary: */
+    if (s.strstart !== 0) {
+      putShortMSB(s, strm.adler >>> 16);
+      putShortMSB(s, strm.adler & 0xffff);
+    }
+    strm.adler = 1; // adler32(0L, Z_NULL, 0);
+    s.status = BUSY_STATE;
+
+    /* Compression must start with an empty pending buffer */
+    flush_pending(strm);
+    if (s.pending !== 0) {
+      s.last_flush = -1;
+      return Z_OK$3;
+    }
+  }
+//#ifdef GZIP
+  if (s.status === GZIP_STATE) {
+    /* gzip header */
+    strm.adler = 0;  //crc32(0L, Z_NULL, 0);
+    put_byte(s, 31);
+    put_byte(s, 139);
+    put_byte(s, 8);
+    if (!s.gzhead) { // s->gzhead == Z_NULL
+      put_byte(s, 0);
+      put_byte(s, 0);
+      put_byte(s, 0);
+      put_byte(s, 0);
+      put_byte(s, 0);
+      put_byte(s, s.level === 9 ? 2 :
+                  (s.strategy >= Z_HUFFMAN_ONLY || s.level < 2 ?
+                   4 : 0));
+      put_byte(s, OS_CODE);
+      s.status = BUSY_STATE;
+
+      /* Compression must start with an empty pending buffer */
+      flush_pending(strm);
+      if (s.pending !== 0) {
+        s.last_flush = -1;
+        return Z_OK$3;
+      }
+    }
+    else {
+      put_byte(s, (s.gzhead.text ? 1 : 0) +
+                  (s.gzhead.hcrc ? 2 : 0) +
+                  (!s.gzhead.extra ? 0 : 4) +
+                  (!s.gzhead.name ? 0 : 8) +
+                  (!s.gzhead.comment ? 0 : 16)
+      );
+      put_byte(s, s.gzhead.time & 0xff);
+      put_byte(s, (s.gzhead.time >> 8) & 0xff);
+      put_byte(s, (s.gzhead.time >> 16) & 0xff);
+      put_byte(s, (s.gzhead.time >> 24) & 0xff);
+      put_byte(s, s.level === 9 ? 2 :
+                  (s.strategy >= Z_HUFFMAN_ONLY || s.level < 2 ?
+                   4 : 0));
+      put_byte(s, s.gzhead.os & 0xff);
+      if (s.gzhead.extra && s.gzhead.extra.length) {
+        put_byte(s, s.gzhead.extra.length & 0xff);
+        put_byte(s, (s.gzhead.extra.length >> 8) & 0xff);
+      }
+      if (s.gzhead.hcrc) {
+        strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending, 0);
+      }
+      s.gzindex = 0;
+      s.status = EXTRA_STATE;
+    }
+  }
+  if (s.status === EXTRA_STATE) {
+    if (s.gzhead.extra/* != Z_NULL*/) {
+      let beg = s.pending;   /* start of bytes to update crc */
+      let left = (s.gzhead.extra.length & 0xffff) - s.gzindex;
+      while (s.pending + left > s.pending_buf_size) {
+        let copy = s.pending_buf_size - s.pending;
+        // zmemcpy(s.pending_buf + s.pending,
+        //    s.gzhead.extra + s.gzindex, copy);
+        s.pending_buf.set(s.gzhead.extra.subarray(s.gzindex, s.gzindex + copy), s.pending);
+        s.pending = s.pending_buf_size;
+        //--- HCRC_UPDATE(beg) ---//
+        if (s.gzhead.hcrc && s.pending > beg) {
+          strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending - beg, beg);
+        }
+        //---//
+        s.gzindex += copy;
+        flush_pending(strm);
+        if (s.pending !== 0) {
+          s.last_flush = -1;
+          return Z_OK$3;
+        }
+        beg = 0;
+        left -= copy;
+      }
+      // JS specific: s.gzhead.extra may be TypedArray or Array for backward compatibility
+      //              TypedArray.slice and TypedArray.from don't exist in IE10-IE11
+      let gzhead_extra = new Uint8Array(s.gzhead.extra);
+      // zmemcpy(s->pending_buf + s->pending,
+      //     s->gzhead->extra + s->gzindex, left);
+      s.pending_buf.set(gzhead_extra.subarray(s.gzindex, s.gzindex + left), s.pending);
+      s.pending += left;
+      //--- HCRC_UPDATE(beg) ---//
+      if (s.gzhead.hcrc && s.pending > beg) {
+        strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending - beg, beg);
+      }
+      //---//
+      s.gzindex = 0;
+    }
+    s.status = NAME_STATE;
+  }
+  if (s.status === NAME_STATE) {
+    if (s.gzhead.name/* != Z_NULL*/) {
+      let beg = s.pending;   /* start of bytes to update crc */
+      let val;
+      do {
+        if (s.pending === s.pending_buf_size) {
+          //--- HCRC_UPDATE(beg) ---//
+          if (s.gzhead.hcrc && s.pending > beg) {
+            strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending - beg, beg);
+          }
+          //---//
+          flush_pending(strm);
+          if (s.pending !== 0) {
+            s.last_flush = -1;
+            return Z_OK$3;
+          }
+          beg = 0;
+        }
+        // JS specific: little magic to add zero terminator to end of string
+        if (s.gzindex < s.gzhead.name.length) {
+          val = s.gzhead.name.charCodeAt(s.gzindex++) & 0xff;
+        } else {
+          val = 0;
+        }
+        put_byte(s, val);
+      } while (val !== 0);
+      //--- HCRC_UPDATE(beg) ---//
+      if (s.gzhead.hcrc && s.pending > beg) {
+        strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending - beg, beg);
+      }
+      //---//
+      s.gzindex = 0;
+    }
+    s.status = COMMENT_STATE;
+  }
+  if (s.status === COMMENT_STATE) {
+    if (s.gzhead.comment/* != Z_NULL*/) {
+      let beg = s.pending;   /* start of bytes to update crc */
+      let val;
+      do {
+        if (s.pending === s.pending_buf_size) {
+          //--- HCRC_UPDATE(beg) ---//
+          if (s.gzhead.hcrc && s.pending > beg) {
+            strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending - beg, beg);
+          }
+          //---//
+          flush_pending(strm);
+          if (s.pending !== 0) {
+            s.last_flush = -1;
+            return Z_OK$3;
+          }
+          beg = 0;
+        }
+        // JS specific: little magic to add zero terminator to end of string
+        if (s.gzindex < s.gzhead.comment.length) {
+          val = s.gzhead.comment.charCodeAt(s.gzindex++) & 0xff;
+        } else {
+          val = 0;
+        }
+        put_byte(s, val);
+      } while (val !== 0);
+      //--- HCRC_UPDATE(beg) ---//
+      if (s.gzhead.hcrc && s.pending > beg) {
+        strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending - beg, beg);
+      }
+      //---//
+    }
+    s.status = HCRC_STATE;
+  }
+  if (s.status === HCRC_STATE) {
+    if (s.gzhead.hcrc) {
+      if (s.pending + 2 > s.pending_buf_size) {
+        flush_pending(strm);
+        if (s.pending !== 0) {
+          s.last_flush = -1;
+          return Z_OK$3;
+        }
+      }
+      put_byte(s, strm.adler & 0xff);
+      put_byte(s, (strm.adler >> 8) & 0xff);
+      strm.adler = 0; //crc32(0L, Z_NULL, 0);
+    }
+    s.status = BUSY_STATE;
+
+    /* Compression must start with an empty pending buffer */
+    flush_pending(strm);
+    if (s.pending !== 0) {
+      s.last_flush = -1;
+      return Z_OK$3;
+    }
+  }
+//#endif
+
+  /* Start a new block or continue the current one.
+   */
+  if (strm.avail_in !== 0 || s.lookahead !== 0 ||
+    (flush !== Z_NO_FLUSH$2 && s.status !== FINISH_STATE)) {
+    let bstate = s.level === 0 ? deflate_stored(s, flush) :
+                 s.strategy === Z_HUFFMAN_ONLY ? deflate_huff(s, flush) :
+                 s.strategy === Z_RLE ? deflate_rle(s, flush) :
+                 configuration_table[s.level].func(s, flush);
+
+    if (bstate === BS_FINISH_STARTED || bstate === BS_FINISH_DONE) {
+      s.status = FINISH_STATE;
+    }
+    if (bstate === BS_NEED_MORE || bstate === BS_FINISH_STARTED) {
+      if (strm.avail_out === 0) {
+        s.last_flush = -1;
+        /* avoid BUF_ERROR next call, see above */
+      }
+      return Z_OK$3;
+      /* If flush != Z_NO_FLUSH && avail_out == 0, the next call
+       * of deflate should use the same flush parameter to make sure
+       * that the flush is complete. So we don't have to output an
+       * empty block here, this will be done at next call. This also
+       * ensures that for a very small output buffer, we emit at most
+       * one empty block.
+       */
+    }
+    if (bstate === BS_BLOCK_DONE) {
+      if (flush === Z_PARTIAL_FLUSH) {
+        _tr_align(s);
+      }
+      else if (flush !== Z_BLOCK$1) { /* FULL_FLUSH or SYNC_FLUSH */
+
+        _tr_stored_block(s, 0, 0, false);
+        /* For a full flush, this empty block will be recognized
+         * as a special marker by inflate_sync().
+         */
+        if (flush === Z_FULL_FLUSH$1) {
+          /*** CLEAR_HASH(s); ***/             /* forget history */
+          zero(s.head); // Fill with NIL (= 0);
+
+          if (s.lookahead === 0) {
+            s.strstart = 0;
+            s.block_start = 0;
+            s.insert = 0;
+          }
+        }
+      }
+      flush_pending(strm);
+      if (strm.avail_out === 0) {
+        s.last_flush = -1; /* avoid BUF_ERROR at next call, see above */
+        return Z_OK$3;
+      }
+    }
+  }
+
+  if (flush !== Z_FINISH$3) { return Z_OK$3; }
+  if (s.wrap <= 0) { return Z_STREAM_END$3; }
+
+  /* Write the trailer */
+  if (s.wrap === 2) {
+    put_byte(s, strm.adler & 0xff);
+    put_byte(s, (strm.adler >> 8) & 0xff);
+    put_byte(s, (strm.adler >> 16) & 0xff);
+    put_byte(s, (strm.adler >> 24) & 0xff);
+    put_byte(s, strm.total_in & 0xff);
+    put_byte(s, (strm.total_in >> 8) & 0xff);
+    put_byte(s, (strm.total_in >> 16) & 0xff);
+    put_byte(s, (strm.total_in >> 24) & 0xff);
+  }
+  else
+  {
+    putShortMSB(s, strm.adler >>> 16);
+    putShortMSB(s, strm.adler & 0xffff);
+  }
+
+  flush_pending(strm);
+  /* If avail_out is zero, the application will call deflate again
+   * to flush the rest.
+   */
+  if (s.wrap > 0) { s.wrap = -s.wrap; }
+  /* write the trailer only once! */
+  return s.pending !== 0 ? Z_OK$3 : Z_STREAM_END$3;
+};
+
+
+const deflateEnd = (strm) => {
+
+  if (deflateStateCheck(strm)) {
+    return Z_STREAM_ERROR$2;
+  }
+
+  const status = strm.state.status;
+
+  strm.state = null;
+
+  return status === BUSY_STATE ? err(strm, Z_DATA_ERROR$2) : Z_OK$3;
+};
+
+
+/* =========================================================================
+ * Initializes the compression dictionary from the given byte
+ * sequence without producing any compressed output.
+ */
+const deflateSetDictionary = (strm, dictionary) => {
+
+  let dictLength = dictionary.length;
+
+  if (deflateStateCheck(strm)) {
+    return Z_STREAM_ERROR$2;
+  }
+
+  const s = strm.state;
+  const wrap = s.wrap;
+
+  if (wrap === 2 || (wrap === 1 && s.status !== INIT_STATE) || s.lookahead) {
+    return Z_STREAM_ERROR$2;
+  }
+
+  /* when using zlib wrappers, compute Adler-32 for provided dictionary */
+  if (wrap === 1) {
+    /* adler32(strm->adler, dictionary, dictLength); */
+    strm.adler = adler32_1(strm.adler, dictionary, dictLength, 0);
+  }
+
+  s.wrap = 0;   /* avoid computing Adler-32 in read_buf */
+
+  /* if dictionary would fill window, just replace the history */
+  if (dictLength >= s.w_size) {
+    if (wrap === 0) {            /* already empty otherwise */
+      /*** CLEAR_HASH(s); ***/
+      zero(s.head); // Fill with NIL (= 0);
+      s.strstart = 0;
+      s.block_start = 0;
+      s.insert = 0;
+    }
+    /* use the tail */
+    // dictionary = dictionary.slice(dictLength - s.w_size);
+    let tmpDict = new Uint8Array(s.w_size);
+    tmpDict.set(dictionary.subarray(dictLength - s.w_size, dictLength), 0);
+    dictionary = tmpDict;
+    dictLength = s.w_size;
+  }
+  /* insert dictionary into window and hash */
+  const avail = strm.avail_in;
+  const next = strm.next_in;
+  const input = strm.input;
+  strm.avail_in = dictLength;
+  strm.next_in = 0;
+  strm.input = dictionary;
+  fill_window(s);
+  while (s.lookahead >= MIN_MATCH) {
+    let str = s.strstart;
+    let n = s.lookahead - (MIN_MATCH - 1);
+    do {
+      /* UPDATE_HASH(s, s->ins_h, s->window[str + MIN_MATCH-1]); */
+      s.ins_h = HASH(s, s.ins_h, s.window[str + MIN_MATCH - 1]);
+
+      s.prev[str & s.w_mask] = s.head[s.ins_h];
+
+      s.head[s.ins_h] = str;
+      str++;
+    } while (--n);
+    s.strstart = str;
+    s.lookahead = MIN_MATCH - 1;
+    fill_window(s);
+  }
+  s.strstart += s.lookahead;
+  s.block_start = s.strstart;
+  s.insert = s.lookahead;
+  s.lookahead = 0;
+  s.match_length = s.prev_length = MIN_MATCH - 1;
+  s.match_available = 0;
+  strm.next_in = next;
+  strm.input = input;
+  strm.avail_in = avail;
+  s.wrap = wrap;
+  return Z_OK$3;
+};
+
+
+var deflateInit_1 = deflateInit;
+var deflateInit2_1 = deflateInit2;
+var deflateReset_1 = deflateReset;
+var deflateResetKeep_1 = deflateResetKeep;
+var deflateSetHeader_1 = deflateSetHeader;
+var deflate_2$1 = deflate$2;
+var deflateEnd_1 = deflateEnd;
+var deflateSetDictionary_1 = deflateSetDictionary;
+var deflateInfo = 'pako deflate (from Nodeca project)';
+
+/* Not implemented
+module.exports.deflateBound = deflateBound;
+module.exports.deflateCopy = deflateCopy;
+module.exports.deflateGetDictionary = deflateGetDictionary;
+module.exports.deflateParams = deflateParams;
+module.exports.deflatePending = deflatePending;
+module.exports.deflatePrime = deflatePrime;
+module.exports.deflateTune = deflateTune;
+*/
+
+var deflate_1$2 = {
+	deflateInit: deflateInit_1,
+	deflateInit2: deflateInit2_1,
+	deflateReset: deflateReset_1,
+	deflateResetKeep: deflateResetKeep_1,
+	deflateSetHeader: deflateSetHeader_1,
+	deflate: deflate_2$1,
+	deflateEnd: deflateEnd_1,
+	deflateSetDictionary: deflateSetDictionary_1,
+	deflateInfo: deflateInfo
+};
+
+const _has = (obj, key) => {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+};
+
+var assign = function (obj /*from1, from2, from3, ...*/) {
+  const sources = Array.prototype.slice.call(arguments, 1);
+  while (sources.length) {
+    const source = sources.shift();
+    if (!source) { continue; }
+
+    if (typeof source !== 'object') {
+      throw new TypeError(source + 'must be non-object');
+    }
+
+    for (const p in source) {
+      if (_has(source, p)) {
+        obj[p] = source[p];
+      }
+    }
+  }
+
+  return obj;
+};
+
+
+// Join array of chunks to single array.
+var flattenChunks = (chunks) => {
+  // calculate data length
+  let len = 0;
+
+  for (let i = 0, l = chunks.length; i < l; i++) {
+    len += chunks[i].length;
+  }
+
+  // join chunks
+  const result = new Uint8Array(len);
+
+  for (let i = 0, pos = 0, l = chunks.length; i < l; i++) {
+    let chunk = chunks[i];
+    result.set(chunk, pos);
+    pos += chunk.length;
+  }
+
+  return result;
+};
+
+var common = {
+	assign: assign,
+	flattenChunks: flattenChunks
+};
+
+// String encode/decode helpers
+
+
+// Quick check if we can use fast array to bin string conversion
+//
+// - apply(Array) can fail on Android 2.2
+// - apply(Uint8Array) can fail on iOS 5.1 Safari
+//
+let STR_APPLY_UIA_OK = true;
+
+try { String.fromCharCode.apply(null, new Uint8Array(1)); } catch (__) { STR_APPLY_UIA_OK = false; }
+
+
+// Table with utf8 lengths (calculated by first byte of sequence)
+// Note, that 5 & 6-byte values and some 4-byte values can not be represented in JS,
+// because max possible codepoint is 0x10ffff
+const _utf8len = new Uint8Array(256);
+for (let q = 0; q < 256; q++) {
+  _utf8len[q] = (q >= 252 ? 6 : q >= 248 ? 5 : q >= 240 ? 4 : q >= 224 ? 3 : q >= 192 ? 2 : 1);
+}
+_utf8len[254] = _utf8len[254] = 1; // Invalid sequence start
+
+
+// convert string to array (typed, when possible)
+var string2buf = (str) => {
+  if (typeof TextEncoder === 'function' && TextEncoder.prototype.encode) {
+    return new TextEncoder().encode(str);
+  }
+
+  let buf, c, c2, m_pos, i, str_len = str.length, buf_len = 0;
+
+  // count binary size
+  for (m_pos = 0; m_pos < str_len; m_pos++) {
+    c = str.charCodeAt(m_pos);
+    if ((c & 0xfc00) === 0xd800 && (m_pos + 1 < str_len)) {
+      c2 = str.charCodeAt(m_pos + 1);
+      if ((c2 & 0xfc00) === 0xdc00) {
+        c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00);
+        m_pos++;
+      }
+    }
+    buf_len += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4;
+  }
+
+  // allocate buffer
+  buf = new Uint8Array(buf_len);
+
+  // convert
+  for (i = 0, m_pos = 0; i < buf_len; m_pos++) {
+    c = str.charCodeAt(m_pos);
+    if ((c & 0xfc00) === 0xd800 && (m_pos + 1 < str_len)) {
+      c2 = str.charCodeAt(m_pos + 1);
+      if ((c2 & 0xfc00) === 0xdc00) {
+        c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00);
+        m_pos++;
+      }
+    }
+    if (c < 0x80) {
+      /* one byte */
+      buf[i++] = c;
+    } else if (c < 0x800) {
+      /* two bytes */
+      buf[i++] = 0xC0 | (c >>> 6);
+      buf[i++] = 0x80 | (c & 0x3f);
+    } else if (c < 0x10000) {
+      /* three bytes */
+      buf[i++] = 0xE0 | (c >>> 12);
+      buf[i++] = 0x80 | (c >>> 6 & 0x3f);
+      buf[i++] = 0x80 | (c & 0x3f);
+    } else {
+      /* four bytes */
+      buf[i++] = 0xf0 | (c >>> 18);
+      buf[i++] = 0x80 | (c >>> 12 & 0x3f);
+      buf[i++] = 0x80 | (c >>> 6 & 0x3f);
+      buf[i++] = 0x80 | (c & 0x3f);
+    }
+  }
+
+  return buf;
+};
+
+// Helper
+const buf2binstring = (buf, len) => {
+  // On Chrome, the arguments in a function call that are allowed is `65534`.
+  // If the length of the buffer is smaller than that, we can use this optimization,
+  // otherwise we will take a slower path.
+  if (len < 65534) {
+    if (buf.subarray && STR_APPLY_UIA_OK) {
+      return String.fromCharCode.apply(null, buf.length === len ? buf : buf.subarray(0, len));
+    }
+  }
+
+  let result = '';
+  for (let i = 0; i < len; i++) {
+    result += String.fromCharCode(buf[i]);
+  }
+  return result;
+};
+
+
+// convert array to string
+var buf2string = (buf, max) => {
+  const len = max || buf.length;
+
+  if (typeof TextDecoder === 'function' && TextDecoder.prototype.decode) {
+    return new TextDecoder().decode(buf.subarray(0, max));
+  }
+
+  let i, out;
+
+  // Reserve max possible length (2 words per char)
+  // NB: by unknown reasons, Array is significantly faster for
+  //     String.fromCharCode.apply than Uint16Array.
+  const utf16buf = new Array(len * 2);
+
+  for (out = 0, i = 0; i < len;) {
+    let c = buf[i++];
+    // quick process ascii
+    if (c < 0x80) { utf16buf[out++] = c; continue; }
+
+    let c_len = _utf8len[c];
+    // skip 5 & 6 byte codes
+    if (c_len > 4) { utf16buf[out++] = 0xfffd; i += c_len - 1; continue; }
+
+    // apply mask on first byte
+    c &= c_len === 2 ? 0x1f : c_len === 3 ? 0x0f : 0x07;
+    // join the rest
+    while (c_len > 1 && i < len) {
+      c = (c << 6) | (buf[i++] & 0x3f);
+      c_len--;
+    }
+
+    // terminated by end of string?
+    if (c_len > 1) { utf16buf[out++] = 0xfffd; continue; }
+
+    if (c < 0x10000) {
+      utf16buf[out++] = c;
+    } else {
+      c -= 0x10000;
+      utf16buf[out++] = 0xd800 | ((c >> 10) & 0x3ff);
+      utf16buf[out++] = 0xdc00 | (c & 0x3ff);
+    }
+  }
+
+  return buf2binstring(utf16buf, out);
+};
+
+
+// Calculate max possible position in utf8 buffer,
+// that will not break sequence. If that's not possible
+// - (very small limits) return max size as is.
+//
+// buf[] - utf8 bytes array
+// max   - length limit (mandatory);
+var utf8border = (buf, max) => {
+
+  max = max || buf.length;
+  if (max > buf.length) { max = buf.length; }
+
+  // go back from last position, until start of sequence found
+  let pos = max - 1;
+  while (pos >= 0 && (buf[pos] & 0xC0) === 0x80) { pos--; }
+
+  // Very small and broken sequence,
+  // return max, because we should return something anyway.
+  if (pos < 0) { return max; }
+
+  // If we came to start of buffer - that means buffer is too small,
+  // return max too.
+  if (pos === 0) { return max; }
+
+  return (pos + _utf8len[buf[pos]] > max) ? pos : max;
+};
+
+var strings = {
+	string2buf: string2buf,
+	buf2string: buf2string,
+	utf8border: utf8border
+};
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
+function ZStream() {
+  /* next input byte */
+  this.input = null; // JS specific, because we have no pointers
+  this.next_in = 0;
+  /* number of bytes available at input */
+  this.avail_in = 0;
+  /* total number of input bytes read so far */
+  this.total_in = 0;
+  /* next output byte should be put there */
+  this.output = null; // JS specific, because we have no pointers
+  this.next_out = 0;
+  /* remaining free space at output */
+  this.avail_out = 0;
+  /* total number of bytes output so far */
+  this.total_out = 0;
+  /* last error message, NULL if no error */
+  this.msg = ''/*Z_NULL*/;
+  /* not visible by applications */
+  this.state = null;
+  /* best guess about the data type: binary or text */
+  this.data_type = 2/*Z_UNKNOWN*/;
+  /* adler32 value of the uncompressed data */
+  this.adler = 0;
+}
+
+var zstream = ZStream;
+
+const toString$1 = Object.prototype.toString;
+
+/* Public constants ==========================================================*/
+/* ===========================================================================*/
+
+const {
+  Z_NO_FLUSH: Z_NO_FLUSH$1, Z_SYNC_FLUSH, Z_FULL_FLUSH, Z_FINISH: Z_FINISH$2,
+  Z_OK: Z_OK$2, Z_STREAM_END: Z_STREAM_END$2,
+  Z_DEFAULT_COMPRESSION,
+  Z_DEFAULT_STRATEGY,
+  Z_DEFLATED: Z_DEFLATED$1
+} = constants$2;
+
+/* ===========================================================================*/
+
+
+/**
+ * class Deflate
+ *
+ * Generic JS-style wrapper for zlib calls. If you don't need
+ * streaming behaviour - use more simple functions: [[deflate]],
+ * [[deflateRaw]] and [[gzip]].
+ **/
+
+/* internal
+ * Deflate.chunks -> Array
+ *
+ * Chunks of output data, if [[Deflate#onData]] not overridden.
+ **/
+
+/**
+ * Deflate.result -> Uint8Array
+ *
+ * Compressed result, generated by default [[Deflate#onData]]
+ * and [[Deflate#onEnd]] handlers. Filled after you push last chunk
+ * (call [[Deflate#push]] with `Z_FINISH` / `true` param).
+ **/
+
+/**
+ * Deflate.err -> Number
+ *
+ * Error code after deflate finished. 0 (Z_OK) on success.
+ * You will not need it in real life, because deflate errors
+ * are possible only on wrong options or bad `onData` / `onEnd`
+ * custom handlers.
+ **/
+
+/**
+ * Deflate.msg -> String
+ *
+ * Error message, if [[Deflate.err]] != 0
+ **/
+
+
+/**
+ * new Deflate(options)
+ * - options (Object): zlib deflate options.
+ *
+ * Creates new deflator instance with specified params. Throws exception
+ * on bad params. Supported options:
+ *
+ * - `level`
+ * - `windowBits`
+ * - `memLevel`
+ * - `strategy`
+ * - `dictionary`
+ *
+ * [http://zlib.net/manual.html#Advanced](http://zlib.net/manual.html#Advanced)
+ * for more information on these.
+ *
+ * Additional options, for internal needs:
+ *
+ * - `chunkSize` - size of generated data chunks (16K by default)
+ * - `raw` (Boolean) - do raw deflate
+ * - `gzip` (Boolean) - create gzip wrapper
+ * - `header` (Object) - custom header for gzip
+ *   - `text` (Boolean) - true if compressed data believed to be text
+ *   - `time` (Number) - modification time, unix timestamp
+ *   - `os` (Number) - operation system code
+ *   - `extra` (Array) - array of bytes with extra data (max 65536)
+ *   - `name` (String) - file name (binary string)
+ *   - `comment` (String) - comment (binary string)
+ *   - `hcrc` (Boolean) - true if header crc should be added
+ *
+ * ##### Example:
+ *
+ * ```javascript
+ * const pako = require('pako')
+ *   , chunk1 = new Uint8Array([1,2,3,4,5,6,7,8,9])
+ *   , chunk2 = new Uint8Array([10,11,12,13,14,15,16,17,18,19]);
+ *
+ * const deflate = new pako.Deflate({ level: 3});
+ *
+ * deflate.push(chunk1, false);
+ * deflate.push(chunk2, true);  // true -> last chunk
+ *
+ * if (deflate.err) { throw new Error(deflate.err); }
+ *
+ * console.log(deflate.result);
+ * ```
+ **/
+function Deflate$1(options) {
+  this.options = common.assign({
+    level: Z_DEFAULT_COMPRESSION,
+    method: Z_DEFLATED$1,
+    chunkSize: 16384,
+    windowBits: 15,
+    memLevel: 8,
+    strategy: Z_DEFAULT_STRATEGY
+  }, options || {});
+
+  let opt = this.options;
+
+  if (opt.raw && (opt.windowBits > 0)) {
+    opt.windowBits = -opt.windowBits;
+  }
+
+  else if (opt.gzip && (opt.windowBits > 0) && (opt.windowBits < 16)) {
+    opt.windowBits += 16;
+  }
+
+  this.err    = 0;      // error code, if happens (0 = Z_OK)
+  this.msg    = '';     // error message
+  this.ended  = false;  // used to avoid multiple onEnd() calls
+  this.chunks = [];     // chunks of compressed data
+
+  this.strm = new zstream();
+  this.strm.avail_out = 0;
+
+  let status = deflate_1$2.deflateInit2(
+    this.strm,
+    opt.level,
+    opt.method,
+    opt.windowBits,
+    opt.memLevel,
+    opt.strategy
+  );
+
+  if (status !== Z_OK$2) {
+    throw new Error(messages[status]);
+  }
+
+  if (opt.header) {
+    deflate_1$2.deflateSetHeader(this.strm, opt.header);
+  }
+
+  if (opt.dictionary) {
+    let dict;
+    // Convert data if needed
+    if (typeof opt.dictionary === 'string') {
+      // If we need to compress text, change encoding to utf8.
+      dict = strings.string2buf(opt.dictionary);
+    } else if (toString$1.call(opt.dictionary) === '[object ArrayBuffer]') {
+      dict = new Uint8Array(opt.dictionary);
+    } else {
+      dict = opt.dictionary;
+    }
+
+    status = deflate_1$2.deflateSetDictionary(this.strm, dict);
+
+    if (status !== Z_OK$2) {
+      throw new Error(messages[status]);
+    }
+
+    this._dict_set = true;
+  }
+}
+
+/**
+ * Deflate#push(data[, flush_mode]) -> Boolean
+ * - data (Uint8Array|ArrayBuffer|String): input data. Strings will be
+ *   converted to utf8 byte sequence.
+ * - flush_mode (Number|Boolean): 0..6 for corresponding Z_NO_FLUSH..Z_TREE modes.
+ *   See constants. Skipped or `false` means Z_NO_FLUSH, `true` means Z_FINISH.
+ *
+ * Sends input data to deflate pipe, generating [[Deflate#onData]] calls with
+ * new compressed chunks. Returns `true` on success. The last data block must
+ * have `flush_mode` Z_FINISH (or `true`). That will flush internal pending
+ * buffers and call [[Deflate#onEnd]].
+ *
+ * On fail call [[Deflate#onEnd]] with error code and return false.
+ *
+ * ##### Example
+ *
+ * ```javascript
+ * push(chunk, false); // push one of data chunks
+ * ...
+ * push(chunk, true);  // push last chunk
+ * ```
+ **/
+Deflate$1.prototype.push = function (data, flush_mode) {
+  const strm = this.strm;
+  const chunkSize = this.options.chunkSize;
+  let status, _flush_mode;
+
+  if (this.ended) { return false; }
+
+  if (flush_mode === ~~flush_mode) _flush_mode = flush_mode;
+  else _flush_mode = flush_mode === true ? Z_FINISH$2 : Z_NO_FLUSH$1;
+
+  // Convert data if needed
+  if (typeof data === 'string') {
+    // If we need to compress text, change encoding to utf8.
+    strm.input = strings.string2buf(data);
+  } else if (toString$1.call(data) === '[object ArrayBuffer]') {
+    strm.input = new Uint8Array(data);
+  } else {
+    strm.input = data;
+  }
+
+  strm.next_in = 0;
+  strm.avail_in = strm.input.length;
+
+  for (;;) {
+    if (strm.avail_out === 0) {
+      strm.output = new Uint8Array(chunkSize);
+      strm.next_out = 0;
+      strm.avail_out = chunkSize;
+    }
+
+    // Make sure avail_out > 6 to avoid repeating markers
+    if ((_flush_mode === Z_SYNC_FLUSH || _flush_mode === Z_FULL_FLUSH) && strm.avail_out <= 6) {
+      this.onData(strm.output.subarray(0, strm.next_out));
+      strm.avail_out = 0;
+      continue;
+    }
+
+    status = deflate_1$2.deflate(strm, _flush_mode);
+
+    // Ended => flush and finish
+    if (status === Z_STREAM_END$2) {
+      if (strm.next_out > 0) {
+        this.onData(strm.output.subarray(0, strm.next_out));
+      }
+      status = deflate_1$2.deflateEnd(this.strm);
+      this.onEnd(status);
+      this.ended = true;
+      return status === Z_OK$2;
+    }
+
+    // Flush if out buffer full
+    if (strm.avail_out === 0) {
+      this.onData(strm.output);
+      continue;
+    }
+
+    // Flush if requested and has data
+    if (_flush_mode > 0 && strm.next_out > 0) {
+      this.onData(strm.output.subarray(0, strm.next_out));
+      strm.avail_out = 0;
+      continue;
+    }
+
+    if (strm.avail_in === 0) break;
+  }
+
+  return true;
+};
+
+
+/**
+ * Deflate#onData(chunk) -> Void
+ * - chunk (Uint8Array): output data.
+ *
+ * By default, stores data blocks in `chunks[]` property and glue
+ * those in `onEnd`. Override this handler, if you need another behaviour.
+ **/
+Deflate$1.prototype.onData = function (chunk) {
+  this.chunks.push(chunk);
+};
+
+
+/**
+ * Deflate#onEnd(status) -> Void
+ * - status (Number): deflate status. 0 (Z_OK) on success,
+ *   other if not.
+ *
+ * Called once after you tell deflate that the input stream is
+ * complete (Z_FINISH). By default - join collected chunks,
+ * free memory and fill `results` / `err` properties.
+ **/
+Deflate$1.prototype.onEnd = function (status) {
+  // On success - join
+  if (status === Z_OK$2) {
+    this.result = common.flattenChunks(this.chunks);
+  }
+  this.chunks = [];
+  this.err = status;
+  this.msg = this.strm.msg;
+};
+
+
+/**
+ * deflate(data[, options]) -> Uint8Array
+ * - data (Uint8Array|ArrayBuffer|String): input data to compress.
+ * - options (Object): zlib deflate options.
+ *
+ * Compress `data` with deflate algorithm and `options`.
+ *
+ * Supported options are:
+ *
+ * - level
+ * - windowBits
+ * - memLevel
+ * - strategy
+ * - dictionary
+ *
+ * [http://zlib.net/manual.html#Advanced](http://zlib.net/manual.html#Advanced)
+ * for more information on these.
+ *
+ * Sugar (options):
+ *
+ * - `raw` (Boolean) - say that we work with raw stream, if you don't wish to specify
+ *   negative windowBits implicitly.
+ *
+ * ##### Example:
+ *
+ * ```javascript
+ * const pako = require('pako')
+ * const data = new Uint8Array([1,2,3,4,5,6,7,8,9]);
+ *
+ * console.log(pako.deflate(data));
+ * ```
+ **/
+function deflate$1(input, options) {
+  const deflator = new Deflate$1(options);
+
+  deflator.push(input, true);
+
+  // That will never happens, if you don't cheat with options :)
+  if (deflator.err) { throw deflator.msg || messages[deflator.err]; }
+
+  return deflator.result;
+}
+
+
+/**
+ * deflateRaw(data[, options]) -> Uint8Array
+ * - data (Uint8Array|ArrayBuffer|String): input data to compress.
+ * - options (Object): zlib deflate options.
+ *
+ * The same as [[deflate]], but creates raw data, without wrapper
+ * (header and adler32 crc).
+ **/
+function deflateRaw$1(input, options) {
+  options = options || {};
+  options.raw = true;
+  return deflate$1(input, options);
+}
+
+
+/**
+ * gzip(data[, options]) -> Uint8Array
+ * - data (Uint8Array|ArrayBuffer|String): input data to compress.
+ * - options (Object): zlib deflate options.
+ *
+ * The same as [[deflate]], but create gzip wrapper instead of
+ * deflate one.
+ **/
+function gzip$1(input, options) {
+  options = options || {};
+  options.gzip = true;
+  return deflate$1(input, options);
+}
+
+
+var Deflate_1$1 = Deflate$1;
+var deflate_2 = deflate$1;
+var deflateRaw_1$1 = deflateRaw$1;
+var gzip_1$1 = gzip$1;
+var constants$1 = constants$2;
+
+var deflate_1$1 = {
+	Deflate: Deflate_1$1,
+	deflate: deflate_2,
+	deflateRaw: deflateRaw_1$1,
+	gzip: gzip_1$1,
+	constants: constants$1
+};
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
+// See state defs from inflate.js
+const BAD$1 = 16209;       /* got a data error -- remain here until reset */
+const TYPE$1 = 16191;      /* i: waiting for type bits, including last-flag bit */
+
+/*
+   Decode literal, length, and distance codes and write out the resulting
+   literal and match bytes until either not enough input or output is
+   available, an end-of-block is encountered, or a data error is encountered.
+   When large enough input and output buffers are supplied to inflate(), for
+   example, a 16K input buffer and a 64K output buffer, more than 95% of the
+   inflate execution time is spent in this routine.
+
+   Entry assumptions:
+
+        state.mode === LEN
+        strm.avail_in >= 6
+        strm.avail_out >= 258
+        start >= strm.avail_out
+        state.bits < 8
+
+   On return, state.mode is one of:
+
+        LEN -- ran out of enough output space or enough available input
+        TYPE -- reached end of block code, inflate() to interpret next block
+        BAD -- error in block data
+
+   Notes:
+
+    - The maximum input bits used by a length/distance pair is 15 bits for the
+      length code, 5 bits for the length extra, 15 bits for the distance code,
+      and 13 bits for the distance extra.  This totals 48 bits, or six bytes.
+      Therefore if strm.avail_in >= 6, then there is enough input to avoid
+      checking for available input while decoding.
+
+    - The maximum bytes that a single length/distance pair can output is 258
+      bytes, which is the maximum length that can be coded.  inflate_fast()
+      requires strm.avail_out >= 258 for each loop to avoid checking for
+      output space.
+ */
+var inffast = function inflate_fast(strm, start) {
+  let _in;                    /* local strm.input */
+  let last;                   /* have enough input while in < last */
+  let _out;                   /* local strm.output */
+  let beg;                    /* inflate()'s initial strm.output */
+  let end;                    /* while out < end, enough space available */
+//#ifdef INFLATE_STRICT
+  let dmax;                   /* maximum distance from zlib header */
+//#endif
+  let wsize;                  /* window size or zero if not using window */
+  let whave;                  /* valid bytes in the window */
+  let wnext;                  /* window write index */
+  // Use `s_window` instead `window`, avoid conflict with instrumentation tools
+  let s_window;               /* allocated sliding window, if wsize != 0 */
+  let hold;                   /* local strm.hold */
+  let bits;                   /* local strm.bits */
+  let lcode;                  /* local strm.lencode */
+  let dcode;                  /* local strm.distcode */
+  let lmask;                  /* mask for first level of length codes */
+  let dmask;                  /* mask for first level of distance codes */
+  let here;                   /* retrieved table entry */
+  let op;                     /* code bits, operation, extra bits, or */
+                              /*  window position, window bytes to copy */
+  let len;                    /* match length, unused bytes */
+  let dist;                   /* match distance */
+  let from;                   /* where to copy match from */
+  let from_source;
+
+
+  let input, output; // JS specific, because we have no pointers
+
+  /* copy state to local variables */
+  const state = strm.state;
+  //here = state.here;
+  _in = strm.next_in;
+  input = strm.input;
+  last = _in + (strm.avail_in - 5);
+  _out = strm.next_out;
+  output = strm.output;
+  beg = _out - (start - strm.avail_out);
+  end = _out + (strm.avail_out - 257);
+//#ifdef INFLATE_STRICT
+  dmax = state.dmax;
+//#endif
+  wsize = state.wsize;
+  whave = state.whave;
+  wnext = state.wnext;
+  s_window = state.window;
+  hold = state.hold;
+  bits = state.bits;
+  lcode = state.lencode;
+  dcode = state.distcode;
+  lmask = (1 << state.lenbits) - 1;
+  dmask = (1 << state.distbits) - 1;
+
+
+  /* decode literals and length/distances until end-of-block or not enough
+     input data or output space */
+
+  top:
+  do {
+    if (bits < 15) {
+      hold += input[_in++] << bits;
+      bits += 8;
+      hold += input[_in++] << bits;
+      bits += 8;
+    }
+
+    here = lcode[hold & lmask];
+
+    dolen:
+    for (;;) { // Goto emulation
+      op = here >>> 24/*here.bits*/;
+      hold >>>= op;
+      bits -= op;
+      op = (here >>> 16) & 0xff/*here.op*/;
+      if (op === 0) {                          /* literal */
+        //Tracevv((stderr, here.val >= 0x20 && here.val < 0x7f ?
+        //        "inflate:         literal '%c'\n" :
+        //        "inflate:         literal 0x%02x\n", here.val));
+        output[_out++] = here & 0xffff/*here.val*/;
+      }
+      else if (op & 16) {                     /* length base */
+        len = here & 0xffff/*here.val*/;
+        op &= 15;                           /* number of extra bits */
+        if (op) {
+          if (bits < op) {
+            hold += input[_in++] << bits;
+            bits += 8;
+          }
+          len += hold & ((1 << op) - 1);
+          hold >>>= op;
+          bits -= op;
+        }
+        //Tracevv((stderr, "inflate:         length %u\n", len));
+        if (bits < 15) {
+          hold += input[_in++] << bits;
+          bits += 8;
+          hold += input[_in++] << bits;
+          bits += 8;
+        }
+        here = dcode[hold & dmask];
+
+        dodist:
+        for (;;) { // goto emulation
+          op = here >>> 24/*here.bits*/;
+          hold >>>= op;
+          bits -= op;
+          op = (here >>> 16) & 0xff/*here.op*/;
+
+          if (op & 16) {                      /* distance base */
+            dist = here & 0xffff/*here.val*/;
+            op &= 15;                       /* number of extra bits */
+            if (bits < op) {
+              hold += input[_in++] << bits;
+              bits += 8;
+              if (bits < op) {
+                hold += input[_in++] << bits;
+                bits += 8;
+              }
+            }
+            dist += hold & ((1 << op) - 1);
+//#ifdef INFLATE_STRICT
+            if (dist > dmax) {
+              strm.msg = 'invalid distance too far back';
+              state.mode = BAD$1;
+              break top;
+            }
+//#endif
+            hold >>>= op;
+            bits -= op;
+            //Tracevv((stderr, "inflate:         distance %u\n", dist));
+            op = _out - beg;                /* max distance in output */
+            if (dist > op) {                /* see if copy from window */
+              op = dist - op;               /* distance back in window */
+              if (op > whave) {
+                if (state.sane) {
+                  strm.msg = 'invalid distance too far back';
+                  state.mode = BAD$1;
+                  break top;
+                }
+
+// (!) This block is disabled in zlib defaults,
+// don't enable it for binary compatibility
+//#ifdef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
+//                if (len <= op - whave) {
+//                  do {
+//                    output[_out++] = 0;
+//                  } while (--len);
+//                  continue top;
+//                }
+//                len -= op - whave;
+//                do {
+//                  output[_out++] = 0;
+//                } while (--op > whave);
+//                if (op === 0) {
+//                  from = _out - dist;
+//                  do {
+//                    output[_out++] = output[from++];
+//                  } while (--len);
+//                  continue top;
+//                }
+//#endif
+              }
+              from = 0; // window index
+              from_source = s_window;
+              if (wnext === 0) {           /* very common case */
+                from += wsize - op;
+                if (op < len) {         /* some from window */
+                  len -= op;
+                  do {
+                    output[_out++] = s_window[from++];
+                  } while (--op);
+                  from = _out - dist;  /* rest from output */
+                  from_source = output;
+                }
+              }
+              else if (wnext < op) {      /* wrap around window */
+                from += wsize + wnext - op;
+                op -= wnext;
+                if (op < len) {         /* some from end of window */
+                  len -= op;
+                  do {
+                    output[_out++] = s_window[from++];
+                  } while (--op);
+                  from = 0;
+                  if (wnext < len) {  /* some from start of window */
+                    op = wnext;
+                    len -= op;
+                    do {
+                      output[_out++] = s_window[from++];
+                    } while (--op);
+                    from = _out - dist;      /* rest from output */
+                    from_source = output;
+                  }
+                }
+              }
+              else {                      /* contiguous in window */
+                from += wnext - op;
+                if (op < len) {         /* some from window */
+                  len -= op;
+                  do {
+                    output[_out++] = s_window[from++];
+                  } while (--op);
+                  from = _out - dist;  /* rest from output */
+                  from_source = output;
+                }
+              }
+              while (len > 2) {
+                output[_out++] = from_source[from++];
+                output[_out++] = from_source[from++];
+                output[_out++] = from_source[from++];
+                len -= 3;
+              }
+              if (len) {
+                output[_out++] = from_source[from++];
+                if (len > 1) {
+                  output[_out++] = from_source[from++];
+                }
+              }
+            }
+            else {
+              from = _out - dist;          /* copy direct from output */
+              do {                        /* minimum length is three */
+                output[_out++] = output[from++];
+                output[_out++] = output[from++];
+                output[_out++] = output[from++];
+                len -= 3;
+              } while (len > 2);
+              if (len) {
+                output[_out++] = output[from++];
+                if (len > 1) {
+                  output[_out++] = output[from++];
+                }
+              }
+            }
+          }
+          else if ((op & 64) === 0) {          /* 2nd level distance code */
+            here = dcode[(here & 0xffff)/*here.val*/ + (hold & ((1 << op) - 1))];
+            continue dodist;
+          }
+          else {
+            strm.msg = 'invalid distance code';
+            state.mode = BAD$1;
+            break top;
+          }
+
+          break; // need to emulate goto via "continue"
+        }
+      }
+      else if ((op & 64) === 0) {              /* 2nd level length code */
+        here = lcode[(here & 0xffff)/*here.val*/ + (hold & ((1 << op) - 1))];
+        continue dolen;
+      }
+      else if (op & 32) {                     /* end-of-block */
+        //Tracevv((stderr, "inflate:         end of block\n"));
+        state.mode = TYPE$1;
+        break top;
+      }
+      else {
+        strm.msg = 'invalid literal/length code';
+        state.mode = BAD$1;
+        break top;
+      }
+
+      break; // need to emulate goto via "continue"
+    }
+  } while (_in < last && _out < end);
+
+  /* return unused bytes (on entry, bits < 8, so in won't go too far back) */
+  len = bits >> 3;
+  _in -= len;
+  bits -= len << 3;
+  hold &= (1 << bits) - 1;
+
+  /* update state and return */
+  strm.next_in = _in;
+  strm.next_out = _out;
+  strm.avail_in = (_in < last ? 5 + (last - _in) : 5 - (_in - last));
+  strm.avail_out = (_out < end ? 257 + (end - _out) : 257 - (_out - end));
+  state.hold = hold;
+  state.bits = bits;
+  return;
+};
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
+const MAXBITS = 15;
+const ENOUGH_LENS$1 = 852;
+const ENOUGH_DISTS$1 = 592;
+//const ENOUGH = (ENOUGH_LENS+ENOUGH_DISTS);
+
+const CODES$1 = 0;
+const LENS$1 = 1;
+const DISTS$1 = 2;
+
+const lbase = new Uint16Array([ /* Length codes 257..285 base */
+  3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31,
+  35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258, 0, 0
+]);
+
+const lext = new Uint8Array([ /* Length codes 257..285 extra */
+  16, 16, 16, 16, 16, 16, 16, 16, 17, 17, 17, 17, 18, 18, 18, 18,
+  19, 19, 19, 19, 20, 20, 20, 20, 21, 21, 21, 21, 16, 72, 78
+]);
+
+const dbase = new Uint16Array([ /* Distance codes 0..29 base */
+  1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193,
+  257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
+  8193, 12289, 16385, 24577, 0, 0
+]);
+
+const dext = new Uint8Array([ /* Distance codes 0..29 extra */
+  16, 16, 16, 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22,
+  23, 23, 24, 24, 25, 25, 26, 26, 27, 27,
+  28, 28, 29, 29, 64, 64
+]);
+
+const inflate_table = (type, lens, lens_index, codes, table, table_index, work, opts) =>
+{
+  const bits = opts.bits;
+      //here = opts.here; /* table entry for duplication */
+
+  let len = 0;               /* a code's length in bits */
+  let sym = 0;               /* index of code symbols */
+  let min = 0, max = 0;          /* minimum and maximum code lengths */
+  let root = 0;              /* number of index bits for root table */
+  let curr = 0;              /* number of index bits for current table */
+  let drop = 0;              /* code bits to drop for sub-table */
+  let left = 0;                   /* number of prefix codes available */
+  let used = 0;              /* code entries in table used */
+  let huff = 0;              /* Huffman code */
+  let incr;              /* for incrementing code, index */
+  let fill;              /* index for replicating entries */
+  let low;               /* low bits for current root entry */
+  let mask;              /* mask for low root bits */
+  let next;             /* next available space in table */
+  let base = null;     /* base value table to use */
+//  let shoextra;    /* extra bits table to use */
+  let match;                  /* use base and extra for symbol >= match */
+  const count = new Uint16Array(MAXBITS + 1); //[MAXBITS+1];    /* number of codes of each length */
+  const offs = new Uint16Array(MAXBITS + 1); //[MAXBITS+1];     /* offsets in table for each length */
+  let extra = null;
+
+  let here_bits, here_op, here_val;
+
+  /*
+   Process a set of code lengths to create a canonical Huffman code.  The
+   code lengths are lens[0..codes-1].  Each length corresponds to the
+   symbols 0..codes-1.  The Huffman code is generated by first sorting the
+   symbols by length from short to long, and retaining the symbol order
+   for codes with equal lengths.  Then the code starts with all zero bits
+   for the first code of the shortest length, and the codes are integer
+   increments for the same length, and zeros are appended as the length
+   increases.  For the deflate format, these bits are stored backwards
+   from their more natural integer increment ordering, and so when the
+   decoding tables are built in the large loop below, the integer codes
+   are incremented backwards.
+
+   This routine assumes, but does not check, that all of the entries in
+   lens[] are in the range 0..MAXBITS.  The caller must assure this.
+   1..MAXBITS is interpreted as that code length.  zero means that that
+   symbol does not occur in this code.
+
+   The codes are sorted by computing a count of codes for each length,
+   creating from that a table of starting indices for each length in the
+   sorted table, and then entering the symbols in order in the sorted
+   table.  The sorted table is work[], with that space being provided by
+   the caller.
+
+   The length counts are used for other purposes as well, i.e. finding
+   the minimum and maximum length codes, determining if there are any
+   codes at all, checking for a valid set of lengths, and looking ahead
+   at length counts to determine sub-table sizes when building the
+   decoding tables.
+   */
+
+  /* accumulate lengths for codes (assumes lens[] all in 0..MAXBITS) */
+  for (len = 0; len <= MAXBITS; len++) {
+    count[len] = 0;
+  }
+  for (sym = 0; sym < codes; sym++) {
+    count[lens[lens_index + sym]]++;
+  }
+
+  /* bound code lengths, force root to be within code lengths */
+  root = bits;
+  for (max = MAXBITS; max >= 1; max--) {
+    if (count[max] !== 0) { break; }
+  }
+  if (root > max) {
+    root = max;
+  }
+  if (max === 0) {                     /* no symbols to code at all */
+    //table.op[opts.table_index] = 64;  //here.op = (var char)64;    /* invalid code marker */
+    //table.bits[opts.table_index] = 1;   //here.bits = (var char)1;
+    //table.val[opts.table_index++] = 0;   //here.val = (var short)0;
+    table[table_index++] = (1 << 24) | (64 << 16) | 0;
+
+
+    //table.op[opts.table_index] = 64;
+    //table.bits[opts.table_index] = 1;
+    //table.val[opts.table_index++] = 0;
+    table[table_index++] = (1 << 24) | (64 << 16) | 0;
+
+    opts.bits = 1;
+    return 0;     /* no symbols, but wait for decoding to report error */
+  }
+  for (min = 1; min < max; min++) {
+    if (count[min] !== 0) { break; }
+  }
+  if (root < min) {
+    root = min;
+  }
+
+  /* check for an over-subscribed or incomplete set of lengths */
+  left = 1;
+  for (len = 1; len <= MAXBITS; len++) {
+    left <<= 1;
+    left -= count[len];
+    if (left < 0) {
+      return -1;
+    }        /* over-subscribed */
+  }
+  if (left > 0 && (type === CODES$1 || max !== 1)) {
+    return -1;                      /* incomplete set */
+  }
+
+  /* generate offsets into symbol table for each length for sorting */
+  offs[1] = 0;
+  for (len = 1; len < MAXBITS; len++) {
+    offs[len + 1] = offs[len] + count[len];
+  }
+
+  /* sort symbols by length, by symbol order within each length */
+  for (sym = 0; sym < codes; sym++) {
+    if (lens[lens_index + sym] !== 0) {
+      work[offs[lens[lens_index + sym]]++] = sym;
+    }
+  }
+
+  /*
+   Create and fill in decoding tables.  In this loop, the table being
+   filled is at next and has curr index bits.  The code being used is huff
+   with length len.  That code is converted to an index by dropping drop
+   bits off of the bottom.  For codes where len is less than drop + curr,
+   those top drop + curr - len bits are incremented through all values to
+   fill the table with replicated entries.
+
+   root is the number of index bits for the root table.  When len exceeds
+   root, sub-tables are created pointed to by the root entry with an index
+   of the low root bits of huff.  This is saved in low to check for when a
+   new sub-table should be started.  drop is zero when the root table is
+   being filled, and drop is root when sub-tables are being filled.
+
+   When a new sub-table is needed, it is necessary to look ahead in the
+   code lengths to determine what size sub-table is needed.  The length
+   counts are used for this, and so count[] is decremented as codes are
+   entered in the tables.
+
+   used keeps track of how many table entries have been allocated from the
+   provided *table space.  It is checked for LENS and DIST tables against
+   the constants ENOUGH_LENS and ENOUGH_DISTS to guard against changes in
+   the initial root table size constants.  See the comments in inftrees.h
+   for more information.
+
+   sym increments through all symbols, and the loop terminates when
+   all codes of length max, i.e. all codes, have been processed.  This
+   routine permits incomplete codes, so another loop after this one fills
+   in the rest of the decoding tables with invalid code markers.
+   */
+
+  /* set up for code type */
+  // poor man optimization - use if-else instead of switch,
+  // to avoid deopts in old v8
+  if (type === CODES$1) {
+    base = extra = work;    /* dummy value--not used */
+    match = 20;
+
+  } else if (type === LENS$1) {
+    base = lbase;
+    extra = lext;
+    match = 257;
+
+  } else {                    /* DISTS */
+    base = dbase;
+    extra = dext;
+    match = 0;
+  }
+
+  /* initialize opts for loop */
+  huff = 0;                   /* starting code */
+  sym = 0;                    /* starting code symbol */
+  len = min;                  /* starting code length */
+  next = table_index;              /* current table to fill in */
+  curr = root;                /* current table index bits */
+  drop = 0;                   /* current bits to drop from code for index */
+  low = -1;                   /* trigger new sub-table when len > root */
+  used = 1 << root;          /* use root table entries */
+  mask = used - 1;            /* mask for comparing low */
+
+  /* check available table space */
+  if ((type === LENS$1 && used > ENOUGH_LENS$1) ||
+    (type === DISTS$1 && used > ENOUGH_DISTS$1)) {
+    return 1;
+  }
+
+  /* process all codes and make table entries */
+  for (;;) {
+    /* create table entry */
+    here_bits = len - drop;
+    if (work[sym] + 1 < match) {
+      here_op = 0;
+      here_val = work[sym];
+    }
+    else if (work[sym] >= match) {
+      here_op = extra[work[sym] - match];
+      here_val = base[work[sym] - match];
+    }
+    else {
+      here_op = 32 + 64;         /* end of block */
+      here_val = 0;
+    }
+
+    /* replicate for those indices with low len bits equal to huff */
+    incr = 1 << (len - drop);
+    fill = 1 << curr;
+    min = fill;                 /* save offset to next table */
+    do {
+      fill -= incr;
+      table[next + (huff >> drop) + fill] = (here_bits << 24) | (here_op << 16) | here_val |0;
+    } while (fill !== 0);
+
+    /* backwards increment the len-bit code huff */
+    incr = 1 << (len - 1);
+    while (huff & incr) {
+      incr >>= 1;
+    }
+    if (incr !== 0) {
+      huff &= incr - 1;
+      huff += incr;
+    } else {
+      huff = 0;
+    }
+
+    /* go to next symbol, update count, len */
+    sym++;
+    if (--count[len] === 0) {
+      if (len === max) { break; }
+      len = lens[lens_index + work[sym]];
+    }
+
+    /* create new sub-table if needed */
+    if (len > root && (huff & mask) !== low) {
+      /* if first time, transition to sub-tables */
+      if (drop === 0) {
+        drop = root;
+      }
+
+      /* increment past last table */
+      next += min;            /* here min is 1 << curr */
+
+      /* determine length of next table */
+      curr = len - drop;
+      left = 1 << curr;
+      while (curr + drop < max) {
+        left -= count[curr + drop];
+        if (left <= 0) { break; }
+        curr++;
+        left <<= 1;
+      }
+
+      /* check for enough space */
+      used += 1 << curr;
+      if ((type === LENS$1 && used > ENOUGH_LENS$1) ||
+        (type === DISTS$1 && used > ENOUGH_DISTS$1)) {
+        return 1;
+      }
+
+      /* point entry in root table to sub-table */
+      low = huff & mask;
+      /*table.op[low] = curr;
+      table.bits[low] = root;
+      table.val[low] = next - opts.table_index;*/
+      table[low] = (root << 24) | (curr << 16) | (next - table_index) |0;
+    }
+  }
+
+  /* fill in remaining table entry if code is incomplete (guaranteed to have
+   at most one remaining entry, since if the code is incomplete, the
+   maximum code length that was allowed to get this far is one bit) */
+  if (huff !== 0) {
+    //table.op[next + huff] = 64;            /* invalid code marker */
+    //table.bits[next + huff] = len - drop;
+    //table.val[next + huff] = 0;
+    table[next + huff] = ((len - drop) << 24) | (64 << 16) |0;
+  }
+
+  /* set return parameters */
+  //opts.table_index += used;
+  opts.bits = root;
+  return 0;
+};
+
+
+var inftrees = inflate_table;
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
+
+
+
+
+
+const CODES = 0;
+const LENS = 1;
+const DISTS = 2;
+
+/* Public constants ==========================================================*/
+/* ===========================================================================*/
+
+const {
+  Z_FINISH: Z_FINISH$1, Z_BLOCK, Z_TREES,
+  Z_OK: Z_OK$1, Z_STREAM_END: Z_STREAM_END$1, Z_NEED_DICT: Z_NEED_DICT$1, Z_STREAM_ERROR: Z_STREAM_ERROR$1, Z_DATA_ERROR: Z_DATA_ERROR$1, Z_MEM_ERROR: Z_MEM_ERROR$1, Z_BUF_ERROR,
+  Z_DEFLATED
+} = constants$2;
+
+
+/* STATES ====================================================================*/
+/* ===========================================================================*/
+
+
+const    HEAD = 16180;       /* i: waiting for magic header */
+const    FLAGS = 16181;      /* i: waiting for method and flags (gzip) */
+const    TIME = 16182;       /* i: waiting for modification time (gzip) */
+const    OS = 16183;         /* i: waiting for extra flags and operating system (gzip) */
+const    EXLEN = 16184;      /* i: waiting for extra length (gzip) */
+const    EXTRA = 16185;      /* i: waiting for extra bytes (gzip) */
+const    NAME = 16186;       /* i: waiting for end of file name (gzip) */
+const    COMMENT = 16187;    /* i: waiting for end of comment (gzip) */
+const    HCRC = 16188;       /* i: waiting for header crc (gzip) */
+const    DICTID = 16189;    /* i: waiting for dictionary check value */
+const    DICT = 16190;      /* waiting for inflateSetDictionary() call */
+const        TYPE = 16191;      /* i: waiting for type bits, including last-flag bit */
+const        TYPEDO = 16192;    /* i: same, but skip check to exit inflate on new block */
+const        STORED = 16193;    /* i: waiting for stored size (length and complement) */
+const        COPY_ = 16194;     /* i/o: same as COPY below, but only first time in */
+const        COPY = 16195;      /* i/o: waiting for input or output to copy stored block */
+const        TABLE = 16196;     /* i: waiting for dynamic block table lengths */
+const        LENLENS = 16197;   /* i: waiting for code length code lengths */
+const        CODELENS = 16198;  /* i: waiting for length/lit and distance code lengths */
+const            LEN_ = 16199;      /* i: same as LEN below, but only first time in */
+const            LEN = 16200;       /* i: waiting for length/lit/eob code */
+const            LENEXT = 16201;    /* i: waiting for length extra bits */
+const            DIST = 16202;      /* i: waiting for distance code */
+const            DISTEXT = 16203;   /* i: waiting for distance extra bits */
+const            MATCH = 16204;     /* o: waiting for output space to copy string */
+const            LIT = 16205;       /* o: waiting for output space to write literal */
+const    CHECK = 16206;     /* i: waiting for 32-bit check value */
+const    LENGTH = 16207;    /* i: waiting for 32-bit length (gzip) */
+const    DONE = 16208;      /* finished check, done -- remain here until reset */
+const    BAD = 16209;       /* got a data error -- remain here until reset */
+const    MEM = 16210;       /* got an inflate() memory error -- remain here until reset */
+const    SYNC = 16211;      /* looking for synchronization bytes to restart inflate() */
+
+/* ===========================================================================*/
+
+
+
+const ENOUGH_LENS = 852;
+const ENOUGH_DISTS = 592;
+//const ENOUGH =  (ENOUGH_LENS+ENOUGH_DISTS);
+
+const MAX_WBITS = 15;
+/* 32K LZ77 window */
+const DEF_WBITS = MAX_WBITS;
+
+
+const zswap32 = (q) => {
+
+  return  (((q >>> 24) & 0xff) +
+          ((q >>> 8) & 0xff00) +
+          ((q & 0xff00) << 8) +
+          ((q & 0xff) << 24));
+};
+
+
+function InflateState() {
+  this.strm = null;           /* pointer back to this zlib stream */
+  this.mode = 0;              /* current inflate mode */
+  this.last = false;          /* true if processing last block */
+  this.wrap = 0;              /* bit 0 true for zlib, bit 1 true for gzip,
+                                 bit 2 true to validate check value */
+  this.havedict = false;      /* true if dictionary provided */
+  this.flags = 0;             /* gzip header method and flags (0 if zlib), or
+                                 -1 if raw or no header yet */
+  this.dmax = 0;              /* zlib header max distance (INFLATE_STRICT) */
+  this.check = 0;             /* protected copy of check value */
+  this.total = 0;             /* protected copy of output count */
+  // TODO: may be {}
+  this.head = null;           /* where to save gzip header information */
+
+  /* sliding window */
+  this.wbits = 0;             /* log base 2 of requested window size */
+  this.wsize = 0;             /* window size or zero if not using window */
+  this.whave = 0;             /* valid bytes in the window */
+  this.wnext = 0;             /* window write index */
+  this.window = null;         /* allocated sliding window, if needed */
+
+  /* bit accumulator */
+  this.hold = 0;              /* input bit accumulator */
+  this.bits = 0;              /* number of bits in "in" */
+
+  /* for string and stored block copying */
+  this.length = 0;            /* literal or length of data to copy */
+  this.offset = 0;            /* distance back to copy string from */
+
+  /* for table and code decoding */
+  this.extra = 0;             /* extra bits needed */
+
+  /* fixed and dynamic code tables */
+  this.lencode = null;          /* starting table for length/literal codes */
+  this.distcode = null;         /* starting table for distance codes */
+  this.lenbits = 0;           /* index bits for lencode */
+  this.distbits = 0;          /* index bits for distcode */
+
+  /* dynamic table building */
+  this.ncode = 0;             /* number of code length code lengths */
+  this.nlen = 0;              /* number of length code lengths */
+  this.ndist = 0;             /* number of distance code lengths */
+  this.have = 0;              /* number of code lengths in lens[] */
+  this.next = null;              /* next available space in codes[] */
+
+  this.lens = new Uint16Array(320); /* temporary storage for code lengths */
+  this.work = new Uint16Array(288); /* work area for code table building */
+
+  /*
+   because we don't have pointers in js, we use lencode and distcode directly
+   as buffers so we don't need codes
+  */
+  //this.codes = new Int32Array(ENOUGH);       /* space for code tables */
+  this.lendyn = null;              /* dynamic table for length/literal codes (JS specific) */
+  this.distdyn = null;             /* dynamic table for distance codes (JS specific) */
+  this.sane = 0;                   /* if false, allow invalid distance too far */
+  this.back = 0;                   /* bits back of last unprocessed length/lit */
+  this.was = 0;                    /* initial length of match */
+}
+
+
+const inflateStateCheck = (strm) => {
+
+  if (!strm) {
+    return 1;
+  }
+  const state = strm.state;
+  if (!state || state.strm !== strm ||
+    state.mode < HEAD || state.mode > SYNC) {
+    return 1;
+  }
+  return 0;
+};
+
+
+const inflateResetKeep = (strm) => {
+
+  if (inflateStateCheck(strm)) { return Z_STREAM_ERROR$1; }
+  const state = strm.state;
+  strm.total_in = strm.total_out = state.total = 0;
+  strm.msg = ''; /*Z_NULL*/
+  if (state.wrap) {       /* to support ill-conceived Java test suite */
+    strm.adler = state.wrap & 1;
+  }
+  state.mode = HEAD;
+  state.last = 0;
+  state.havedict = 0;
+  state.flags = -1;
+  state.dmax = 32768;
+  state.head = null/*Z_NULL*/;
+  state.hold = 0;
+  state.bits = 0;
+  //state.lencode = state.distcode = state.next = state.codes;
+  state.lencode = state.lendyn = new Int32Array(ENOUGH_LENS);
+  state.distcode = state.distdyn = new Int32Array(ENOUGH_DISTS);
+
+  state.sane = 1;
+  state.back = -1;
+  //Tracev((stderr, "inflate: reset\n"));
+  return Z_OK$1;
+};
+
+
+const inflateReset = (strm) => {
+
+  if (inflateStateCheck(strm)) { return Z_STREAM_ERROR$1; }
+  const state = strm.state;
+  state.wsize = 0;
+  state.whave = 0;
+  state.wnext = 0;
+  return inflateResetKeep(strm);
+
+};
+
+
+const inflateReset2 = (strm, windowBits) => {
+  let wrap;
+
+  /* get the state */
+  if (inflateStateCheck(strm)) { return Z_STREAM_ERROR$1; }
+  const state = strm.state;
+
+  /* extract wrap request from windowBits parameter */
+  if (windowBits < 0) {
+    wrap = 0;
+    windowBits = -windowBits;
+  }
+  else {
+    wrap = (windowBits >> 4) + 5;
+    if (windowBits < 48) {
+      windowBits &= 15;
+    }
+  }
+
+  /* set number of window bits, free window if different */
+  if (windowBits && (windowBits < 8 || windowBits > 15)) {
+    return Z_STREAM_ERROR$1;
+  }
+  if (state.window !== null && state.wbits !== windowBits) {
+    state.window = null;
+  }
+
+  /* update state and reset the rest of it */
+  state.wrap = wrap;
+  state.wbits = windowBits;
+  return inflateReset(strm);
+};
+
+
+const inflateInit2 = (strm, windowBits) => {
+
+  if (!strm) { return Z_STREAM_ERROR$1; }
+  //strm.msg = Z_NULL;                 /* in case we return an error */
+
+  const state = new InflateState();
+
+  //if (state === Z_NULL) return Z_MEM_ERROR;
+  //Tracev((stderr, "inflate: allocated\n"));
+  strm.state = state;
+  state.strm = strm;
+  state.window = null/*Z_NULL*/;
+  state.mode = HEAD;     /* to pass state test in inflateReset2() */
+  const ret = inflateReset2(strm, windowBits);
+  if (ret !== Z_OK$1) {
+    strm.state = null/*Z_NULL*/;
+  }
+  return ret;
+};
+
+
+const inflateInit = (strm) => {
+
+  return inflateInit2(strm, DEF_WBITS);
+};
+
+
+/*
+ Return state with length and distance decoding tables and index sizes set to
+ fixed code decoding.  Normally this returns fixed tables from inffixed.h.
+ If BUILDFIXED is defined, then instead this routine builds the tables the
+ first time it's called, and returns those tables the first time and
+ thereafter.  This reduces the size of the code by about 2K bytes, in
+ exchange for a little execution time.  However, BUILDFIXED should not be
+ used for threaded applications, since the rewriting of the tables and virgin
+ may not be thread-safe.
+ */
+let virgin = true;
+
+let lenfix, distfix; // We have no pointers in JS, so keep tables separate
+
+
+const fixedtables = (state) => {
+
+  /* build fixed huffman tables if first call (may not be thread safe) */
+  if (virgin) {
+    lenfix = new Int32Array(512);
+    distfix = new Int32Array(32);
+
+    /* literal/length table */
+    let sym = 0;
+    while (sym < 144) { state.lens[sym++] = 8; }
+    while (sym < 256) { state.lens[sym++] = 9; }
+    while (sym < 280) { state.lens[sym++] = 7; }
+    while (sym < 288) { state.lens[sym++] = 8; }
+
+    inftrees(LENS,  state.lens, 0, 288, lenfix,   0, state.work, { bits: 9 });
+
+    /* distance table */
+    sym = 0;
+    while (sym < 32) { state.lens[sym++] = 5; }
+
+    inftrees(DISTS, state.lens, 0, 32,   distfix, 0, state.work, { bits: 5 });
+
+    /* do this just once */
+    virgin = false;
+  }
+
+  state.lencode = lenfix;
+  state.lenbits = 9;
+  state.distcode = distfix;
+  state.distbits = 5;
+};
+
+
+/*
+ Update the window with the last wsize (normally 32K) bytes written before
+ returning.  If window does not exist yet, create it.  This is only called
+ when a window is already in use, or when output has been written during this
+ inflate call, but the end of the deflate stream has not been reached yet.
+ It is also called to create a window for dictionary data when a dictionary
+ is loaded.
+
+ Providing output buffers larger than 32K to inflate() should provide a speed
+ advantage, since only the last 32K of output is copied to the sliding window
+ upon return from inflate(), and since all distances after the first 32K of
+ output will fall in the output data, making match copies simpler and faster.
+ The advantage may be dependent on the size of the processor's data caches.
+ */
+const updatewindow = (strm, src, end, copy) => {
+
+  let dist;
+  const state = strm.state;
+
+  /* if it hasn't been done already, allocate space for the window */
+  if (state.window === null) {
+    state.wsize = 1 << state.wbits;
+    state.wnext = 0;
+    state.whave = 0;
+
+    state.window = new Uint8Array(state.wsize);
+  }
+
+  /* copy state->wsize or less output bytes into the circular window */
+  if (copy >= state.wsize) {
+    state.window.set(src.subarray(end - state.wsize, end), 0);
+    state.wnext = 0;
+    state.whave = state.wsize;
+  }
+  else {
+    dist = state.wsize - state.wnext;
+    if (dist > copy) {
+      dist = copy;
+    }
+    //zmemcpy(state->window + state->wnext, end - copy, dist);
+    state.window.set(src.subarray(end - copy, end - copy + dist), state.wnext);
+    copy -= dist;
+    if (copy) {
+      //zmemcpy(state->window, end - copy, copy);
+      state.window.set(src.subarray(end - copy, end), 0);
+      state.wnext = copy;
+      state.whave = state.wsize;
+    }
+    else {
+      state.wnext += dist;
+      if (state.wnext === state.wsize) { state.wnext = 0; }
+      if (state.whave < state.wsize) { state.whave += dist; }
+    }
+  }
+  return 0;
+};
+
+
+const inflate$2 = (strm, flush) => {
+
+  let state;
+  let input, output;          // input/output buffers
+  let next;                   /* next input INDEX */
+  let put;                    /* next output INDEX */
+  let have, left;             /* available input and output */
+  let hold;                   /* bit buffer */
+  let bits;                   /* bits in bit buffer */
+  let _in, _out;              /* save starting available input and output */
+  let copy;                   /* number of stored or match bytes to copy */
+  let from;                   /* where to copy match bytes from */
+  let from_source;
+  let here = 0;               /* current decoding table entry */
+  let here_bits, here_op, here_val; // paked "here" denormalized (JS specific)
+  //let last;                   /* parent table entry */
+  let last_bits, last_op, last_val; // paked "last" denormalized (JS specific)
+  let len;                    /* length to copy for repeats, bits to drop */
+  let ret;                    /* return code */
+  const hbuf = new Uint8Array(4);    /* buffer for gzip header crc calculation */
+  let opts;
+
+  let n; // temporary variable for NEED_BITS
+
+  const order = /* permutation of code lengths */
+    new Uint8Array([ 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 ]);
+
+
+  if (inflateStateCheck(strm) || !strm.output ||
+      (!strm.input && strm.avail_in !== 0)) {
+    return Z_STREAM_ERROR$1;
+  }
+
+  state = strm.state;
+  if (state.mode === TYPE) { state.mode = TYPEDO; }    /* skip check */
+
+
+  //--- LOAD() ---
+  put = strm.next_out;
+  output = strm.output;
+  left = strm.avail_out;
+  next = strm.next_in;
+  input = strm.input;
+  have = strm.avail_in;
+  hold = state.hold;
+  bits = state.bits;
+  //---
+
+  _in = have;
+  _out = left;
+  ret = Z_OK$1;
+
+  inf_leave: // goto emulation
+  for (;;) {
+    switch (state.mode) {
+      case HEAD:
+        if (state.wrap === 0) {
+          state.mode = TYPEDO;
+          break;
+        }
+        //=== NEEDBITS(16);
+        while (bits < 16) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        if ((state.wrap & 2) && hold === 0x8b1f) {  /* gzip header */
+          if (state.wbits === 0) {
+            state.wbits = 15;
+          }
+          state.check = 0/*crc32(0L, Z_NULL, 0)*/;
+          //=== CRC2(state.check, hold);
+          hbuf[0] = hold & 0xff;
+          hbuf[1] = (hold >>> 8) & 0xff;
+          state.check = crc32_1(state.check, hbuf, 2, 0);
+          //===//
+
+          //=== INITBITS();
+          hold = 0;
+          bits = 0;
+          //===//
+          state.mode = FLAGS;
+          break;
+        }
+        if (state.head) {
+          state.head.done = false;
+        }
+        if (!(state.wrap & 1) ||   /* check if zlib header allowed */
+          (((hold & 0xff)/*BITS(8)*/ << 8) + (hold >> 8)) % 31) {
+          strm.msg = 'incorrect header check';
+          state.mode = BAD;
+          break;
+        }
+        if ((hold & 0x0f)/*BITS(4)*/ !== Z_DEFLATED) {
+          strm.msg = 'unknown compression method';
+          state.mode = BAD;
+          break;
+        }
+        //--- DROPBITS(4) ---//
+        hold >>>= 4;
+        bits -= 4;
+        //---//
+        len = (hold & 0x0f)/*BITS(4)*/ + 8;
+        if (state.wbits === 0) {
+          state.wbits = len;
+        }
+        if (len > 15 || len > state.wbits) {
+          strm.msg = 'invalid window size';
+          state.mode = BAD;
+          break;
+        }
+
+        // !!! pako patch. Force use `options.windowBits` if passed.
+        // Required to always use max window size by default.
+        state.dmax = 1 << state.wbits;
+        //state.dmax = 1 << len;
+
+        state.flags = 0;               /* indicate zlib header */
+        //Tracev((stderr, "inflate:   zlib header ok\n"));
+        strm.adler = state.check = 1/*adler32(0L, Z_NULL, 0)*/;
+        state.mode = hold & 0x200 ? DICTID : TYPE;
+        //=== INITBITS();
+        hold = 0;
+        bits = 0;
+        //===//
+        break;
+      case FLAGS:
+        //=== NEEDBITS(16); */
+        while (bits < 16) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        state.flags = hold;
+        if ((state.flags & 0xff) !== Z_DEFLATED) {
+          strm.msg = 'unknown compression method';
+          state.mode = BAD;
+          break;
+        }
+        if (state.flags & 0xe000) {
+          strm.msg = 'unknown header flags set';
+          state.mode = BAD;
+          break;
+        }
+        if (state.head) {
+          state.head.text = ((hold >> 8) & 1);
+        }
+        if ((state.flags & 0x0200) && (state.wrap & 4)) {
+          //=== CRC2(state.check, hold);
+          hbuf[0] = hold & 0xff;
+          hbuf[1] = (hold >>> 8) & 0xff;
+          state.check = crc32_1(state.check, hbuf, 2, 0);
+          //===//
+        }
+        //=== INITBITS();
+        hold = 0;
+        bits = 0;
+        //===//
+        state.mode = TIME;
+        /* falls through */
+      case TIME:
+        //=== NEEDBITS(32); */
+        while (bits < 32) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        if (state.head) {
+          state.head.time = hold;
+        }
+        if ((state.flags & 0x0200) && (state.wrap & 4)) {
+          //=== CRC4(state.check, hold)
+          hbuf[0] = hold & 0xff;
+          hbuf[1] = (hold >>> 8) & 0xff;
+          hbuf[2] = (hold >>> 16) & 0xff;
+          hbuf[3] = (hold >>> 24) & 0xff;
+          state.check = crc32_1(state.check, hbuf, 4, 0);
+          //===
+        }
+        //=== INITBITS();
+        hold = 0;
+        bits = 0;
+        //===//
+        state.mode = OS;
+        /* falls through */
+      case OS:
+        //=== NEEDBITS(16); */
+        while (bits < 16) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        if (state.head) {
+          state.head.xflags = (hold & 0xff);
+          state.head.os = (hold >> 8);
+        }
+        if ((state.flags & 0x0200) && (state.wrap & 4)) {
+          //=== CRC2(state.check, hold);
+          hbuf[0] = hold & 0xff;
+          hbuf[1] = (hold >>> 8) & 0xff;
+          state.check = crc32_1(state.check, hbuf, 2, 0);
+          //===//
+        }
+        //=== INITBITS();
+        hold = 0;
+        bits = 0;
+        //===//
+        state.mode = EXLEN;
+        /* falls through */
+      case EXLEN:
+        if (state.flags & 0x0400) {
+          //=== NEEDBITS(16); */
+          while (bits < 16) {
+            if (have === 0) { break inf_leave; }
+            have--;
+            hold += input[next++] << bits;
+            bits += 8;
+          }
+          //===//
+          state.length = hold;
+          if (state.head) {
+            state.head.extra_len = hold;
+          }
+          if ((state.flags & 0x0200) && (state.wrap & 4)) {
+            //=== CRC2(state.check, hold);
+            hbuf[0] = hold & 0xff;
+            hbuf[1] = (hold >>> 8) & 0xff;
+            state.check = crc32_1(state.check, hbuf, 2, 0);
+            //===//
+          }
+          //=== INITBITS();
+          hold = 0;
+          bits = 0;
+          //===//
+        }
+        else if (state.head) {
+          state.head.extra = null/*Z_NULL*/;
+        }
+        state.mode = EXTRA;
+        /* falls through */
+      case EXTRA:
+        if (state.flags & 0x0400) {
+          copy = state.length;
+          if (copy > have) { copy = have; }
+          if (copy) {
+            if (state.head) {
+              len = state.head.extra_len - state.length;
+              if (!state.head.extra) {
+                // Use untyped array for more convenient processing later
+                state.head.extra = new Uint8Array(state.head.extra_len);
+              }
+              state.head.extra.set(
+                input.subarray(
+                  next,
+                  // extra field is limited to 65536 bytes
+                  // - no need for additional size check
+                  next + copy
+                ),
+                /*len + copy > state.head.extra_max - len ? state.head.extra_max : copy,*/
+                len
+              );
+              //zmemcpy(state.head.extra + len, next,
+              //        len + copy > state.head.extra_max ?
+              //        state.head.extra_max - len : copy);
+            }
+            if ((state.flags & 0x0200) && (state.wrap & 4)) {
+              state.check = crc32_1(state.check, input, copy, next);
+            }
+            have -= copy;
+            next += copy;
+            state.length -= copy;
+          }
+          if (state.length) { break inf_leave; }
+        }
+        state.length = 0;
+        state.mode = NAME;
+        /* falls through */
+      case NAME:
+        if (state.flags & 0x0800) {
+          if (have === 0) { break inf_leave; }
+          copy = 0;
+          do {
+            // TODO: 2 or 1 bytes?
+            len = input[next + copy++];
+            /* use constant limit because in js we should not preallocate memory */
+            if (state.head && len &&
+                (state.length < 65536 /*state.head.name_max*/)) {
+              state.head.name += String.fromCharCode(len);
+            }
+          } while (len && copy < have);
+
+          if ((state.flags & 0x0200) && (state.wrap & 4)) {
+            state.check = crc32_1(state.check, input, copy, next);
+          }
+          have -= copy;
+          next += copy;
+          if (len) { break inf_leave; }
+        }
+        else if (state.head) {
+          state.head.name = null;
+        }
+        state.length = 0;
+        state.mode = COMMENT;
+        /* falls through */
+      case COMMENT:
+        if (state.flags & 0x1000) {
+          if (have === 0) { break inf_leave; }
+          copy = 0;
+          do {
+            len = input[next + copy++];
+            /* use constant limit because in js we should not preallocate memory */
+            if (state.head && len &&
+                (state.length < 65536 /*state.head.comm_max*/)) {
+              state.head.comment += String.fromCharCode(len);
+            }
+          } while (len && copy < have);
+          if ((state.flags & 0x0200) && (state.wrap & 4)) {
+            state.check = crc32_1(state.check, input, copy, next);
+          }
+          have -= copy;
+          next += copy;
+          if (len) { break inf_leave; }
+        }
+        else if (state.head) {
+          state.head.comment = null;
+        }
+        state.mode = HCRC;
+        /* falls through */
+      case HCRC:
+        if (state.flags & 0x0200) {
+          //=== NEEDBITS(16); */
+          while (bits < 16) {
+            if (have === 0) { break inf_leave; }
+            have--;
+            hold += input[next++] << bits;
+            bits += 8;
+          }
+          //===//
+          if ((state.wrap & 4) && hold !== (state.check & 0xffff)) {
+            strm.msg = 'header crc mismatch';
+            state.mode = BAD;
+            break;
+          }
+          //=== INITBITS();
+          hold = 0;
+          bits = 0;
+          //===//
+        }
+        if (state.head) {
+          state.head.hcrc = ((state.flags >> 9) & 1);
+          state.head.done = true;
+        }
+        strm.adler = state.check = 0;
+        state.mode = TYPE;
+        break;
+      case DICTID:
+        //=== NEEDBITS(32); */
+        while (bits < 32) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        strm.adler = state.check = zswap32(hold);
+        //=== INITBITS();
+        hold = 0;
+        bits = 0;
+        //===//
+        state.mode = DICT;
+        /* falls through */
+      case DICT:
+        if (state.havedict === 0) {
+          //--- RESTORE() ---
+          strm.next_out = put;
+          strm.avail_out = left;
+          strm.next_in = next;
+          strm.avail_in = have;
+          state.hold = hold;
+          state.bits = bits;
+          //---
+          return Z_NEED_DICT$1;
+        }
+        strm.adler = state.check = 1/*adler32(0L, Z_NULL, 0)*/;
+        state.mode = TYPE;
+        /* falls through */
+      case TYPE:
+        if (flush === Z_BLOCK || flush === Z_TREES) { break inf_leave; }
+        /* falls through */
+      case TYPEDO:
+        if (state.last) {
+          //--- BYTEBITS() ---//
+          hold >>>= bits & 7;
+          bits -= bits & 7;
+          //---//
+          state.mode = CHECK;
+          break;
+        }
+        //=== NEEDBITS(3); */
+        while (bits < 3) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        state.last = (hold & 0x01)/*BITS(1)*/;
+        //--- DROPBITS(1) ---//
+        hold >>>= 1;
+        bits -= 1;
+        //---//
+
+        switch ((hold & 0x03)/*BITS(2)*/) {
+          case 0:                             /* stored block */
+            //Tracev((stderr, "inflate:     stored block%s\n",
+            //        state.last ? " (last)" : ""));
+            state.mode = STORED;
+            break;
+          case 1:                             /* fixed block */
+            fixedtables(state);
+            //Tracev((stderr, "inflate:     fixed codes block%s\n",
+            //        state.last ? " (last)" : ""));
+            state.mode = LEN_;             /* decode codes */
+            if (flush === Z_TREES) {
+              //--- DROPBITS(2) ---//
+              hold >>>= 2;
+              bits -= 2;
+              //---//
+              break inf_leave;
+            }
+            break;
+          case 2:                             /* dynamic block */
+            //Tracev((stderr, "inflate:     dynamic codes block%s\n",
+            //        state.last ? " (last)" : ""));
+            state.mode = TABLE;
+            break;
+          case 3:
+            strm.msg = 'invalid block type';
+            state.mode = BAD;
+        }
+        //--- DROPBITS(2) ---//
+        hold >>>= 2;
+        bits -= 2;
+        //---//
+        break;
+      case STORED:
+        //--- BYTEBITS() ---// /* go to byte boundary */
+        hold >>>= bits & 7;
+        bits -= bits & 7;
+        //---//
+        //=== NEEDBITS(32); */
+        while (bits < 32) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        if ((hold & 0xffff) !== ((hold >>> 16) ^ 0xffff)) {
+          strm.msg = 'invalid stored block lengths';
+          state.mode = BAD;
+          break;
+        }
+        state.length = hold & 0xffff;
+        //Tracev((stderr, "inflate:       stored length %u\n",
+        //        state.length));
+        //=== INITBITS();
+        hold = 0;
+        bits = 0;
+        //===//
+        state.mode = COPY_;
+        if (flush === Z_TREES) { break inf_leave; }
+        /* falls through */
+      case COPY_:
+        state.mode = COPY;
+        /* falls through */
+      case COPY:
+        copy = state.length;
+        if (copy) {
+          if (copy > have) { copy = have; }
+          if (copy > left) { copy = left; }
+          if (copy === 0) { break inf_leave; }
+          //--- zmemcpy(put, next, copy); ---
+          output.set(input.subarray(next, next + copy), put);
+          //---//
+          have -= copy;
+          next += copy;
+          left -= copy;
+          put += copy;
+          state.length -= copy;
+          break;
+        }
+        //Tracev((stderr, "inflate:       stored end\n"));
+        state.mode = TYPE;
+        break;
+      case TABLE:
+        //=== NEEDBITS(14); */
+        while (bits < 14) {
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+        }
+        //===//
+        state.nlen = (hold & 0x1f)/*BITS(5)*/ + 257;
+        //--- DROPBITS(5) ---//
+        hold >>>= 5;
+        bits -= 5;
+        //---//
+        state.ndist = (hold & 0x1f)/*BITS(5)*/ + 1;
+        //--- DROPBITS(5) ---//
+        hold >>>= 5;
+        bits -= 5;
+        //---//
+        state.ncode = (hold & 0x0f)/*BITS(4)*/ + 4;
+        //--- DROPBITS(4) ---//
+        hold >>>= 4;
+        bits -= 4;
+        //---//
+//#ifndef PKZIP_BUG_WORKAROUND
+        if (state.nlen > 286 || state.ndist > 30) {
+          strm.msg = 'too many length or distance symbols';
+          state.mode = BAD;
+          break;
+        }
+//#endif
+        //Tracev((stderr, "inflate:       table sizes ok\n"));
+        state.have = 0;
+        state.mode = LENLENS;
+        /* falls through */
+      case LENLENS:
+        while (state.have < state.ncode) {
+          //=== NEEDBITS(3);
+          while (bits < 3) {
+            if (have === 0) { break inf_leave; }
+            have--;
+            hold += input[next++] << bits;
+            bits += 8;
+          }
+          //===//
+          state.lens[order[state.have++]] = (hold & 0x07);//BITS(3);
+          //--- DROPBITS(3) ---//
+          hold >>>= 3;
+          bits -= 3;
+          //---//
+        }
+        while (state.have < 19) {
+          state.lens[order[state.have++]] = 0;
+        }
+        // We have separate tables & no pointers. 2 commented lines below not needed.
+        //state.next = state.codes;
+        //state.lencode = state.next;
+        // Switch to use dynamic table
+        state.lencode = state.lendyn;
+        state.lenbits = 7;
+
+        opts = { bits: state.lenbits };
+        ret = inftrees(CODES, state.lens, 0, 19, state.lencode, 0, state.work, opts);
+        state.lenbits = opts.bits;
+
+        if (ret) {
+          strm.msg = 'invalid code lengths set';
+          state.mode = BAD;
+          break;
+        }
+        //Tracev((stderr, "inflate:       code lengths ok\n"));
+        state.have = 0;
+        state.mode = CODELENS;
+        /* falls through */
+      case CODELENS:
+        while (state.have < state.nlen + state.ndist) {
+          for (;;) {
+            here = state.lencode[hold & ((1 << state.lenbits) - 1)];/*BITS(state.lenbits)*/
+            here_bits = here >>> 24;
+            here_op = (here >>> 16) & 0xff;
+            here_val = here & 0xffff;
+
+            if ((here_bits) <= bits) { break; }
+            //--- PULLBYTE() ---//
+            if (have === 0) { break inf_leave; }
+            have--;
+            hold += input[next++] << bits;
+            bits += 8;
+            //---//
+          }
+          if (here_val < 16) {
+            //--- DROPBITS(here.bits) ---//
+            hold >>>= here_bits;
+            bits -= here_bits;
+            //---//
+            state.lens[state.have++] = here_val;
+          }
+          else {
+            if (here_val === 16) {
+              //=== NEEDBITS(here.bits + 2);
+              n = here_bits + 2;
+              while (bits < n) {
+                if (have === 0) { break inf_leave; }
+                have--;
+                hold += input[next++] << bits;
+                bits += 8;
+              }
+              //===//
+              //--- DROPBITS(here.bits) ---//
+              hold >>>= here_bits;
+              bits -= here_bits;
+              //---//
+              if (state.have === 0) {
+                strm.msg = 'invalid bit length repeat';
+                state.mode = BAD;
+                break;
+              }
+              len = state.lens[state.have - 1];
+              copy = 3 + (hold & 0x03);//BITS(2);
+              //--- DROPBITS(2) ---//
+              hold >>>= 2;
+              bits -= 2;
+              //---//
+            }
+            else if (here_val === 17) {
+              //=== NEEDBITS(here.bits + 3);
+              n = here_bits + 3;
+              while (bits < n) {
+                if (have === 0) { break inf_leave; }
+                have--;
+                hold += input[next++] << bits;
+                bits += 8;
+              }
+              //===//
+              //--- DROPBITS(here.bits) ---//
+              hold >>>= here_bits;
+              bits -= here_bits;
+              //---//
+              len = 0;
+              copy = 3 + (hold & 0x07);//BITS(3);
+              //--- DROPBITS(3) ---//
+              hold >>>= 3;
+              bits -= 3;
+              //---//
+            }
+            else {
+              //=== NEEDBITS(here.bits + 7);
+              n = here_bits + 7;
+              while (bits < n) {
+                if (have === 0) { break inf_leave; }
+                have--;
+                hold += input[next++] << bits;
+                bits += 8;
+              }
+              //===//
+              //--- DROPBITS(here.bits) ---//
+              hold >>>= here_bits;
+              bits -= here_bits;
+              //---//
+              len = 0;
+              copy = 11 + (hold & 0x7f);//BITS(7);
+              //--- DROPBITS(7) ---//
+              hold >>>= 7;
+              bits -= 7;
+              //---//
+            }
+            if (state.have + copy > state.nlen + state.ndist) {
+              strm.msg = 'invalid bit length repeat';
+              state.mode = BAD;
+              break;
+            }
+            while (copy--) {
+              state.lens[state.have++] = len;
+            }
+          }
+        }
+
+        /* handle error breaks in while */
+        if (state.mode === BAD) { break; }
+
+        /* check for end-of-block code (better have one) */
+        if (state.lens[256] === 0) {
+          strm.msg = 'invalid code -- missing end-of-block';
+          state.mode = BAD;
+          break;
+        }
+
+        /* build code tables -- note: do not change the lenbits or distbits
+           values here (9 and 6) without reading the comments in inftrees.h
+           concerning the ENOUGH constants, which depend on those values */
+        state.lenbits = 9;
+
+        opts = { bits: state.lenbits };
+        ret = inftrees(LENS, state.lens, 0, state.nlen, state.lencode, 0, state.work, opts);
+        // We have separate tables & no pointers. 2 commented lines below not needed.
+        // state.next_index = opts.table_index;
+        state.lenbits = opts.bits;
+        // state.lencode = state.next;
+
+        if (ret) {
+          strm.msg = 'invalid literal/lengths set';
+          state.mode = BAD;
+          break;
+        }
+
+        state.distbits = 6;
+        //state.distcode.copy(state.codes);
+        // Switch to use dynamic table
+        state.distcode = state.distdyn;
+        opts = { bits: state.distbits };
+        ret = inftrees(DISTS, state.lens, state.nlen, state.ndist, state.distcode, 0, state.work, opts);
+        // We have separate tables & no pointers. 2 commented lines below not needed.
+        // state.next_index = opts.table_index;
+        state.distbits = opts.bits;
+        // state.distcode = state.next;
+
+        if (ret) {
+          strm.msg = 'invalid distances set';
+          state.mode = BAD;
+          break;
+        }
+        //Tracev((stderr, 'inflate:       codes ok\n'));
+        state.mode = LEN_;
+        if (flush === Z_TREES) { break inf_leave; }
+        /* falls through */
+      case LEN_:
+        state.mode = LEN;
+        /* falls through */
+      case LEN:
+        if (have >= 6 && left >= 258) {
+          //--- RESTORE() ---
+          strm.next_out = put;
+          strm.avail_out = left;
+          strm.next_in = next;
+          strm.avail_in = have;
+          state.hold = hold;
+          state.bits = bits;
+          //---
+          inffast(strm, _out);
+          //--- LOAD() ---
+          put = strm.next_out;
+          output = strm.output;
+          left = strm.avail_out;
+          next = strm.next_in;
+          input = strm.input;
+          have = strm.avail_in;
+          hold = state.hold;
+          bits = state.bits;
+          //---
+
+          if (state.mode === TYPE) {
+            state.back = -1;
+          }
+          break;
+        }
+        state.back = 0;
+        for (;;) {
+          here = state.lencode[hold & ((1 << state.lenbits) - 1)];  /*BITS(state.lenbits)*/
+          here_bits = here >>> 24;
+          here_op = (here >>> 16) & 0xff;
+          here_val = here & 0xffff;
+
+          if (here_bits <= bits) { break; }
+          //--- PULLBYTE() ---//
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+          //---//
+        }
+        if (here_op && (here_op & 0xf0) === 0) {
+          last_bits = here_bits;
+          last_op = here_op;
+          last_val = here_val;
+          for (;;) {
+            here = state.lencode[last_val +
+                    ((hold & ((1 << (last_bits + last_op)) - 1))/*BITS(last.bits + last.op)*/ >> last_bits)];
+            here_bits = here >>> 24;
+            here_op = (here >>> 16) & 0xff;
+            here_val = here & 0xffff;
+
+            if ((last_bits + here_bits) <= bits) { break; }
+            //--- PULLBYTE() ---//
+            if (have === 0) { break inf_leave; }
+            have--;
+            hold += input[next++] << bits;
+            bits += 8;
+            //---//
+          }
+          //--- DROPBITS(last.bits) ---//
+          hold >>>= last_bits;
+          bits -= last_bits;
+          //---//
+          state.back += last_bits;
+        }
+        //--- DROPBITS(here.bits) ---//
+        hold >>>= here_bits;
+        bits -= here_bits;
+        //---//
+        state.back += here_bits;
+        state.length = here_val;
+        if (here_op === 0) {
+          //Tracevv((stderr, here.val >= 0x20 && here.val < 0x7f ?
+          //        "inflate:         literal '%c'\n" :
+          //        "inflate:         literal 0x%02x\n", here.val));
+          state.mode = LIT;
+          break;
+        }
+        if (here_op & 32) {
+          //Tracevv((stderr, "inflate:         end of block\n"));
+          state.back = -1;
+          state.mode = TYPE;
+          break;
+        }
+        if (here_op & 64) {
+          strm.msg = 'invalid literal/length code';
+          state.mode = BAD;
+          break;
+        }
+        state.extra = here_op & 15;
+        state.mode = LENEXT;
+        /* falls through */
+      case LENEXT:
+        if (state.extra) {
+          //=== NEEDBITS(state.extra);
+          n = state.extra;
+          while (bits < n) {
+            if (have === 0) { break inf_leave; }
+            have--;
+            hold += input[next++] << bits;
+            bits += 8;
+          }
+          //===//
+          state.length += hold & ((1 << state.extra) - 1)/*BITS(state.extra)*/;
+          //--- DROPBITS(state.extra) ---//
+          hold >>>= state.extra;
+          bits -= state.extra;
+          //---//
+          state.back += state.extra;
+        }
+        //Tracevv((stderr, "inflate:         length %u\n", state.length));
+        state.was = state.length;
+        state.mode = DIST;
+        /* falls through */
+      case DIST:
+        for (;;) {
+          here = state.distcode[hold & ((1 << state.distbits) - 1)];/*BITS(state.distbits)*/
+          here_bits = here >>> 24;
+          here_op = (here >>> 16) & 0xff;
+          here_val = here & 0xffff;
+
+          if ((here_bits) <= bits) { break; }
+          //--- PULLBYTE() ---//
+          if (have === 0) { break inf_leave; }
+          have--;
+          hold += input[next++] << bits;
+          bits += 8;
+          //---//
+        }
+        if ((here_op & 0xf0) === 0) {
+          last_bits = here_bits;
+          last_op = here_op;
+          last_val = here_val;
+          for (;;) {
+            here = state.distcode[last_val +
+                    ((hold & ((1 << (last_bits + last_op)) - 1))/*BITS(last.bits + last.op)*/ >> last_bits)];
+            here_bits = here >>> 24;
+            here_op = (here >>> 16) & 0xff;
+            here_val = here & 0xffff;
+
+            if ((last_bits + here_bits) <= bits) { break; }
+            //--- PULLBYTE() ---//
+            if (have === 0) { break inf_leave; }
+            have--;
+            hold += input[next++] << bits;
+            bits += 8;
+            //---//
+          }
+          //--- DROPBITS(last.bits) ---//
+          hold >>>= last_bits;
+          bits -= last_bits;
+          //---//
+          state.back += last_bits;
+        }
+        //--- DROPBITS(here.bits) ---//
+        hold >>>= here_bits;
+        bits -= here_bits;
+        //---//
+        state.back += here_bits;
+        if (here_op & 64) {
+          strm.msg = 'invalid distance code';
+          state.mode = BAD;
+          break;
+        }
+        state.offset = here_val;
+        state.extra = (here_op) & 15;
+        state.mode = DISTEXT;
+        /* falls through */
+      case DISTEXT:
+        if (state.extra) {
+          //=== NEEDBITS(state.extra);
+          n = state.extra;
+          while (bits < n) {
+            if (have === 0) { break inf_leave; }
+            have--;
+            hold += input[next++] << bits;
+            bits += 8;
+          }
+          //===//
+          state.offset += hold & ((1 << state.extra) - 1)/*BITS(state.extra)*/;
+          //--- DROPBITS(state.extra) ---//
+          hold >>>= state.extra;
+          bits -= state.extra;
+          //---//
+          state.back += state.extra;
+        }
+//#ifdef INFLATE_STRICT
+        if (state.offset > state.dmax) {
+          strm.msg = 'invalid distance too far back';
+          state.mode = BAD;
+          break;
+        }
+//#endif
+        //Tracevv((stderr, "inflate:         distance %u\n", state.offset));
+        state.mode = MATCH;
+        /* falls through */
+      case MATCH:
+        if (left === 0) { break inf_leave; }
+        copy = _out - left;
+        if (state.offset > copy) {         /* copy from window */
+          copy = state.offset - copy;
+          if (copy > state.whave) {
+            if (state.sane) {
+              strm.msg = 'invalid distance too far back';
+              state.mode = BAD;
+              break;
+            }
+// (!) This block is disabled in zlib defaults,
+// don't enable it for binary compatibility
+//#ifdef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
+//          Trace((stderr, "inflate.c too far\n"));
+//          copy -= state.whave;
+//          if (copy > state.length) { copy = state.length; }
+//          if (copy > left) { copy = left; }
+//          left -= copy;
+//          state.length -= copy;
+//          do {
+//            output[put++] = 0;
+//          } while (--copy);
+//          if (state.length === 0) { state.mode = LEN; }
+//          break;
+//#endif
+          }
+          if (copy > state.wnext) {
+            copy -= state.wnext;
+            from = state.wsize - copy;
+          }
+          else {
+            from = state.wnext - copy;
+          }
+          if (copy > state.length) { copy = state.length; }
+          from_source = state.window;
+        }
+        else {                              /* copy from output */
+          from_source = output;
+          from = put - state.offset;
+          copy = state.length;
+        }
+        if (copy > left) { copy = left; }
+        left -= copy;
+        state.length -= copy;
+        do {
+          output[put++] = from_source[from++];
+        } while (--copy);
+        if (state.length === 0) { state.mode = LEN; }
+        break;
+      case LIT:
+        if (left === 0) { break inf_leave; }
+        output[put++] = state.length;
+        left--;
+        state.mode = LEN;
+        break;
+      case CHECK:
+        if (state.wrap) {
+          //=== NEEDBITS(32);
+          while (bits < 32) {
+            if (have === 0) { break inf_leave; }
+            have--;
+            // Use '|' instead of '+' to make sure that result is signed
+            hold |= input[next++] << bits;
+            bits += 8;
+          }
+          //===//
+          _out -= left;
+          strm.total_out += _out;
+          state.total += _out;
+          if ((state.wrap & 4) && _out) {
+            strm.adler = state.check =
+                /*UPDATE_CHECK(state.check, put - _out, _out);*/
+                (state.flags ? crc32_1(state.check, output, _out, put - _out) : adler32_1(state.check, output, _out, put - _out));
+
+          }
+          _out = left;
+          // NB: crc32 stored as signed 32-bit int, zswap32 returns signed too
+          if ((state.wrap & 4) && (state.flags ? hold : zswap32(hold)) !== state.check) {
+            strm.msg = 'incorrect data check';
+            state.mode = BAD;
+            break;
+          }
+          //=== INITBITS();
+          hold = 0;
+          bits = 0;
+          //===//
+          //Tracev((stderr, "inflate:   check matches trailer\n"));
+        }
+        state.mode = LENGTH;
+        /* falls through */
+      case LENGTH:
+        if (state.wrap && state.flags) {
+          //=== NEEDBITS(32);
+          while (bits < 32) {
+            if (have === 0) { break inf_leave; }
+            have--;
+            hold += input[next++] << bits;
+            bits += 8;
+          }
+          //===//
+          if ((state.wrap & 4) && hold !== (state.total & 0xffffffff)) {
+            strm.msg = 'incorrect length check';
+            state.mode = BAD;
+            break;
+          }
+          //=== INITBITS();
+          hold = 0;
+          bits = 0;
+          //===//
+          //Tracev((stderr, "inflate:   length matches trailer\n"));
+        }
+        state.mode = DONE;
+        /* falls through */
+      case DONE:
+        ret = Z_STREAM_END$1;
+        break inf_leave;
+      case BAD:
+        ret = Z_DATA_ERROR$1;
+        break inf_leave;
+      case MEM:
+        return Z_MEM_ERROR$1;
+      case SYNC:
+        /* falls through */
+      default:
+        return Z_STREAM_ERROR$1;
+    }
+  }
+
+  // inf_leave <- here is real place for "goto inf_leave", emulated via "break inf_leave"
+
+  /*
+     Return from inflate(), updating the total counts and the check value.
+     If there was no progress during the inflate() call, return a buffer
+     error.  Call updatewindow() to create and/or update the window state.
+     Note: a memory error from inflate() is non-recoverable.
+   */
+
+  //--- RESTORE() ---
+  strm.next_out = put;
+  strm.avail_out = left;
+  strm.next_in = next;
+  strm.avail_in = have;
+  state.hold = hold;
+  state.bits = bits;
+  //---
+
+  if (state.wsize || (_out !== strm.avail_out && state.mode < BAD &&
+                      (state.mode < CHECK || flush !== Z_FINISH$1))) {
+    if (updatewindow(strm, strm.output, strm.next_out, _out - strm.avail_out)) ;
+  }
+  _in -= strm.avail_in;
+  _out -= strm.avail_out;
+  strm.total_in += _in;
+  strm.total_out += _out;
+  state.total += _out;
+  if ((state.wrap & 4) && _out) {
+    strm.adler = state.check = /*UPDATE_CHECK(state.check, strm.next_out - _out, _out);*/
+      (state.flags ? crc32_1(state.check, output, _out, strm.next_out - _out) : adler32_1(state.check, output, _out, strm.next_out - _out));
+  }
+  strm.data_type = state.bits + (state.last ? 64 : 0) +
+                    (state.mode === TYPE ? 128 : 0) +
+                    (state.mode === LEN_ || state.mode === COPY_ ? 256 : 0);
+  if (((_in === 0 && _out === 0) || flush === Z_FINISH$1) && ret === Z_OK$1) {
+    ret = Z_BUF_ERROR;
+  }
+  return ret;
+};
+
+
+const inflateEnd = (strm) => {
+
+  if (inflateStateCheck(strm)) {
+    return Z_STREAM_ERROR$1;
+  }
+
+  let state = strm.state;
+  if (state.window) {
+    state.window = null;
+  }
+  strm.state = null;
+  return Z_OK$1;
+};
+
+
+const inflateGetHeader = (strm, head) => {
+
+  /* check state */
+  if (inflateStateCheck(strm)) { return Z_STREAM_ERROR$1; }
+  const state = strm.state;
+  if ((state.wrap & 2) === 0) { return Z_STREAM_ERROR$1; }
+
+  /* save header structure */
+  state.head = head;
+  head.done = false;
+  return Z_OK$1;
+};
+
+
+const inflateSetDictionary = (strm, dictionary) => {
+  const dictLength = dictionary.length;
+
+  let state;
+  let dictid;
+  let ret;
+
+  /* check state */
+  if (inflateStateCheck(strm)) { return Z_STREAM_ERROR$1; }
+  state = strm.state;
+
+  if (state.wrap !== 0 && state.mode !== DICT) {
+    return Z_STREAM_ERROR$1;
+  }
+
+  /* check for correct dictionary identifier */
+  if (state.mode === DICT) {
+    dictid = 1; /* adler32(0, null, 0)*/
+    /* dictid = adler32(dictid, dictionary, dictLength); */
+    dictid = adler32_1(dictid, dictionary, dictLength, 0);
+    if (dictid !== state.check) {
+      return Z_DATA_ERROR$1;
+    }
+  }
+  /* copy dictionary to window using updatewindow(), which will amend the
+   existing dictionary if appropriate */
+  ret = updatewindow(strm, dictionary, dictLength, dictLength);
+  if (ret) {
+    state.mode = MEM;
+    return Z_MEM_ERROR$1;
+  }
+  state.havedict = 1;
+  // Tracev((stderr, "inflate:   dictionary set\n"));
+  return Z_OK$1;
+};
+
+
+var inflateReset_1 = inflateReset;
+var inflateReset2_1 = inflateReset2;
+var inflateResetKeep_1 = inflateResetKeep;
+var inflateInit_1 = inflateInit;
+var inflateInit2_1 = inflateInit2;
+var inflate_2$1 = inflate$2;
+var inflateEnd_1 = inflateEnd;
+var inflateGetHeader_1 = inflateGetHeader;
+var inflateSetDictionary_1 = inflateSetDictionary;
+var inflateInfo = 'pako inflate (from Nodeca project)';
+
+/* Not implemented
+module.exports.inflateCodesUsed = inflateCodesUsed;
+module.exports.inflateCopy = inflateCopy;
+module.exports.inflateGetDictionary = inflateGetDictionary;
+module.exports.inflateMark = inflateMark;
+module.exports.inflatePrime = inflatePrime;
+module.exports.inflateSync = inflateSync;
+module.exports.inflateSyncPoint = inflateSyncPoint;
+module.exports.inflateUndermine = inflateUndermine;
+module.exports.inflateValidate = inflateValidate;
+*/
+
+var inflate_1$2 = {
+	inflateReset: inflateReset_1,
+	inflateReset2: inflateReset2_1,
+	inflateResetKeep: inflateResetKeep_1,
+	inflateInit: inflateInit_1,
+	inflateInit2: inflateInit2_1,
+	inflate: inflate_2$1,
+	inflateEnd: inflateEnd_1,
+	inflateGetHeader: inflateGetHeader_1,
+	inflateSetDictionary: inflateSetDictionary_1,
+	inflateInfo: inflateInfo
+};
+
+// (C) 1995-2013 Jean-loup Gailly and Mark Adler
+// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
+//
+// This software is provided 'as-is', without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+//
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+//
+// 1. The origin of this software must not be misrepresented; you must not
+//   claim that you wrote the original software. If you use this software
+//   in a product, an acknowledgment in the product documentation would be
+//   appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//   misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+
+function GZheader() {
+  /* true if compressed data believed to be text */
+  this.text       = 0;
+  /* modification time */
+  this.time       = 0;
+  /* extra flags (not used when writing a gzip file) */
+  this.xflags     = 0;
+  /* operating system */
+  this.os         = 0;
+  /* pointer to extra field or Z_NULL if none */
+  this.extra      = null;
+  /* extra field length (valid if extra != Z_NULL) */
+  this.extra_len  = 0; // Actually, we don't need it in JS,
+                       // but leave for few code modifications
+
+  //
+  // Setup limits is not necessary because in js we should not preallocate memory
+  // for inflate use constant limit in 65536 bytes
+  //
+
+  /* space at extra (only when reading header) */
+  // this.extra_max  = 0;
+  /* pointer to zero-terminated file name or Z_NULL */
+  this.name       = '';
+  /* space at name (only when reading header) */
+  // this.name_max   = 0;
+  /* pointer to zero-terminated comment or Z_NULL */
+  this.comment    = '';
+  /* space at comment (only when reading header) */
+  // this.comm_max   = 0;
+  /* true if there was or will be a header crc */
+  this.hcrc       = 0;
+  /* true when done reading gzip header (not used when writing a gzip file) */
+  this.done       = false;
+}
+
+var gzheader = GZheader;
+
+const toString = Object.prototype.toString;
+
+/* Public constants ==========================================================*/
+/* ===========================================================================*/
+
+const {
+  Z_NO_FLUSH, Z_FINISH,
+  Z_OK, Z_STREAM_END, Z_NEED_DICT, Z_STREAM_ERROR, Z_DATA_ERROR, Z_MEM_ERROR
+} = constants$2;
+
+/* ===========================================================================*/
+
+
+/**
+ * class Inflate
+ *
+ * Generic JS-style wrapper for zlib calls. If you don't need
+ * streaming behaviour - use more simple functions: [[inflate]]
+ * and [[inflateRaw]].
+ **/
+
+/* internal
+ * inflate.chunks -> Array
+ *
+ * Chunks of output data, if [[Inflate#onData]] not overridden.
+ **/
+
+/**
+ * Inflate.result -> Uint8Array|String
+ *
+ * Uncompressed result, generated by default [[Inflate#onData]]
+ * and [[Inflate#onEnd]] handlers. Filled after you push last chunk
+ * (call [[Inflate#push]] with `Z_FINISH` / `true` param).
+ **/
+
+/**
+ * Inflate.err -> Number
+ *
+ * Error code after inflate finished. 0 (Z_OK) on success.
+ * Should be checked if broken data possible.
+ **/
+
+/**
+ * Inflate.msg -> String
+ *
+ * Error message, if [[Inflate.err]] != 0
+ **/
+
+
+/**
+ * new Inflate(options)
+ * - options (Object): zlib inflate options.
+ *
+ * Creates new inflator instance with specified params. Throws exception
+ * on bad params. Supported options:
+ *
+ * - `windowBits`
+ * - `dictionary`
+ *
+ * [http://zlib.net/manual.html#Advanced](http://zlib.net/manual.html#Advanced)
+ * for more information on these.
+ *
+ * Additional options, for internal needs:
+ *
+ * - `chunkSize` - size of generated data chunks (16K by default)
+ * - `raw` (Boolean) - do raw inflate
+ * - `to` (String) - if equal to 'string', then result will be converted
+ *   from utf8 to utf16 (javascript) string. When string output requested,
+ *   chunk length can differ from `chunkSize`, depending on content.
+ *
+ * By default, when no options set, autodetect deflate/gzip data format via
+ * wrapper header.
+ *
+ * ##### Example:
+ *
+ * ```javascript
+ * const pako = require('pako')
+ * const chunk1 = new Uint8Array([1,2,3,4,5,6,7,8,9])
+ * const chunk2 = new Uint8Array([10,11,12,13,14,15,16,17,18,19]);
+ *
+ * const inflate = new pako.Inflate({ level: 3});
+ *
+ * inflate.push(chunk1, false);
+ * inflate.push(chunk2, true);  // true -> last chunk
+ *
+ * if (inflate.err) { throw new Error(inflate.err); }
+ *
+ * console.log(inflate.result);
+ * ```
+ **/
+function Inflate$1(options) {
+  this.options = common.assign({
+    chunkSize: 1024 * 64,
+    windowBits: 15,
+    to: ''
+  }, options || {});
+
+  const opt = this.options;
+
+  // Force window size for `raw` data, if not set directly,
+  // because we have no header for autodetect.
+  if (opt.raw && (opt.windowBits >= 0) && (opt.windowBits < 16)) {
+    opt.windowBits = -opt.windowBits;
+    if (opt.windowBits === 0) { opt.windowBits = -15; }
+  }
+
+  // If `windowBits` not defined (and mode not raw) - set autodetect flag for gzip/deflate
+  if ((opt.windowBits >= 0) && (opt.windowBits < 16) &&
+      !(options && options.windowBits)) {
+    opt.windowBits += 32;
+  }
+
+  // Gzip header has no info about windows size, we can do autodetect only
+  // for deflate. So, if window size not set, force it to max when gzip possible
+  if ((opt.windowBits > 15) && (opt.windowBits < 48)) {
+    // bit 3 (16) -> gzipped data
+    // bit 4 (32) -> autodetect gzip/deflate
+    if ((opt.windowBits & 15) === 0) {
+      opt.windowBits |= 15;
+    }
+  }
+
+  this.err    = 0;      // error code, if happens (0 = Z_OK)
+  this.msg    = '';     // error message
+  this.ended  = false;  // used to avoid multiple onEnd() calls
+  this.chunks = [];     // chunks of compressed data
+
+  this.strm   = new zstream();
+  this.strm.avail_out = 0;
+
+  let status  = inflate_1$2.inflateInit2(
+    this.strm,
+    opt.windowBits
+  );
+
+  if (status !== Z_OK) {
+    throw new Error(messages[status]);
+  }
+
+  this.header = new gzheader();
+
+  inflate_1$2.inflateGetHeader(this.strm, this.header);
+
+  // Setup dictionary
+  if (opt.dictionary) {
+    // Convert data if needed
+    if (typeof opt.dictionary === 'string') {
+      opt.dictionary = strings.string2buf(opt.dictionary);
+    } else if (toString.call(opt.dictionary) === '[object ArrayBuffer]') {
+      opt.dictionary = new Uint8Array(opt.dictionary);
+    }
+    if (opt.raw) { //In raw mode we need to set the dictionary early
+      status = inflate_1$2.inflateSetDictionary(this.strm, opt.dictionary);
+      if (status !== Z_OK) {
+        throw new Error(messages[status]);
+      }
+    }
+  }
+}
+
+/**
+ * Inflate#push(data[, flush_mode]) -> Boolean
+ * - data (Uint8Array|ArrayBuffer): input data
+ * - flush_mode (Number|Boolean): 0..6 for corresponding Z_NO_FLUSH..Z_TREE
+ *   flush modes. See constants. Skipped or `false` means Z_NO_FLUSH,
+ *   `true` means Z_FINISH.
+ *
+ * Sends input data to inflate pipe, generating [[Inflate#onData]] calls with
+ * new output chunks. Returns `true` on success. If end of stream detected,
+ * [[Inflate#onEnd]] will be called.
+ *
+ * `flush_mode` is not needed for normal operation, because end of stream
+ * detected automatically. You may try to use it for advanced things, but
+ * this functionality was not tested.
+ *
+ * On fail call [[Inflate#onEnd]] with error code and return false.
+ *
+ * ##### Example
+ *
+ * ```javascript
+ * push(chunk, false); // push one of data chunks
+ * ...
+ * push(chunk, true);  // push last chunk
+ * ```
+ **/
+Inflate$1.prototype.push = function (data, flush_mode) {
+  const strm = this.strm;
+  const chunkSize = this.options.chunkSize;
+  const dictionary = this.options.dictionary;
+  let status, _flush_mode, last_avail_out;
+
+  if (this.ended) return false;
+
+  if (flush_mode === ~~flush_mode) _flush_mode = flush_mode;
+  else _flush_mode = flush_mode === true ? Z_FINISH : Z_NO_FLUSH;
+
+  // Convert data if needed
+  if (toString.call(data) === '[object ArrayBuffer]') {
+    strm.input = new Uint8Array(data);
+  } else {
+    strm.input = data;
+  }
+
+  strm.next_in = 0;
+  strm.avail_in = strm.input.length;
+
+  for (;;) {
+    if (strm.avail_out === 0) {
+      strm.output = new Uint8Array(chunkSize);
+      strm.next_out = 0;
+      strm.avail_out = chunkSize;
+    }
+
+    status = inflate_1$2.inflate(strm, _flush_mode);
+
+    if (status === Z_NEED_DICT && dictionary) {
+      status = inflate_1$2.inflateSetDictionary(strm, dictionary);
+
+      if (status === Z_OK) {
+        status = inflate_1$2.inflate(strm, _flush_mode);
+      } else if (status === Z_DATA_ERROR) {
+        // Replace code with more verbose
+        status = Z_NEED_DICT;
+      }
+    }
+
+    // Skip snyc markers if more data follows and not raw mode
+    while (strm.avail_in > 0 &&
+           status === Z_STREAM_END &&
+           strm.state.wrap > 0 &&
+           data[strm.next_in] !== 0)
+    {
+      inflate_1$2.inflateReset(strm);
+      status = inflate_1$2.inflate(strm, _flush_mode);
+    }
+
+    switch (status) {
+      case Z_STREAM_ERROR:
+      case Z_DATA_ERROR:
+      case Z_NEED_DICT:
+      case Z_MEM_ERROR:
+        this.onEnd(status);
+        this.ended = true;
+        return false;
+    }
+
+    // Remember real `avail_out` value, because we may patch out buffer content
+    // to align utf8 strings boundaries.
+    last_avail_out = strm.avail_out;
+
+    if (strm.next_out) {
+      if (strm.avail_out === 0 || status === Z_STREAM_END) {
+
+        if (this.options.to === 'string') {
+
+          let next_out_utf8 = strings.utf8border(strm.output, strm.next_out);
+
+          let tail = strm.next_out - next_out_utf8;
+          let utf8str = strings.buf2string(strm.output, next_out_utf8);
+
+          // move tail & realign counters
+          strm.next_out = tail;
+          strm.avail_out = chunkSize - tail;
+          if (tail) strm.output.set(strm.output.subarray(next_out_utf8, next_out_utf8 + tail), 0);
+
+          this.onData(utf8str);
+
+        } else {
+          this.onData(strm.output.length === strm.next_out ? strm.output : strm.output.subarray(0, strm.next_out));
+        }
+      }
+    }
+
+    // Must repeat iteration if out buffer is full
+    if (status === Z_OK && last_avail_out === 0) continue;
+
+    // Finalize if end of stream reached.
+    if (status === Z_STREAM_END) {
+      status = inflate_1$2.inflateEnd(this.strm);
+      this.onEnd(status);
+      this.ended = true;
+      return true;
+    }
+
+    if (strm.avail_in === 0) break;
+  }
+
+  return true;
+};
+
+
+/**
+ * Inflate#onData(chunk) -> Void
+ * - chunk (Uint8Array|String): output data. When string output requested,
+ *   each chunk will be string.
+ *
+ * By default, stores data blocks in `chunks[]` property and glue
+ * those in `onEnd`. Override this handler, if you need another behaviour.
+ **/
+Inflate$1.prototype.onData = function (chunk) {
+  this.chunks.push(chunk);
+};
+
+
+/**
+ * Inflate#onEnd(status) -> Void
+ * - status (Number): inflate status. 0 (Z_OK) on success,
+ *   other if not.
+ *
+ * Called either after you tell inflate that the input stream is
+ * complete (Z_FINISH). By default - join collected chunks,
+ * free memory and fill `results` / `err` properties.
+ **/
+Inflate$1.prototype.onEnd = function (status) {
+  // On success - join
+  if (status === Z_OK) {
+    if (this.options.to === 'string') {
+      this.result = this.chunks.join('');
+    } else {
+      this.result = common.flattenChunks(this.chunks);
+    }
+  }
+  this.chunks = [];
+  this.err = status;
+  this.msg = this.strm.msg;
+};
+
+
+/**
+ * inflate(data[, options]) -> Uint8Array|String
+ * - data (Uint8Array|ArrayBuffer): input data to decompress.
+ * - options (Object): zlib inflate options.
+ *
+ * Decompress `data` with inflate/ungzip and `options`. Autodetect
+ * format via wrapper header by default. That's why we don't provide
+ * separate `ungzip` method.
+ *
+ * Supported options are:
+ *
+ * - windowBits
+ *
+ * [http://zlib.net/manual.html#Advanced](http://zlib.net/manual.html#Advanced)
+ * for more information.
+ *
+ * Sugar (options):
+ *
+ * - `raw` (Boolean) - say that we work with raw stream, if you don't wish to specify
+ *   negative windowBits implicitly.
+ * - `to` (String) - if equal to 'string', then result will be converted
+ *   from utf8 to utf16 (javascript) string. When string output requested,
+ *   chunk length can differ from `chunkSize`, depending on content.
+ *
+ *
+ * ##### Example:
+ *
+ * ```javascript
+ * const pako = require('pako');
+ * const input = pako.deflate(new Uint8Array([1,2,3,4,5,6,7,8,9]));
+ * let output;
+ *
+ * try {
+ *   output = pako.inflate(input);
+ * } catch (err) {
+ *   console.log(err);
+ * }
+ * ```
+ **/
+function inflate$1(input, options) {
+  const inflator = new Inflate$1(options);
+
+  inflator.push(input);
+
+  // That will never happens, if you don't cheat with options :)
+  if (inflator.err) throw inflator.msg || messages[inflator.err];
+
+  return inflator.result;
+}
+
+
+/**
+ * inflateRaw(data[, options]) -> Uint8Array|String
+ * - data (Uint8Array|ArrayBuffer): input data to decompress.
+ * - options (Object): zlib inflate options.
+ *
+ * The same as [[inflate]], but creates raw data, without wrapper
+ * (header and adler32 crc).
+ **/
+function inflateRaw$1(input, options) {
+  options = options || {};
+  options.raw = true;
+  return inflate$1(input, options);
+}
+
+
+/**
+ * ungzip(data[, options]) -> Uint8Array|String
+ * - data (Uint8Array|ArrayBuffer): input data to decompress.
+ * - options (Object): zlib inflate options.
+ *
+ * Just shortcut to [[inflate]], because it autodetects format
+ * by header.content. Done for convenience.
+ **/
+
+
+var Inflate_1$1 = Inflate$1;
+var inflate_2 = inflate$1;
+var inflateRaw_1$1 = inflateRaw$1;
+var ungzip$1 = inflate$1;
+var constants = constants$2;
+
+var inflate_1$1 = {
+	Inflate: Inflate_1$1,
+	inflate: inflate_2,
+	inflateRaw: inflateRaw_1$1,
+	ungzip: ungzip$1,
+	constants: constants
+};
+
+const { Deflate, deflate, deflateRaw, gzip } = deflate_1$1;
+
+const { Inflate, inflate, inflateRaw, ungzip } = inflate_1$1;
+
+
+
+var Deflate_1 = Deflate;
+var deflate_1 = deflate;
+var deflateRaw_1 = deflateRaw;
+var gzip_1 = gzip;
+var Inflate_1 = Inflate;
+var inflate_1 = inflate;
+var inflateRaw_1 = inflateRaw;
+var ungzip_1 = ungzip;
+var constants_1 = constants$2;
+
+var pako$1 = {
+	Deflate: Deflate_1,
+	deflate: deflate_1,
+	deflateRaw: deflateRaw_1,
+	gzip: gzip_1,
+	Inflate: Inflate_1,
+	inflate: inflate_1,
+	inflateRaw: inflateRaw_1,
+	ungzip: ungzip_1,
+	constants: constants_1
+};
+
+/**
+ * Add gRPC Header
+ * @author app2smile
+ * @param {ArrayBuffer} header - unGzip Header
+ * @param {ArrayBuffer} body - unGzip Body
+ * @param {String} type - encoding type
+ * @return {ArrayBuffer} new raw Body with Checksum Header
+ */
+function addgRPCHeader({ header, body }, encoding = undefined) {
+	console.log(`☑️ Add gRPC Header`, "");
+	// Header: 1位：是否校验数据 （0或者1） + 4位:校验值（数据长度）
+	const flag = (encoding == "gzip") ? 1 : (encoding == "identity") ? 0 : (encoding == undefined) ? 0 : header?.[0] ?? 0; // encoding flag
+	const checksum = Checksum(body.length); // 校验值为未压缩情况下的数据长度, 不是压缩后的长度
+	if (encoding == "gzip") body = pako.gzip(body); // gzip压缩（有问题，别压）
+	let rawBody = new Uint8Array(header.length + body.length);
+	rawBody.set([flag], 0); // 0位：Encoding类型，当为1的时候, app会校验1-4位的校验值是否正确
+	rawBody.set(checksum, 1); // 1-4位： 校验值(4位)
+	rawBody.set(body, 5); // 5-end位：protobuf数据
+	console.log(`✅ Add gRPC Header`, "");
+	return rawBody;
+
+	// 计算校验和 (B站为数据本体字节数)
+	function Checksum(num) {
+		let arr = new ArrayBuffer(4); // an Int32 takes 4 bytes
+		let view = new DataView(arr);
+		// 首位填充计算过的新数据长度
+		view.setUint32(0, num, false); // byteOffset = 0; litteEndian = false
+		return new Uint8Array(arr);
+	}}
+
+/**
+ * Get the type of a JSON value.
+ * Distinguishes between array, null and object.
+ */
+function typeofJsonValue(value) {
+    let t = typeof value;
+    if (t == "object") {
+        if (Array.isArray(value))
+            return "array";
+        if (value === null)
+            return "null";
+    }
+    return t;
+}
+/**
+ * Is this a JSON object (instead of an array or null)?
+ */
+function isJsonObject(value) {
+    return value !== null && typeof value == "object" && !Array.isArray(value);
+}
+
+// lookup table from base64 character to byte
+let encTable = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'.split('');
+// lookup table from base64 character *code* to byte because lookup by number is fast
+let decTable = [];
+for (let i = 0; i < encTable.length; i++)
+    decTable[encTable[i].charCodeAt(0)] = i;
+// support base64url variants
+decTable["-".charCodeAt(0)] = encTable.indexOf("+");
+decTable["_".charCodeAt(0)] = encTable.indexOf("/");
+/**
+ * Decodes a base64 string to a byte array.
+ *
+ * - ignores white-space, including line breaks and tabs
+ * - allows inner padding (can decode concatenated base64 strings)
+ * - does not require padding
+ * - understands base64url encoding:
+ *   "-" instead of "+",
+ *   "_" instead of "/",
+ *   no padding
+ */
+function base64decode(base64Str) {
+    // estimate byte size, not accounting for inner padding and whitespace
+    let es = base64Str.length * 3 / 4;
+    // if (es % 3 !== 0)
+    // throw new Error('invalid base64 string');
+    if (base64Str[base64Str.length - 2] == '=')
+        es -= 2;
+    else if (base64Str[base64Str.length - 1] == '=')
+        es -= 1;
+    let bytes = new Uint8Array(es), bytePos = 0, // position in byte array
+    groupPos = 0, // position in base64 group
+    b, // current byte
+    p = 0 // previous byte
+    ;
+    for (let i = 0; i < base64Str.length; i++) {
+        b = decTable[base64Str.charCodeAt(i)];
+        if (b === undefined) {
+            // noinspection FallThroughInSwitchStatementJS
+            switch (base64Str[i]) {
+                case '=':
+                    groupPos = 0; // reset state when padding found
+                case '\n':
+                case '\r':
+                case '\t':
+                case ' ':
+                    continue; // skip white-space, and padding
+                default:
+                    throw Error(`invalid base64 string.`);
+            }
+        }
+        switch (groupPos) {
+            case 0:
+                p = b;
+                groupPos = 1;
+                break;
+            case 1:
+                bytes[bytePos++] = p << 2 | (b & 48) >> 4;
+                p = b;
+                groupPos = 2;
+                break;
+            case 2:
+                bytes[bytePos++] = (p & 15) << 4 | (b & 60) >> 2;
+                p = b;
+                groupPos = 3;
+                break;
+            case 3:
+                bytes[bytePos++] = (p & 3) << 6 | b;
+                groupPos = 0;
+                break;
+        }
+    }
+    if (groupPos == 1)
+        throw Error(`invalid base64 string.`);
+    return bytes.subarray(0, bytePos);
+}
+/**
+ * Encodes a byte array to a base64 string.
+ * Adds padding at the end.
+ * Does not insert newlines.
+ */
+function base64encode(bytes) {
+    let base64 = '', groupPos = 0, // position in base64 group
+    b, // current byte
+    p = 0; // carry over from previous byte
+    for (let i = 0; i < bytes.length; i++) {
+        b = bytes[i];
+        switch (groupPos) {
+            case 0:
+                base64 += encTable[b >> 2];
+                p = (b & 3) << 4;
+                groupPos = 1;
+                break;
+            case 1:
+                base64 += encTable[p | b >> 4];
+                p = (b & 15) << 2;
+                groupPos = 2;
+                break;
+            case 2:
+                base64 += encTable[p | b >> 6];
+                base64 += encTable[b & 63];
+                groupPos = 0;
+                break;
+        }
+    }
+    // padding required?
+    if (groupPos) {
+        base64 += encTable[p];
+        base64 += '=';
+        if (groupPos == 1)
+            base64 += '=';
+    }
+    return base64;
+}
+
+/**
+ * This handler implements the default behaviour for unknown fields.
+ * When reading data, unknown fields are stored on the message, in a
+ * symbol property.
+ * When writing data, the symbol property is queried and unknown fields
+ * are serialized into the output again.
+ */
+var UnknownFieldHandler;
+(function (UnknownFieldHandler) {
+    /**
+     * The symbol used to store unknown fields for a message.
+     * The property must conform to `UnknownFieldContainer`.
+     */
+    UnknownFieldHandler.symbol = Symbol.for("protobuf-ts/unknown");
+    /**
+     * Store an unknown field during binary read directly on the message.
+     * This method is compatible with `BinaryReadOptions.readUnknownField`.
+     */
+    UnknownFieldHandler.onRead = (typeName, message, fieldNo, wireType, data) => {
+        let container = is(message) ? message[UnknownFieldHandler.symbol] : message[UnknownFieldHandler.symbol] = [];
+        container.push({ no: fieldNo, wireType, data });
+    };
+    /**
+     * Write unknown fields stored for the message to the writer.
+     * This method is compatible with `BinaryWriteOptions.writeUnknownFields`.
+     */
+    UnknownFieldHandler.onWrite = (typeName, message, writer) => {
+        for (let { no, wireType, data } of UnknownFieldHandler.list(message))
+            writer.tag(no, wireType).raw(data);
+    };
+    /**
+     * List unknown fields stored for the message.
+     * Note that there may be multiples fields with the same number.
+     */
+    UnknownFieldHandler.list = (message, fieldNo) => {
+        if (is(message)) {
+            let all = message[UnknownFieldHandler.symbol];
+            return fieldNo ? all.filter(uf => uf.no == fieldNo) : all;
+        }
+        return [];
+    };
+    /**
+     * Returns the last unknown field by field number.
+     */
+    UnknownFieldHandler.last = (message, fieldNo) => UnknownFieldHandler.list(message, fieldNo).slice(-1)[0];
+    const is = (message) => message && Array.isArray(message[UnknownFieldHandler.symbol]);
+})(UnknownFieldHandler || (UnknownFieldHandler = {}));
+/**
+ * Protobuf binary format wire types.
+ *
+ * A wire type provides just enough information to find the length of the
+ * following value.
+ *
+ * See https://developers.google.com/protocol-buffers/docs/encoding#structure
+ */
+var WireType;
+(function (WireType) {
+    /**
+     * Used for int32, int64, uint32, uint64, sint32, sint64, bool, enum
+     */
+    WireType[WireType["Varint"] = 0] = "Varint";
+    /**
+     * Used for fixed64, sfixed64, double.
+     * Always 8 bytes with little-endian byte order.
+     */
+    WireType[WireType["Bit64"] = 1] = "Bit64";
+    /**
+     * Used for string, bytes, embedded messages, packed repeated fields
+     *
+     * Only repeated numeric types (types which use the varint, 32-bit,
+     * or 64-bit wire types) can be packed. In proto3, such fields are
+     * packed by default.
+     */
+    WireType[WireType["LengthDelimited"] = 2] = "LengthDelimited";
+    /**
+     * Used for groups
+     * @deprecated
+     */
+    WireType[WireType["StartGroup"] = 3] = "StartGroup";
+    /**
+     * Used for groups
+     * @deprecated
+     */
+    WireType[WireType["EndGroup"] = 4] = "EndGroup";
+    /**
+     * Used for fixed32, sfixed32, float.
+     * Always 4 bytes with little-endian byte order.
+     */
+    WireType[WireType["Bit32"] = 5] = "Bit32";
+})(WireType || (WireType = {}));
+
+// Copyright 2008 Google Inc.  All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+// * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+// * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Code generated by the Protocol Buffer compiler is owned by the owner
+// of the input file used when generating it.  This code is not
+// standalone and requires a support library to be linked with it.  This
+// support library is itself covered by the above license.
+/**
+ * Read a 64 bit varint as two JS numbers.
+ *
+ * Returns tuple:
+ * [0]: low bits
+ * [0]: high bits
+ *
+ * Copyright 2008 Google Inc.  All rights reserved.
+ *
+ * See https://github.com/protocolbuffers/protobuf/blob/8a71927d74a4ce34efe2d8769fda198f52d20d12/js/experimental/runtime/kernel/buffer_decoder.js#L175
+ */
+function varint64read() {
+    let lowBits = 0;
+    let highBits = 0;
+    for (let shift = 0; shift < 28; shift += 7) {
+        let b = this.buf[this.pos++];
+        lowBits |= (b & 0x7F) << shift;
+        if ((b & 0x80) == 0) {
+            this.assertBounds();
+            return [lowBits, highBits];
+        }
+    }
+    let middleByte = this.buf[this.pos++];
+    // last four bits of the first 32 bit number
+    lowBits |= (middleByte & 0x0F) << 28;
+    // 3 upper bits are part of the next 32 bit number
+    highBits = (middleByte & 0x70) >> 4;
+    if ((middleByte & 0x80) == 0) {
+        this.assertBounds();
+        return [lowBits, highBits];
+    }
+    for (let shift = 3; shift <= 31; shift += 7) {
+        let b = this.buf[this.pos++];
+        highBits |= (b & 0x7F) << shift;
+        if ((b & 0x80) == 0) {
+            this.assertBounds();
+            return [lowBits, highBits];
+        }
+    }
+    throw new Error('invalid varint');
+}
+/**
+ * Write a 64 bit varint, given as two JS numbers, to the given bytes array.
+ *
+ * Copyright 2008 Google Inc.  All rights reserved.
+ *
+ * See https://github.com/protocolbuffers/protobuf/blob/8a71927d74a4ce34efe2d8769fda198f52d20d12/js/experimental/runtime/kernel/writer.js#L344
+ */
+function varint64write(lo, hi, bytes) {
+    for (let i = 0; i < 28; i = i + 7) {
+        const shift = lo >>> i;
+        const hasNext = !((shift >>> 7) == 0 && hi == 0);
+        const byte = (hasNext ? shift | 0x80 : shift) & 0xFF;
+        bytes.push(byte);
+        if (!hasNext) {
+            return;
+        }
+    }
+    const splitBits = ((lo >>> 28) & 0x0F) | ((hi & 0x07) << 4);
+    const hasMoreBits = !((hi >> 3) == 0);
+    bytes.push((hasMoreBits ? splitBits | 0x80 : splitBits) & 0xFF);
+    if (!hasMoreBits) {
+        return;
+    }
+    for (let i = 3; i < 31; i = i + 7) {
+        const shift = hi >>> i;
+        const hasNext = !((shift >>> 7) == 0);
+        const byte = (hasNext ? shift | 0x80 : shift) & 0xFF;
+        bytes.push(byte);
+        if (!hasNext) {
+            return;
+        }
+    }
+    bytes.push((hi >>> 31) & 0x01);
+}
+// constants for binary math
+const TWO_PWR_32_DBL$1 = (1 << 16) * (1 << 16);
+/**
+ * Parse decimal string of 64 bit integer value as two JS numbers.
+ *
+ * Returns tuple:
+ * [0]: minus sign?
+ * [1]: low bits
+ * [2]: high bits
+ *
+ * Copyright 2008 Google Inc.
+ */
+function int64fromString(dec) {
+    // Check for minus sign.
+    let minus = dec[0] == '-';
+    if (minus)
+        dec = dec.slice(1);
+    // Work 6 decimal digits at a time, acting like we're converting base 1e6
+    // digits to binary. This is safe to do with floating point math because
+    // Number.isSafeInteger(ALL_32_BITS * 1e6) == true.
+    const base = 1e6;
+    let lowBits = 0;
+    let highBits = 0;
+    function add1e6digit(begin, end) {
+        // Note: Number('') is 0.
+        const digit1e6 = Number(dec.slice(begin, end));
+        highBits *= base;
+        lowBits = lowBits * base + digit1e6;
+        // Carry bits from lowBits to highBits
+        if (lowBits >= TWO_PWR_32_DBL$1) {
+            highBits = highBits + ((lowBits / TWO_PWR_32_DBL$1) | 0);
+            lowBits = lowBits % TWO_PWR_32_DBL$1;
+        }
+    }
+    add1e6digit(-24, -18);
+    add1e6digit(-18, -12);
+    add1e6digit(-12, -6);
+    add1e6digit(-6);
+    return [minus, lowBits, highBits];
+}
+/**
+ * Format 64 bit integer value (as two JS numbers) to decimal string.
+ *
+ * Copyright 2008 Google Inc.
+ */
+function int64toString(bitsLow, bitsHigh) {
+    // Skip the expensive conversion if the number is small enough to use the
+    // built-in conversions.
+    if ((bitsHigh >>> 0) <= 0x1FFFFF) {
+        return '' + (TWO_PWR_32_DBL$1 * bitsHigh + (bitsLow >>> 0));
+    }
+    // What this code is doing is essentially converting the input number from
+    // base-2 to base-1e7, which allows us to represent the 64-bit range with
+    // only 3 (very large) digits. Those digits are then trivial to convert to
+    // a base-10 string.
+    // The magic numbers used here are -
+    // 2^24 = 16777216 = (1,6777216) in base-1e7.
+    // 2^48 = 281474976710656 = (2,8147497,6710656) in base-1e7.
+    // Split 32:32 representation into 16:24:24 representation so our
+    // intermediate digits don't overflow.
+    let low = bitsLow & 0xFFFFFF;
+    let mid = (((bitsLow >>> 24) | (bitsHigh << 8)) >>> 0) & 0xFFFFFF;
+    let high = (bitsHigh >> 16) & 0xFFFF;
+    // Assemble our three base-1e7 digits, ignoring carries. The maximum
+    // value in a digit at this step is representable as a 48-bit integer, which
+    // can be stored in a 64-bit floating point number.
+    let digitA = low + (mid * 6777216) + (high * 6710656);
+    let digitB = mid + (high * 8147497);
+    let digitC = (high * 2);
+    // Apply carries from A to B and from B to C.
+    let base = 10000000;
+    if (digitA >= base) {
+        digitB += Math.floor(digitA / base);
+        digitA %= base;
+    }
+    if (digitB >= base) {
+        digitC += Math.floor(digitB / base);
+        digitB %= base;
+    }
+    // Convert base-1e7 digits to base-10, with optional leading zeroes.
+    function decimalFrom1e7(digit1e7, needLeadingZeros) {
+        let partial = digit1e7 ? String(digit1e7) : '';
+        if (needLeadingZeros) {
+            return '0000000'.slice(partial.length) + partial;
+        }
+        return partial;
+    }
+    return decimalFrom1e7(digitC, /*needLeadingZeros=*/ 0) +
+        decimalFrom1e7(digitB, /*needLeadingZeros=*/ digitC) +
+        // If the final 1e7 digit didn't need leading zeros, we would have
+        // returned via the trivial code path at the top.
+        decimalFrom1e7(digitA, /*needLeadingZeros=*/ 1);
+}
+/**
+ * Write a 32 bit varint, signed or unsigned. Same as `varint64write(0, value, bytes)`
+ *
+ * Copyright 2008 Google Inc.  All rights reserved.
+ *
+ * See https://github.com/protocolbuffers/protobuf/blob/1b18833f4f2a2f681f4e4a25cdf3b0a43115ec26/js/binary/encoder.js#L144
+ */
+function varint32write(value, bytes) {
+    if (value >= 0) {
+        // write value as varint 32
+        while (value > 0x7f) {
+            bytes.push((value & 0x7f) | 0x80);
+            value = value >>> 7;
+        }
+        bytes.push(value);
+    }
+    else {
+        for (let i = 0; i < 9; i++) {
+            bytes.push(value & 127 | 128);
+            value = value >> 7;
+        }
+        bytes.push(1);
+    }
+}
+/**
+ * Read an unsigned 32 bit varint.
+ *
+ * See https://github.com/protocolbuffers/protobuf/blob/8a71927d74a4ce34efe2d8769fda198f52d20d12/js/experimental/runtime/kernel/buffer_decoder.js#L220
+ */
+function varint32read() {
+    let b = this.buf[this.pos++];
+    let result = b & 0x7F;
+    if ((b & 0x80) == 0) {
+        this.assertBounds();
+        return result;
+    }
+    b = this.buf[this.pos++];
+    result |= (b & 0x7F) << 7;
+    if ((b & 0x80) == 0) {
+        this.assertBounds();
+        return result;
+    }
+    b = this.buf[this.pos++];
+    result |= (b & 0x7F) << 14;
+    if ((b & 0x80) == 0) {
+        this.assertBounds();
+        return result;
+    }
+    b = this.buf[this.pos++];
+    result |= (b & 0x7F) << 21;
+    if ((b & 0x80) == 0) {
+        this.assertBounds();
+        return result;
+    }
+    // Extract only last 4 bits
+    b = this.buf[this.pos++];
+    result |= (b & 0x0F) << 28;
+    for (let readBytes = 5; ((b & 0x80) !== 0) && readBytes < 10; readBytes++)
+        b = this.buf[this.pos++];
+    if ((b & 0x80) != 0)
+        throw new Error('invalid varint');
+    this.assertBounds();
+    // Result can have 32 bits, convert it to unsigned
+    return result >>> 0;
+}
+
+let BI;
+function detectBi() {
+    const dv = new DataView(new ArrayBuffer(8));
+    const ok = globalThis.BigInt !== undefined
+        && typeof dv.getBigInt64 === "function"
+        && typeof dv.getBigUint64 === "function"
+        && typeof dv.setBigInt64 === "function"
+        && typeof dv.setBigUint64 === "function";
+    BI = ok ? {
+        MIN: BigInt("-9223372036854775808"),
+        MAX: BigInt("9223372036854775807"),
+        UMIN: BigInt("0"),
+        UMAX: BigInt("18446744073709551615"),
+        C: BigInt,
+        V: dv,
+    } : undefined;
+}
+detectBi();
+function assertBi(bi) {
+    if (!bi)
+        throw new Error("BigInt unavailable, see https://github.com/timostamm/protobuf-ts/blob/v1.0.8/MANUAL.md#bigint-support");
+}
+// used to validate from(string) input (when bigint is unavailable)
+const RE_DECIMAL_STR = /^-?[0-9]+$/;
+// constants for binary math
+const TWO_PWR_32_DBL = 0x100000000;
+const HALF_2_PWR_32 = 0x080000000;
+// base class for PbLong and PbULong provides shared code
+class SharedPbLong {
+    /**
+     * Create a new instance with the given bits.
+     */
+    constructor(lo, hi) {
+        this.lo = lo | 0;
+        this.hi = hi | 0;
+    }
+    /**
+     * Is this instance equal to 0?
+     */
+    isZero() {
+        return this.lo == 0 && this.hi == 0;
+    }
+    /**
+     * Convert to a native number.
+     */
+    toNumber() {
+        let result = this.hi * TWO_PWR_32_DBL + (this.lo >>> 0);
+        if (!Number.isSafeInteger(result))
+            throw new Error("cannot convert to safe number");
+        return result;
+    }
+}
+/**
+ * 64-bit unsigned integer as two 32-bit values.
+ * Converts between `string`, `number` and `bigint` representations.
+ */
+class PbULong extends SharedPbLong {
+    /**
+     * Create instance from a `string`, `number` or `bigint`.
+     */
+    static from(value) {
+        if (BI)
+            // noinspection FallThroughInSwitchStatementJS
+            switch (typeof value) {
+                case "string":
+                    if (value == "0")
+                        return this.ZERO;
+                    if (value == "")
+                        throw new Error('string is no integer');
+                    value = BI.C(value);
+                case "number":
+                    if (value === 0)
+                        return this.ZERO;
+                    value = BI.C(value);
+                case "bigint":
+                    if (!value)
+                        return this.ZERO;
+                    if (value < BI.UMIN)
+                        throw new Error('signed value for ulong');
+                    if (value > BI.UMAX)
+                        throw new Error('ulong too large');
+                    BI.V.setBigUint64(0, value, true);
+                    return new PbULong(BI.V.getInt32(0, true), BI.V.getInt32(4, true));
+            }
+        else
+            switch (typeof value) {
+                case "string":
+                    if (value == "0")
+                        return this.ZERO;
+                    value = value.trim();
+                    if (!RE_DECIMAL_STR.test(value))
+                        throw new Error('string is no integer');
+                    let [minus, lo, hi] = int64fromString(value);
+                    if (minus)
+                        throw new Error('signed value for ulong');
+                    return new PbULong(lo, hi);
+                case "number":
+                    if (value == 0)
+                        return this.ZERO;
+                    if (!Number.isSafeInteger(value))
+                        throw new Error('number is no integer');
+                    if (value < 0)
+                        throw new Error('signed value for ulong');
+                    return new PbULong(value, value / TWO_PWR_32_DBL);
+            }
+        throw new Error('unknown value ' + typeof value);
+    }
+    /**
+     * Convert to decimal string.
+     */
+    toString() {
+        return BI ? this.toBigInt().toString() : int64toString(this.lo, this.hi);
+    }
+    /**
+     * Convert to native bigint.
+     */
+    toBigInt() {
+        assertBi(BI);
+        BI.V.setInt32(0, this.lo, true);
+        BI.V.setInt32(4, this.hi, true);
+        return BI.V.getBigUint64(0, true);
+    }
+}
+/**
+ * ulong 0 singleton.
+ */
+PbULong.ZERO = new PbULong(0, 0);
+/**
+ * 64-bit signed integer as two 32-bit values.
+ * Converts between `string`, `number` and `bigint` representations.
+ */
+class PbLong extends SharedPbLong {
+    /**
+     * Create instance from a `string`, `number` or `bigint`.
+     */
+    static from(value) {
+        if (BI)
+            // noinspection FallThroughInSwitchStatementJS
+            switch (typeof value) {
+                case "string":
+                    if (value == "0")
+                        return this.ZERO;
+                    if (value == "")
+                        throw new Error('string is no integer');
+                    value = BI.C(value);
+                case "number":
+                    if (value === 0)
+                        return this.ZERO;
+                    value = BI.C(value);
+                case "bigint":
+                    if (!value)
+                        return this.ZERO;
+                    if (value < BI.MIN)
+                        throw new Error('signed long too small');
+                    if (value > BI.MAX)
+                        throw new Error('signed long too large');
+                    BI.V.setBigInt64(0, value, true);
+                    return new PbLong(BI.V.getInt32(0, true), BI.V.getInt32(4, true));
+            }
+        else
+            switch (typeof value) {
+                case "string":
+                    if (value == "0")
+                        return this.ZERO;
+                    value = value.trim();
+                    if (!RE_DECIMAL_STR.test(value))
+                        throw new Error('string is no integer');
+                    let [minus, lo, hi] = int64fromString(value);
+                    if (minus) {
+                        if (hi > HALF_2_PWR_32 || (hi == HALF_2_PWR_32 && lo != 0))
+                            throw new Error('signed long too small');
+                    }
+                    else if (hi >= HALF_2_PWR_32)
+                        throw new Error('signed long too large');
+                    let pbl = new PbLong(lo, hi);
+                    return minus ? pbl.negate() : pbl;
+                case "number":
+                    if (value == 0)
+                        return this.ZERO;
+                    if (!Number.isSafeInteger(value))
+                        throw new Error('number is no integer');
+                    return value > 0
+                        ? new PbLong(value, value / TWO_PWR_32_DBL)
+                        : new PbLong(-value, -value / TWO_PWR_32_DBL).negate();
+            }
+        throw new Error('unknown value ' + typeof value);
+    }
+    /**
+     * Do we have a minus sign?
+     */
+    isNegative() {
+        return (this.hi & HALF_2_PWR_32) !== 0;
+    }
+    /**
+     * Negate two's complement.
+     * Invert all the bits and add one to the result.
+     */
+    negate() {
+        let hi = ~this.hi, lo = this.lo;
+        if (lo)
+            lo = ~lo + 1;
+        else
+            hi += 1;
+        return new PbLong(lo, hi);
+    }
+    /**
+     * Convert to decimal string.
+     */
+    toString() {
+        if (BI)
+            return this.toBigInt().toString();
+        if (this.isNegative()) {
+            let n = this.negate();
+            return '-' + int64toString(n.lo, n.hi);
+        }
+        return int64toString(this.lo, this.hi);
+    }
+    /**
+     * Convert to native bigint.
+     */
+    toBigInt() {
+        assertBi(BI);
+        BI.V.setInt32(0, this.lo, true);
+        BI.V.setInt32(4, this.hi, true);
+        return BI.V.getBigInt64(0, true);
+    }
+}
+/**
+ * long 0 singleton.
+ */
+PbLong.ZERO = new PbLong(0, 0);
+
+const defaultsRead$1 = {
+    readUnknownField: true,
+    readerFactory: bytes => new BinaryReader(bytes),
+};
+/**
+ * Make options for reading binary data form partial options.
+ */
+function binaryReadOptions(options) {
+    return options ? Object.assign(Object.assign({}, defaultsRead$1), options) : defaultsRead$1;
+}
+class BinaryReader {
+    constructor(buf, textDecoder) {
+        this.varint64 = varint64read; // dirty cast for `this`
+        /**
+         * Read a `uint32` field, an unsigned 32 bit varint.
+         */
+        this.uint32 = varint32read; // dirty cast for `this` and access to protected `buf`
+        this.buf = buf;
+        this.len = buf.length;
+        this.pos = 0;
+        this.view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+        this.textDecoder = textDecoder !== null && textDecoder !== void 0 ? textDecoder : new TextDecoder("utf-8", {
+            fatal: true,
+            ignoreBOM: true,
+        });
+    }
+    /**
+     * Reads a tag - field number and wire type.
+     */
+    tag() {
+        let tag = this.uint32(), fieldNo = tag >>> 3, wireType = tag & 7;
+        if (fieldNo <= 0 || wireType < 0 || wireType > 5)
+            throw new Error("illegal tag: field no " + fieldNo + " wire type " + wireType);
+        return [fieldNo, wireType];
+    }
+    /**
+     * Skip one element on the wire and return the skipped data.
+     * Supports WireType.StartGroup since v2.0.0-alpha.23.
+     */
+    skip(wireType) {
+        let start = this.pos;
+        // noinspection FallThroughInSwitchStatementJS
+        switch (wireType) {
+            case WireType.Varint:
+                while (this.buf[this.pos++] & 0x80) {
+                    // ignore
+                }
+                break;
+            case WireType.Bit64:
+                this.pos += 4;
+            case WireType.Bit32:
+                this.pos += 4;
+                break;
+            case WireType.LengthDelimited:
+                let len = this.uint32();
+                this.pos += len;
+                break;
+            case WireType.StartGroup:
+                // From descriptor.proto: Group type is deprecated, not supported in proto3.
+                // But we must still be able to parse and treat as unknown.
+                let t;
+                while ((t = this.tag()[1]) !== WireType.EndGroup) {
+                    this.skip(t);
+                }
+                break;
+            default:
+                throw new Error("cant skip wire type " + wireType);
+        }
+        this.assertBounds();
+        return this.buf.subarray(start, this.pos);
+    }
+    /**
+     * Throws error if position in byte array is out of range.
+     */
+    assertBounds() {
+        if (this.pos > this.len)
+            throw new RangeError("premature EOF");
+    }
+    /**
+     * Read a `int32` field, a signed 32 bit varint.
+     */
+    int32() {
+        return this.uint32() | 0;
+    }
+    /**
+     * Read a `sint32` field, a signed, zigzag-encoded 32-bit varint.
+     */
+    sint32() {
+        let zze = this.uint32();
+        // decode zigzag
+        return (zze >>> 1) ^ -(zze & 1);
+    }
+    /**
+     * Read a `int64` field, a signed 64-bit varint.
+     */
+    int64() {
+        return new PbLong(...this.varint64());
+    }
+    /**
+     * Read a `uint64` field, an unsigned 64-bit varint.
+     */
+    uint64() {
+        return new PbULong(...this.varint64());
+    }
+    /**
+     * Read a `sint64` field, a signed, zig-zag-encoded 64-bit varint.
+     */
+    sint64() {
+        let [lo, hi] = this.varint64();
+        // decode zig zag
+        let s = -(lo & 1);
+        lo = ((lo >>> 1 | (hi & 1) << 31) ^ s);
+        hi = (hi >>> 1 ^ s);
+        return new PbLong(lo, hi);
+    }
+    /**
+     * Read a `bool` field, a variant.
+     */
+    bool() {
+        let [lo, hi] = this.varint64();
+        return lo !== 0 || hi !== 0;
+    }
+    /**
+     * Read a `fixed32` field, an unsigned, fixed-length 32-bit integer.
+     */
+    fixed32() {
+        return this.view.getUint32((this.pos += 4) - 4, true);
+    }
+    /**
+     * Read a `sfixed32` field, a signed, fixed-length 32-bit integer.
+     */
+    sfixed32() {
+        return this.view.getInt32((this.pos += 4) - 4, true);
+    }
+    /**
+     * Read a `fixed64` field, an unsigned, fixed-length 64 bit integer.
+     */
+    fixed64() {
+        return new PbULong(this.sfixed32(), this.sfixed32());
+    }
+    /**
+     * Read a `fixed64` field, a signed, fixed-length 64-bit integer.
+     */
+    sfixed64() {
+        return new PbLong(this.sfixed32(), this.sfixed32());
+    }
+    /**
+     * Read a `float` field, 32-bit floating point number.
+     */
+    float() {
+        return this.view.getFloat32((this.pos += 4) - 4, true);
+    }
+    /**
+     * Read a `double` field, a 64-bit floating point number.
+     */
+    double() {
+        return this.view.getFloat64((this.pos += 8) - 8, true);
+    }
+    /**
+     * Read a `bytes` field, length-delimited arbitrary data.
+     */
+    bytes() {
+        let len = this.uint32();
+        let start = this.pos;
+        this.pos += len;
+        this.assertBounds();
+        return this.buf.subarray(start, start + len);
+    }
+    /**
+     * Read a `string` field, length-delimited data converted to UTF-8 text.
+     */
+    string() {
+        return this.textDecoder.decode(this.bytes());
+    }
+}
+
+/**
+ * assert that condition is true or throw error (with message)
+ */
+function assert(condition, msg) {
+    if (!condition) {
+        throw new Error(msg);
+    }
+}
+const FLOAT32_MAX = 3.4028234663852886e+38, FLOAT32_MIN = -3.4028234663852886e+38, UINT32_MAX = 0xFFFFFFFF, INT32_MAX = 0X7FFFFFFF, INT32_MIN = -0X80000000;
+function assertInt32(arg) {
+    if (typeof arg !== "number")
+        throw new Error('invalid int 32: ' + typeof arg);
+    if (!Number.isInteger(arg) || arg > INT32_MAX || arg < INT32_MIN)
+        throw new Error('invalid int 32: ' + arg);
+}
+function assertUInt32(arg) {
+    if (typeof arg !== "number")
+        throw new Error('invalid uint 32: ' + typeof arg);
+    if (!Number.isInteger(arg) || arg > UINT32_MAX || arg < 0)
+        throw new Error('invalid uint 32: ' + arg);
+}
+function assertFloat32(arg) {
+    if (typeof arg !== "number")
+        throw new Error('invalid float 32: ' + typeof arg);
+    if (!Number.isFinite(arg))
+        return;
+    if (arg > FLOAT32_MAX || arg < FLOAT32_MIN)
+        throw new Error('invalid float 32: ' + arg);
+}
+
+const defaultsWrite$1 = {
+    writeUnknownFields: true,
+    writerFactory: () => new BinaryWriter(),
+};
+/**
+ * Make options for writing binary data form partial options.
+ */
+function binaryWriteOptions(options) {
+    return options ? Object.assign(Object.assign({}, defaultsWrite$1), options) : defaultsWrite$1;
+}
+class BinaryWriter {
+    constructor(textEncoder) {
+        /**
+         * Previous fork states.
+         */
+        this.stack = [];
+        this.textEncoder = textEncoder !== null && textEncoder !== void 0 ? textEncoder : new TextEncoder();
+        this.chunks = [];
+        this.buf = [];
+    }
+    /**
+     * Return all bytes written and reset this writer.
+     */
+    finish() {
+        this.chunks.push(new Uint8Array(this.buf)); // flush the buffer
+        let len = 0;
+        for (let i = 0; i < this.chunks.length; i++)
+            len += this.chunks[i].length;
+        let bytes = new Uint8Array(len);
+        let offset = 0;
+        for (let i = 0; i < this.chunks.length; i++) {
+            bytes.set(this.chunks[i], offset);
+            offset += this.chunks[i].length;
+        }
+        this.chunks = [];
+        return bytes;
+    }
+    /**
+     * Start a new fork for length-delimited data like a message
+     * or a packed repeated field.
+     *
+     * Must be joined later with `join()`.
+     */
+    fork() {
+        this.stack.push({ chunks: this.chunks, buf: this.buf });
+        this.chunks = [];
+        this.buf = [];
+        return this;
+    }
+    /**
+     * Join the last fork. Write its length and bytes, then
+     * return to the previous state.
+     */
+    join() {
+        // get chunk of fork
+        let chunk = this.finish();
+        // restore previous state
+        let prev = this.stack.pop();
+        if (!prev)
+            throw new Error('invalid state, fork stack empty');
+        this.chunks = prev.chunks;
+        this.buf = prev.buf;
+        // write length of chunk as varint
+        this.uint32(chunk.byteLength);
+        return this.raw(chunk);
+    }
+    /**
+     * Writes a tag (field number and wire type).
+     *
+     * Equivalent to `uint32( (fieldNo << 3 | type) >>> 0 )`.
+     *
+     * Generated code should compute the tag ahead of time and call `uint32()`.
+     */
+    tag(fieldNo, type) {
+        return this.uint32((fieldNo << 3 | type) >>> 0);
+    }
+    /**
+     * Write a chunk of raw bytes.
+     */
+    raw(chunk) {
+        if (this.buf.length) {
+            this.chunks.push(new Uint8Array(this.buf));
+            this.buf = [];
+        }
+        this.chunks.push(chunk);
+        return this;
+    }
+    /**
+     * Write a `uint32` value, an unsigned 32 bit varint.
+     */
+    uint32(value) {
+        assertUInt32(value);
+        // write value as varint 32, inlined for speed
+        while (value > 0x7f) {
+            this.buf.push((value & 0x7f) | 0x80);
+            value = value >>> 7;
+        }
+        this.buf.push(value);
+        return this;
+    }
+    /**
+     * Write a `int32` value, a signed 32 bit varint.
+     */
+    int32(value) {
+        assertInt32(value);
+        varint32write(value, this.buf);
+        return this;
+    }
+    /**
+     * Write a `bool` value, a variant.
+     */
+    bool(value) {
+        this.buf.push(value ? 1 : 0);
+        return this;
+    }
+    /**
+     * Write a `bytes` value, length-delimited arbitrary data.
+     */
+    bytes(value) {
+        this.uint32(value.byteLength); // write length of chunk as varint
+        return this.raw(value);
+    }
+    /**
+     * Write a `string` value, length-delimited data converted to UTF-8 text.
+     */
+    string(value) {
+        let chunk = this.textEncoder.encode(value);
+        this.uint32(chunk.byteLength); // write length of chunk as varint
+        return this.raw(chunk);
+    }
+    /**
+     * Write a `float` value, 32-bit floating point number.
+     */
+    float(value) {
+        assertFloat32(value);
+        let chunk = new Uint8Array(4);
+        new DataView(chunk.buffer).setFloat32(0, value, true);
+        return this.raw(chunk);
+    }
+    /**
+     * Write a `double` value, a 64-bit floating point number.
+     */
+    double(value) {
+        let chunk = new Uint8Array(8);
+        new DataView(chunk.buffer).setFloat64(0, value, true);
+        return this.raw(chunk);
+    }
+    /**
+     * Write a `fixed32` value, an unsigned, fixed-length 32-bit integer.
+     */
+    fixed32(value) {
+        assertUInt32(value);
+        let chunk = new Uint8Array(4);
+        new DataView(chunk.buffer).setUint32(0, value, true);
+        return this.raw(chunk);
+    }
+    /**
+     * Write a `sfixed32` value, a signed, fixed-length 32-bit integer.
+     */
+    sfixed32(value) {
+        assertInt32(value);
+        let chunk = new Uint8Array(4);
+        new DataView(chunk.buffer).setInt32(0, value, true);
+        return this.raw(chunk);
+    }
+    /**
+     * Write a `sint32` value, a signed, zigzag-encoded 32-bit varint.
+     */
+    sint32(value) {
+        assertInt32(value);
+        // zigzag encode
+        value = ((value << 1) ^ (value >> 31)) >>> 0;
+        varint32write(value, this.buf);
+        return this;
+    }
+    /**
+     * Write a `fixed64` value, a signed, fixed-length 64-bit integer.
+     */
+    sfixed64(value) {
+        let chunk = new Uint8Array(8);
+        let view = new DataView(chunk.buffer);
+        let long = PbLong.from(value);
+        view.setInt32(0, long.lo, true);
+        view.setInt32(4, long.hi, true);
+        return this.raw(chunk);
+    }
+    /**
+     * Write a `fixed64` value, an unsigned, fixed-length 64 bit integer.
+     */
+    fixed64(value) {
+        let chunk = new Uint8Array(8);
+        let view = new DataView(chunk.buffer);
+        let long = PbULong.from(value);
+        view.setInt32(0, long.lo, true);
+        view.setInt32(4, long.hi, true);
+        return this.raw(chunk);
+    }
+    /**
+     * Write a `int64` value, a signed 64-bit varint.
+     */
+    int64(value) {
+        let long = PbLong.from(value);
+        varint64write(long.lo, long.hi, this.buf);
+        return this;
+    }
+    /**
+     * Write a `sint64` value, a signed, zig-zag-encoded 64-bit varint.
+     */
+    sint64(value) {
+        let long = PbLong.from(value), 
+        // zigzag encode
+        sign = long.hi >> 31, lo = (long.lo << 1) ^ sign, hi = ((long.hi << 1) | (long.lo >>> 31)) ^ sign;
+        varint64write(lo, hi, this.buf);
+        return this;
+    }
+    /**
+     * Write a `uint64` value, an unsigned 64-bit varint.
+     */
+    uint64(value) {
+        let long = PbULong.from(value);
+        varint64write(long.lo, long.hi, this.buf);
+        return this;
+    }
+}
+
+const defaultsWrite = {
+    emitDefaultValues: false,
+    enumAsInteger: false,
+    useProtoFieldName: false,
+    prettySpaces: 0,
+}, defaultsRead = {
+    ignoreUnknownFields: false,
+};
+/**
+ * Make options for reading JSON data from partial options.
+ */
+function jsonReadOptions(options) {
+    return options ? Object.assign(Object.assign({}, defaultsRead), options) : defaultsRead;
+}
+/**
+ * Make options for writing JSON data from partial options.
+ */
+function jsonWriteOptions(options) {
+    return options ? Object.assign(Object.assign({}, defaultsWrite), options) : defaultsWrite;
+}
+
+/**
+ * The symbol used as a key on message objects to store the message type.
+ *
+ * Note that this is an experimental feature - it is here to stay, but
+ * implementation details may change without notice.
+ */
+const MESSAGE_TYPE = Symbol.for("protobuf-ts/message-type");
+
+/**
+ * Converts snake_case to lowerCamelCase.
+ *
+ * Should behave like protoc:
+ * https://github.com/protocolbuffers/protobuf/blob/e8ae137c96444ea313485ed1118c5e43b2099cf1/src/google/protobuf/compiler/java/java_helpers.cc#L118
+ */
+function lowerCamelCase(snakeCase) {
+    let capNext = false;
+    const sb = [];
+    for (let i = 0; i < snakeCase.length; i++) {
+        let next = snakeCase.charAt(i);
+        if (next == '_') {
+            capNext = true;
+        }
+        else if (/\d/.test(next)) {
+            sb.push(next);
+            capNext = true;
+        }
+        else if (capNext) {
+            sb.push(next.toUpperCase());
+            capNext = false;
+        }
+        else if (i == 0) {
+            sb.push(next.toLowerCase());
+        }
+        else {
+            sb.push(next);
+        }
+    }
+    return sb.join('');
+}
+
+/**
+ * Scalar value types. This is a subset of field types declared by protobuf
+ * enum google.protobuf.FieldDescriptorProto.Type The types GROUP and MESSAGE
+ * are omitted, but the numerical values are identical.
+ */
+var ScalarType;
+(function (ScalarType) {
+    // 0 is reserved for errors.
+    // Order is weird for historical reasons.
+    ScalarType[ScalarType["DOUBLE"] = 1] = "DOUBLE";
+    ScalarType[ScalarType["FLOAT"] = 2] = "FLOAT";
+    // Not ZigZag encoded.  Negative numbers take 10 bytes.  Use TYPE_SINT64 if
+    // negative values are likely.
+    ScalarType[ScalarType["INT64"] = 3] = "INT64";
+    ScalarType[ScalarType["UINT64"] = 4] = "UINT64";
+    // Not ZigZag encoded.  Negative numbers take 10 bytes.  Use TYPE_SINT32 if
+    // negative values are likely.
+    ScalarType[ScalarType["INT32"] = 5] = "INT32";
+    ScalarType[ScalarType["FIXED64"] = 6] = "FIXED64";
+    ScalarType[ScalarType["FIXED32"] = 7] = "FIXED32";
+    ScalarType[ScalarType["BOOL"] = 8] = "BOOL";
+    ScalarType[ScalarType["STRING"] = 9] = "STRING";
+    // Tag-delimited aggregate.
+    // Group type is deprecated and not supported in proto3. However, Proto3
+    // implementations should still be able to parse the group wire format and
+    // treat group fields as unknown fields.
+    // TYPE_GROUP = 10,
+    // TYPE_MESSAGE = 11,  // Length-delimited aggregate.
+    // New in version 2.
+    ScalarType[ScalarType["BYTES"] = 12] = "BYTES";
+    ScalarType[ScalarType["UINT32"] = 13] = "UINT32";
+    // TYPE_ENUM = 14,
+    ScalarType[ScalarType["SFIXED32"] = 15] = "SFIXED32";
+    ScalarType[ScalarType["SFIXED64"] = 16] = "SFIXED64";
+    ScalarType[ScalarType["SINT32"] = 17] = "SINT32";
+    ScalarType[ScalarType["SINT64"] = 18] = "SINT64";
+})(ScalarType || (ScalarType = {}));
+/**
+ * JavaScript representation of 64 bit integral types. Equivalent to the
+ * field option "jstype".
+ *
+ * By default, protobuf-ts represents 64 bit types as `bigint`.
+ *
+ * You can change the default behaviour by enabling the plugin parameter
+ * `long_type_string`, which will represent 64 bit types as `string`.
+ *
+ * Alternatively, you can change the behaviour for individual fields
+ * with the field option "jstype":
+ *
+ * ```protobuf
+ * uint64 my_field = 1 [jstype = JS_STRING];
+ * uint64 other_field = 2 [jstype = JS_NUMBER];
+ * ```
+ */
+var LongType;
+(function (LongType) {
+    /**
+     * Use JavaScript `bigint`.
+     *
+     * Field option `[jstype = JS_NORMAL]`.
+     */
+    LongType[LongType["BIGINT"] = 0] = "BIGINT";
+    /**
+     * Use JavaScript `string`.
+     *
+     * Field option `[jstype = JS_STRING]`.
+     */
+    LongType[LongType["STRING"] = 1] = "STRING";
+    /**
+     * Use JavaScript `number`.
+     *
+     * Large values will loose precision.
+     *
+     * Field option `[jstype = JS_NUMBER]`.
+     */
+    LongType[LongType["NUMBER"] = 2] = "NUMBER";
+})(LongType || (LongType = {}));
+/**
+ * Protobuf 2.1.0 introduced packed repeated fields.
+ * Setting the field option `[packed = true]` enables packing.
+ *
+ * In proto3, all repeated fields are packed by default.
+ * Setting the field option `[packed = false]` disables packing.
+ *
+ * Packed repeated fields are encoded with a single tag,
+ * then a length-delimiter, then the element values.
+ *
+ * Unpacked repeated fields are encoded with a tag and
+ * value for each element.
+ *
+ * `bytes` and `string` cannot be packed.
+ */
+var RepeatType;
+(function (RepeatType) {
+    /**
+     * The field is not repeated.
+     */
+    RepeatType[RepeatType["NO"] = 0] = "NO";
+    /**
+     * The field is repeated and should be packed.
+     * Invalid for `bytes` and `string`, they cannot be packed.
+     */
+    RepeatType[RepeatType["PACKED"] = 1] = "PACKED";
+    /**
+     * The field is repeated but should not be packed.
+     * The only valid repeat type for repeated `bytes` and `string`.
+     */
+    RepeatType[RepeatType["UNPACKED"] = 2] = "UNPACKED";
+})(RepeatType || (RepeatType = {}));
+/**
+ * Turns PartialFieldInfo into FieldInfo.
+ */
+function normalizeFieldInfo(field) {
+    var _a, _b, _c, _d;
+    field.localName = (_a = field.localName) !== null && _a !== void 0 ? _a : lowerCamelCase(field.name);
+    field.jsonName = (_b = field.jsonName) !== null && _b !== void 0 ? _b : lowerCamelCase(field.name);
+    field.repeat = (_c = field.repeat) !== null && _c !== void 0 ? _c : RepeatType.NO;
+    field.opt = (_d = field.opt) !== null && _d !== void 0 ? _d : (field.repeat ? false : field.oneof ? false : field.kind == "message");
+    return field;
+}
+
+/**
+ * Is the given value a valid oneof group?
+ *
+ * We represent protobuf `oneof` as algebraic data types (ADT) in generated
+ * code. But when working with messages of unknown type, the ADT does not
+ * help us.
+ *
+ * This type guard checks if the given object adheres to the ADT rules, which
+ * are as follows:
+ *
+ * 1) Must be an object.
+ *
+ * 2) Must have a "oneofKind" discriminator property.
+ *
+ * 3) If "oneofKind" is `undefined`, no member field is selected. The object
+ * must not have any other properties.
+ *
+ * 4) If "oneofKind" is a `string`, the member field with this name is
+ * selected.
+ *
+ * 5) If a member field is selected, the object must have a second property
+ * with this name. The property must not be `undefined`.
+ *
+ * 6) No extra properties are allowed. The object has either one property
+ * (no selection) or two properties (selection).
+ *
+ */
+function isOneofGroup(any) {
+    if (typeof any != 'object' || any === null || !any.hasOwnProperty('oneofKind')) {
+        return false;
+    }
+    switch (typeof any.oneofKind) {
+        case "string":
+            if (any[any.oneofKind] === undefined)
+                return false;
+            return Object.keys(any).length == 2;
+        case "undefined":
+            return Object.keys(any).length == 1;
+        default:
+            return false;
+    }
+}
+
+// noinspection JSMethodCanBeStatic
+class ReflectionTypeCheck {
+    constructor(info) {
+        var _a;
+        this.fields = (_a = info.fields) !== null && _a !== void 0 ? _a : [];
+    }
+    prepare() {
+        if (this.data)
+            return;
+        const req = [], known = [], oneofs = [];
+        for (let field of this.fields) {
+            if (field.oneof) {
+                if (!oneofs.includes(field.oneof)) {
+                    oneofs.push(field.oneof);
+                    req.push(field.oneof);
+                    known.push(field.oneof);
+                }
+            }
+            else {
+                known.push(field.localName);
+                switch (field.kind) {
+                    case "scalar":
+                    case "enum":
+                        if (!field.opt || field.repeat)
+                            req.push(field.localName);
+                        break;
+                    case "message":
+                        if (field.repeat)
+                            req.push(field.localName);
+                        break;
+                    case "map":
+                        req.push(field.localName);
+                        break;
+                }
+            }
+        }
+        this.data = { req, known, oneofs: Object.values(oneofs) };
+    }
+    /**
+     * Is the argument a valid message as specified by the
+     * reflection information?
+     *
+     * Checks all field types recursively. The `depth`
+     * specifies how deep into the structure the check will be.
+     *
+     * With a depth of 0, only the presence of fields
+     * is checked.
+     *
+     * With a depth of 1 or more, the field types are checked.
+     *
+     * With a depth of 2 or more, the members of map, repeated
+     * and message fields are checked.
+     *
+     * Message fields will be checked recursively with depth - 1.
+     *
+     * The number of map entries / repeated values being checked
+     * is < depth.
+     */
+    is(message, depth, allowExcessProperties = false) {
+        if (depth < 0)
+            return true;
+        if (message === null || message === undefined || typeof message != 'object')
+            return false;
+        this.prepare();
+        let keys = Object.keys(message), data = this.data;
+        // if a required field is missing in arg, this cannot be a T
+        if (keys.length < data.req.length || data.req.some(n => !keys.includes(n)))
+            return false;
+        if (!allowExcessProperties) {
+            // if the arg contains a key we dont know, this is not a literal T
+            if (keys.some(k => !data.known.includes(k)))
+                return false;
+        }
+        // "With a depth of 0, only the presence and absence of fields is checked."
+        // "With a depth of 1 or more, the field types are checked."
+        if (depth < 1) {
+            return true;
+        }
+        // check oneof group
+        for (const name of data.oneofs) {
+            const group = message[name];
+            if (!isOneofGroup(group))
+                return false;
+            if (group.oneofKind === undefined)
+                continue;
+            const field = this.fields.find(f => f.localName === group.oneofKind);
+            if (!field)
+                return false; // we found no field, but have a kind, something is wrong
+            if (!this.field(group[group.oneofKind], field, allowExcessProperties, depth))
+                return false;
+        }
+        // check types
+        for (const field of this.fields) {
+            if (field.oneof !== undefined)
+                continue;
+            if (!this.field(message[field.localName], field, allowExcessProperties, depth))
+                return false;
+        }
+        return true;
+    }
+    field(arg, field, allowExcessProperties, depth) {
+        let repeated = field.repeat;
+        switch (field.kind) {
+            case "scalar":
+                if (arg === undefined)
+                    return field.opt;
+                if (repeated)
+                    return this.scalars(arg, field.T, depth, field.L);
+                return this.scalar(arg, field.T, field.L);
+            case "enum":
+                if (arg === undefined)
+                    return field.opt;
+                if (repeated)
+                    return this.scalars(arg, ScalarType.INT32, depth);
+                return this.scalar(arg, ScalarType.INT32);
+            case "message":
+                if (arg === undefined)
+                    return true;
+                if (repeated)
+                    return this.messages(arg, field.T(), allowExcessProperties, depth);
+                return this.message(arg, field.T(), allowExcessProperties, depth);
+            case "map":
+                if (typeof arg != 'object' || arg === null)
+                    return false;
+                if (depth < 2)
+                    return true;
+                if (!this.mapKeys(arg, field.K, depth))
+                    return false;
+                switch (field.V.kind) {
+                    case "scalar":
+                        return this.scalars(Object.values(arg), field.V.T, depth, field.V.L);
+                    case "enum":
+                        return this.scalars(Object.values(arg), ScalarType.INT32, depth);
+                    case "message":
+                        return this.messages(Object.values(arg), field.V.T(), allowExcessProperties, depth);
+                }
+                break;
+        }
+        return true;
+    }
+    message(arg, type, allowExcessProperties, depth) {
+        if (allowExcessProperties) {
+            return type.isAssignable(arg, depth);
+        }
+        return type.is(arg, depth);
+    }
+    messages(arg, type, allowExcessProperties, depth) {
+        if (!Array.isArray(arg))
+            return false;
+        if (depth < 2)
+            return true;
+        if (allowExcessProperties) {
+            for (let i = 0; i < arg.length && i < depth; i++)
+                if (!type.isAssignable(arg[i], depth - 1))
+                    return false;
+        }
+        else {
+            for (let i = 0; i < arg.length && i < depth; i++)
+                if (!type.is(arg[i], depth - 1))
+                    return false;
+        }
+        return true;
+    }
+    scalar(arg, type, longType) {
+        let argType = typeof arg;
+        switch (type) {
+            case ScalarType.UINT64:
+            case ScalarType.FIXED64:
+            case ScalarType.INT64:
+            case ScalarType.SFIXED64:
+            case ScalarType.SINT64:
+                switch (longType) {
+                    case LongType.BIGINT:
+                        return argType == "bigint";
+                    case LongType.NUMBER:
+                        return argType == "number" && !isNaN(arg);
+                    default:
+                        return argType == "string";
+                }
+            case ScalarType.BOOL:
+                return argType == 'boolean';
+            case ScalarType.STRING:
+                return argType == 'string';
+            case ScalarType.BYTES:
+                return arg instanceof Uint8Array;
+            case ScalarType.DOUBLE:
+            case ScalarType.FLOAT:
+                return argType == 'number' && !isNaN(arg);
+            default:
+                // case ScalarType.UINT32:
+                // case ScalarType.FIXED32:
+                // case ScalarType.INT32:
+                // case ScalarType.SINT32:
+                // case ScalarType.SFIXED32:
+                return argType == 'number' && Number.isInteger(arg);
+        }
+    }
+    scalars(arg, type, depth, longType) {
+        if (!Array.isArray(arg))
+            return false;
+        if (depth < 2)
+            return true;
+        if (Array.isArray(arg))
+            for (let i = 0; i < arg.length && i < depth; i++)
+                if (!this.scalar(arg[i], type, longType))
+                    return false;
+        return true;
+    }
+    mapKeys(map, type, depth) {
+        let keys = Object.keys(map);
+        switch (type) {
+            case ScalarType.INT32:
+            case ScalarType.FIXED32:
+            case ScalarType.SFIXED32:
+            case ScalarType.SINT32:
+            case ScalarType.UINT32:
+                return this.scalars(keys.slice(0, depth).map(k => parseInt(k)), type, depth);
+            case ScalarType.BOOL:
+                return this.scalars(keys.slice(0, depth).map(k => k == 'true' ? true : k == 'false' ? false : k), type, depth);
+            default:
+                return this.scalars(keys, type, depth, LongType.STRING);
+        }
+    }
+}
+
+/**
+ * Utility method to convert a PbLong or PbUlong to a JavaScript
+ * representation during runtime.
+ *
+ * Works with generated field information, `undefined` is equivalent
+ * to `STRING`.
+ */
+function reflectionLongConvert(long, type) {
+    switch (type) {
+        case LongType.BIGINT:
+            return long.toBigInt();
+        case LongType.NUMBER:
+            return long.toNumber();
+        default:
+            // case undefined:
+            // case LongType.STRING:
+            return long.toString();
+    }
+}
+
+/**
+ * Reads proto3 messages in canonical JSON format using reflection information.
+ *
+ * https://developers.google.com/protocol-buffers/docs/proto3#json
+ */
+class ReflectionJsonReader {
+    constructor(info) {
+        this.info = info;
+    }
+    prepare() {
+        var _a;
+        if (this.fMap === undefined) {
+            this.fMap = {};
+            const fieldsInput = (_a = this.info.fields) !== null && _a !== void 0 ? _a : [];
+            for (const field of fieldsInput) {
+                this.fMap[field.name] = field;
+                this.fMap[field.jsonName] = field;
+                this.fMap[field.localName] = field;
+            }
+        }
+    }
+    // Cannot parse JSON <type of jsonValue> for <type name>#<fieldName>.
+    assert(condition, fieldName, jsonValue) {
+        if (!condition) {
+            let what = typeofJsonValue(jsonValue);
+            if (what == "number" || what == "boolean")
+                what = jsonValue.toString();
+            throw new Error(`Cannot parse JSON ${what} for ${this.info.typeName}#${fieldName}`);
+        }
+    }
+    /**
+     * Reads a message from canonical JSON format into the target message.
+     *
+     * Repeated fields are appended. Map entries are added, overwriting
+     * existing keys.
+     *
+     * If a message field is already present, it will be merged with the
+     * new data.
+     */
+    read(input, message, options) {
+        this.prepare();
+        const oneofsHandled = [];
+        for (const [jsonKey, jsonValue] of Object.entries(input)) {
+            const field = this.fMap[jsonKey];
+            if (!field) {
+                if (!options.ignoreUnknownFields)
+                    throw new Error(`Found unknown field while reading ${this.info.typeName} from JSON format. JSON key: ${jsonKey}`);
+                continue;
+            }
+            const localName = field.localName;
+            // handle oneof ADT
+            let target; // this will be the target for the field value, whether it is member of a oneof or not
+            if (field.oneof) {
+                if (jsonValue === null && (field.kind !== 'enum' || field.T()[0] !== 'google.protobuf.NullValue')) {
+                    continue;
+                }
+                // since json objects are unordered by specification, it is not possible to take the last of multiple oneofs
+                if (oneofsHandled.includes(field.oneof))
+                    throw new Error(`Multiple members of the oneof group "${field.oneof}" of ${this.info.typeName} are present in JSON.`);
+                oneofsHandled.push(field.oneof);
+                target = message[field.oneof] = {
+                    oneofKind: localName
+                };
+            }
+            else {
+                target = message;
+            }
+            // we have handled oneof above. we just have read the value into `target`.
+            if (field.kind == 'map') {
+                if (jsonValue === null) {
+                    continue;
+                }
+                // check input
+                this.assert(isJsonObject(jsonValue), field.name, jsonValue);
+                // our target to put map entries into
+                const fieldObj = target[localName];
+                // read entries
+                for (const [jsonObjKey, jsonObjValue] of Object.entries(jsonValue)) {
+                    this.assert(jsonObjValue !== null, field.name + " map value", null);
+                    // read value
+                    let val;
+                    switch (field.V.kind) {
+                        case "message":
+                            val = field.V.T().internalJsonRead(jsonObjValue, options);
+                            break;
+                        case "enum":
+                            val = this.enum(field.V.T(), jsonObjValue, field.name, options.ignoreUnknownFields);
+                            if (val === false)
+                                continue;
+                            break;
+                        case "scalar":
+                            val = this.scalar(jsonObjValue, field.V.T, field.V.L, field.name);
+                            break;
+                    }
+                    this.assert(val !== undefined, field.name + " map value", jsonObjValue);
+                    // read key
+                    let key = jsonObjKey;
+                    if (field.K == ScalarType.BOOL)
+                        key = key == "true" ? true : key == "false" ? false : key;
+                    key = this.scalar(key, field.K, LongType.STRING, field.name).toString();
+                    fieldObj[key] = val;
+                }
+            }
+            else if (field.repeat) {
+                if (jsonValue === null)
+                    continue;
+                // check input
+                this.assert(Array.isArray(jsonValue), field.name, jsonValue);
+                // our target to put array entries into
+                const fieldArr = target[localName];
+                // read array entries
+                for (const jsonItem of jsonValue) {
+                    this.assert(jsonItem !== null, field.name, null);
+                    let val;
+                    switch (field.kind) {
+                        case "message":
+                            val = field.T().internalJsonRead(jsonItem, options);
+                            break;
+                        case "enum":
+                            val = this.enum(field.T(), jsonItem, field.name, options.ignoreUnknownFields);
+                            if (val === false)
+                                continue;
+                            break;
+                        case "scalar":
+                            val = this.scalar(jsonItem, field.T, field.L, field.name);
+                            break;
+                    }
+                    this.assert(val !== undefined, field.name, jsonValue);
+                    fieldArr.push(val);
+                }
+            }
+            else {
+                switch (field.kind) {
+                    case "message":
+                        if (jsonValue === null && field.T().typeName != 'google.protobuf.Value') {
+                            this.assert(field.oneof === undefined, field.name + " (oneof member)", null);
+                            continue;
+                        }
+                        target[localName] = field.T().internalJsonRead(jsonValue, options, target[localName]);
+                        break;
+                    case "enum":
+                        let val = this.enum(field.T(), jsonValue, field.name, options.ignoreUnknownFields);
+                        if (val === false)
+                            continue;
+                        target[localName] = val;
+                        break;
+                    case "scalar":
+                        target[localName] = this.scalar(jsonValue, field.T, field.L, field.name);
+                        break;
+                }
+            }
+        }
+    }
+    /**
+     * Returns `false` for unrecognized string representations.
+     *
+     * google.protobuf.NullValue accepts only JSON `null` (or the old `"NULL_VALUE"`).
+     */
+    enum(type, json, fieldName, ignoreUnknownFields) {
+        if (type[0] == 'google.protobuf.NullValue')
+            assert(json === null || json === "NULL_VALUE", `Unable to parse field ${this.info.typeName}#${fieldName}, enum ${type[0]} only accepts null.`);
+        if (json === null)
+            // we require 0 to be default value for all enums
+            return 0;
+        switch (typeof json) {
+            case "number":
+                assert(Number.isInteger(json), `Unable to parse field ${this.info.typeName}#${fieldName}, enum can only be integral number, got ${json}.`);
+                return json;
+            case "string":
+                let localEnumName = json;
+                if (type[2] && json.substring(0, type[2].length) === type[2])
+                    // lookup without the shared prefix
+                    localEnumName = json.substring(type[2].length);
+                let enumNumber = type[1][localEnumName];
+                if (typeof enumNumber === 'undefined' && ignoreUnknownFields) {
+                    return false;
+                }
+                assert(typeof enumNumber == "number", `Unable to parse field ${this.info.typeName}#${fieldName}, enum ${type[0]} has no value for "${json}".`);
+                return enumNumber;
+        }
+        assert(false, `Unable to parse field ${this.info.typeName}#${fieldName}, cannot parse enum value from ${typeof json}".`);
+    }
+    scalar(json, type, longType, fieldName) {
+        let e;
+        try {
+            switch (type) {
+                // float, double: JSON value will be a number or one of the special string values "NaN", "Infinity", and "-Infinity".
+                // Either numbers or strings are accepted. Exponent notation is also accepted.
+                case ScalarType.DOUBLE:
+                case ScalarType.FLOAT:
+                    if (json === null)
+                        return .0;
+                    if (json === "NaN")
+                        return Number.NaN;
+                    if (json === "Infinity")
+                        return Number.POSITIVE_INFINITY;
+                    if (json === "-Infinity")
+                        return Number.NEGATIVE_INFINITY;
+                    if (json === "") {
+                        e = "empty string";
+                        break;
+                    }
+                    if (typeof json == "string" && json.trim().length !== json.length) {
+                        e = "extra whitespace";
+                        break;
+                    }
+                    if (typeof json != "string" && typeof json != "number") {
+                        break;
+                    }
+                    let float = Number(json);
+                    if (Number.isNaN(float)) {
+                        e = "not a number";
+                        break;
+                    }
+                    if (!Number.isFinite(float)) {
+                        // infinity and -infinity are handled by string representation above, so this is an error
+                        e = "too large or small";
+                        break;
+                    }
+                    if (type == ScalarType.FLOAT)
+                        assertFloat32(float);
+                    return float;
+                // int32, fixed32, uint32: JSON value will be a decimal number. Either numbers or strings are accepted.
+                case ScalarType.INT32:
+                case ScalarType.FIXED32:
+                case ScalarType.SFIXED32:
+                case ScalarType.SINT32:
+                case ScalarType.UINT32:
+                    if (json === null)
+                        return 0;
+                    let int32;
+                    if (typeof json == "number")
+                        int32 = json;
+                    else if (json === "")
+                        e = "empty string";
+                    else if (typeof json == "string") {
+                        if (json.trim().length !== json.length)
+                            e = "extra whitespace";
+                        else
+                            int32 = Number(json);
+                    }
+                    if (int32 === undefined)
+                        break;
+                    if (type == ScalarType.UINT32)
+                        assertUInt32(int32);
+                    else
+                        assertInt32(int32);
+                    return int32;
+                // int64, fixed64, uint64: JSON value will be a decimal string. Either numbers or strings are accepted.
+                case ScalarType.INT64:
+                case ScalarType.SFIXED64:
+                case ScalarType.SINT64:
+                    if (json === null)
+                        return reflectionLongConvert(PbLong.ZERO, longType);
+                    if (typeof json != "number" && typeof json != "string")
+                        break;
+                    return reflectionLongConvert(PbLong.from(json), longType);
+                case ScalarType.FIXED64:
+                case ScalarType.UINT64:
+                    if (json === null)
+                        return reflectionLongConvert(PbULong.ZERO, longType);
+                    if (typeof json != "number" && typeof json != "string")
+                        break;
+                    return reflectionLongConvert(PbULong.from(json), longType);
+                // bool:
+                case ScalarType.BOOL:
+                    if (json === null)
+                        return false;
+                    if (typeof json !== "boolean")
+                        break;
+                    return json;
+                // string:
+                case ScalarType.STRING:
+                    if (json === null)
+                        return "";
+                    if (typeof json !== "string") {
+                        e = "extra whitespace";
+                        break;
+                    }
+                    try {
+                        encodeURIComponent(json);
+                    }
+                    catch (e) {
+                        e = "invalid UTF8";
+                        break;
+                    }
+                    return json;
+                // bytes: JSON value will be the data encoded as a string using standard base64 encoding with paddings.
+                // Either standard or URL-safe base64 encoding with/without paddings are accepted.
+                case ScalarType.BYTES:
+                    if (json === null || json === "")
+                        return new Uint8Array(0);
+                    if (typeof json !== 'string')
+                        break;
+                    return base64decode(json);
+            }
+        }
+        catch (error) {
+            e = error.message;
+        }
+        this.assert(false, fieldName + (e ? " - " + e : ""), json);
+    }
+}
+
+/**
+ * Writes proto3 messages in canonical JSON format using reflection
+ * information.
+ *
+ * https://developers.google.com/protocol-buffers/docs/proto3#json
+ */
+class ReflectionJsonWriter {
+    constructor(info) {
+        var _a;
+        this.fields = (_a = info.fields) !== null && _a !== void 0 ? _a : [];
+    }
+    /**
+     * Converts the message to a JSON object, based on the field descriptors.
+     */
+    write(message, options) {
+        const json = {}, source = message;
+        for (const field of this.fields) {
+            // field is not part of a oneof, simply write as is
+            if (!field.oneof) {
+                let jsonValue = this.field(field, source[field.localName], options);
+                if (jsonValue !== undefined)
+                    json[options.useProtoFieldName ? field.name : field.jsonName] = jsonValue;
+                continue;
+            }
+            // field is part of a oneof
+            const group = source[field.oneof];
+            if (group.oneofKind !== field.localName)
+                continue; // not selected, skip
+            const opt = field.kind == 'scalar' || field.kind == 'enum'
+                ? Object.assign(Object.assign({}, options), { emitDefaultValues: true }) : options;
+            let jsonValue = this.field(field, group[field.localName], opt);
+            assert(jsonValue !== undefined);
+            json[options.useProtoFieldName ? field.name : field.jsonName] = jsonValue;
+        }
+        return json;
+    }
+    field(field, value, options) {
+        let jsonValue = undefined;
+        if (field.kind == 'map') {
+            assert(typeof value == "object" && value !== null);
+            const jsonObj = {};
+            switch (field.V.kind) {
+                case "scalar":
+                    for (const [entryKey, entryValue] of Object.entries(value)) {
+                        const val = this.scalar(field.V.T, entryValue, field.name, false, true);
+                        assert(val !== undefined);
+                        jsonObj[entryKey.toString()] = val; // JSON standard allows only (double quoted) string as property key
+                    }
+                    break;
+                case "message":
+                    const messageType = field.V.T();
+                    for (const [entryKey, entryValue] of Object.entries(value)) {
+                        const val = this.message(messageType, entryValue, field.name, options);
+                        assert(val !== undefined);
+                        jsonObj[entryKey.toString()] = val; // JSON standard allows only (double quoted) string as property key
+                    }
+                    break;
+                case "enum":
+                    const enumInfo = field.V.T();
+                    for (const [entryKey, entryValue] of Object.entries(value)) {
+                        assert(entryValue === undefined || typeof entryValue == 'number');
+                        const val = this.enum(enumInfo, entryValue, field.name, false, true, options.enumAsInteger);
+                        assert(val !== undefined);
+                        jsonObj[entryKey.toString()] = val; // JSON standard allows only (double quoted) string as property key
+                    }
+                    break;
+            }
+            if (options.emitDefaultValues || Object.keys(jsonObj).length > 0)
+                jsonValue = jsonObj;
+        }
+        else if (field.repeat) {
+            assert(Array.isArray(value));
+            const jsonArr = [];
+            switch (field.kind) {
+                case "scalar":
+                    for (let i = 0; i < value.length; i++) {
+                        const val = this.scalar(field.T, value[i], field.name, field.opt, true);
+                        assert(val !== undefined);
+                        jsonArr.push(val);
+                    }
+                    break;
+                case "enum":
+                    const enumInfo = field.T();
+                    for (let i = 0; i < value.length; i++) {
+                        assert(value[i] === undefined || typeof value[i] == 'number');
+                        const val = this.enum(enumInfo, value[i], field.name, field.opt, true, options.enumAsInteger);
+                        assert(val !== undefined);
+                        jsonArr.push(val);
+                    }
+                    break;
+                case "message":
+                    const messageType = field.T();
+                    for (let i = 0; i < value.length; i++) {
+                        const val = this.message(messageType, value[i], field.name, options);
+                        assert(val !== undefined);
+                        jsonArr.push(val);
+                    }
+                    break;
+            }
+            // add converted array to json output
+            if (options.emitDefaultValues || jsonArr.length > 0 || options.emitDefaultValues)
+                jsonValue = jsonArr;
+        }
+        else {
+            switch (field.kind) {
+                case "scalar":
+                    jsonValue = this.scalar(field.T, value, field.name, field.opt, options.emitDefaultValues);
+                    break;
+                case "enum":
+                    jsonValue = this.enum(field.T(), value, field.name, field.opt, options.emitDefaultValues, options.enumAsInteger);
+                    break;
+                case "message":
+                    jsonValue = this.message(field.T(), value, field.name, options);
+                    break;
+            }
+        }
+        return jsonValue;
+    }
+    /**
+     * Returns `null` as the default for google.protobuf.NullValue.
+     */
+    enum(type, value, fieldName, optional, emitDefaultValues, enumAsInteger) {
+        if (type[0] == 'google.protobuf.NullValue')
+            return !emitDefaultValues && !optional ? undefined : null;
+        if (value === undefined) {
+            assert(optional);
+            return undefined;
+        }
+        if (value === 0 && !emitDefaultValues && !optional)
+            // we require 0 to be default value for all enums
+            return undefined;
+        assert(typeof value == 'number');
+        assert(Number.isInteger(value));
+        if (enumAsInteger || !type[1].hasOwnProperty(value))
+            // if we don't now the enum value, just return the number
+            return value;
+        if (type[2])
+            // restore the dropped prefix
+            return type[2] + type[1][value];
+        return type[1][value];
+    }
+    message(type, value, fieldName, options) {
+        if (value === undefined)
+            return options.emitDefaultValues ? null : undefined;
+        return type.internalJsonWrite(value, options);
+    }
+    scalar(type, value, fieldName, optional, emitDefaultValues) {
+        if (value === undefined) {
+            assert(optional);
+            return undefined;
+        }
+        const ed = emitDefaultValues || optional;
+        // noinspection FallThroughInSwitchStatementJS
+        switch (type) {
+            // int32, fixed32, uint32: JSON value will be a decimal number. Either numbers or strings are accepted.
+            case ScalarType.INT32:
+            case ScalarType.SFIXED32:
+            case ScalarType.SINT32:
+                if (value === 0)
+                    return ed ? 0 : undefined;
+                assertInt32(value);
+                return value;
+            case ScalarType.FIXED32:
+            case ScalarType.UINT32:
+                if (value === 0)
+                    return ed ? 0 : undefined;
+                assertUInt32(value);
+                return value;
+            // float, double: JSON value will be a number or one of the special string values "NaN", "Infinity", and "-Infinity".
+            // Either numbers or strings are accepted. Exponent notation is also accepted.
+            case ScalarType.FLOAT:
+                assertFloat32(value);
+            case ScalarType.DOUBLE:
+                if (value === 0)
+                    return ed ? 0 : undefined;
+                assert(typeof value == 'number');
+                if (Number.isNaN(value))
+                    return 'NaN';
+                if (value === Number.POSITIVE_INFINITY)
+                    return 'Infinity';
+                if (value === Number.NEGATIVE_INFINITY)
+                    return '-Infinity';
+                return value;
+            // string:
+            case ScalarType.STRING:
+                if (value === "")
+                    return ed ? '' : undefined;
+                assert(typeof value == 'string');
+                return value;
+            // bool:
+            case ScalarType.BOOL:
+                if (value === false)
+                    return ed ? false : undefined;
+                assert(typeof value == 'boolean');
+                return value;
+            // JSON value will be a decimal string. Either numbers or strings are accepted.
+            case ScalarType.UINT64:
+            case ScalarType.FIXED64:
+                assert(typeof value == 'number' || typeof value == 'string' || typeof value == 'bigint');
+                let ulong = PbULong.from(value);
+                if (ulong.isZero() && !ed)
+                    return undefined;
+                return ulong.toString();
+            // JSON value will be a decimal string. Either numbers or strings are accepted.
+            case ScalarType.INT64:
+            case ScalarType.SFIXED64:
+            case ScalarType.SINT64:
+                assert(typeof value == 'number' || typeof value == 'string' || typeof value == 'bigint');
+                let long = PbLong.from(value);
+                if (long.isZero() && !ed)
+                    return undefined;
+                return long.toString();
+            // bytes: JSON value will be the data encoded as a string using standard base64 encoding with paddings.
+            // Either standard or URL-safe base64 encoding with/without paddings are accepted.
+            case ScalarType.BYTES:
+                assert(value instanceof Uint8Array);
+                if (!value.byteLength)
+                    return ed ? "" : undefined;
+                return base64encode(value);
+        }
+    }
+}
+
+/**
+ * Creates the default value for a scalar type.
+ */
+function reflectionScalarDefault(type, longType = LongType.STRING) {
+    switch (type) {
+        case ScalarType.BOOL:
+            return false;
+        case ScalarType.UINT64:
+        case ScalarType.FIXED64:
+            return reflectionLongConvert(PbULong.ZERO, longType);
+        case ScalarType.INT64:
+        case ScalarType.SFIXED64:
+        case ScalarType.SINT64:
+            return reflectionLongConvert(PbLong.ZERO, longType);
+        case ScalarType.DOUBLE:
+        case ScalarType.FLOAT:
+            return 0.0;
+        case ScalarType.BYTES:
+            return new Uint8Array(0);
+        case ScalarType.STRING:
+            return "";
+        default:
+            // case ScalarType.INT32:
+            // case ScalarType.UINT32:
+            // case ScalarType.SINT32:
+            // case ScalarType.FIXED32:
+            // case ScalarType.SFIXED32:
+            return 0;
+    }
+}
+
+/**
+ * Reads proto3 messages in binary format using reflection information.
+ *
+ * https://developers.google.com/protocol-buffers/docs/encoding
+ */
+class ReflectionBinaryReader {
+    constructor(info) {
+        this.info = info;
+    }
+    prepare() {
+        var _a;
+        if (!this.fieldNoToField) {
+            const fieldsInput = (_a = this.info.fields) !== null && _a !== void 0 ? _a : [];
+            this.fieldNoToField = new Map(fieldsInput.map(field => [field.no, field]));
+        }
+    }
+    /**
+     * Reads a message from binary format into the target message.
+     *
+     * Repeated fields are appended. Map entries are added, overwriting
+     * existing keys.
+     *
+     * If a message field is already present, it will be merged with the
+     * new data.
+     */
+    read(reader, message, options, length) {
+        this.prepare();
+        const end = length === undefined ? reader.len : reader.pos + length;
+        while (reader.pos < end) {
+            // read the tag and find the field
+            const [fieldNo, wireType] = reader.tag(), field = this.fieldNoToField.get(fieldNo);
+            if (!field) {
+                let u = options.readUnknownField;
+                if (u == "throw")
+                    throw new Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.info.typeName}`);
+                let d = reader.skip(wireType);
+                if (u !== false)
+                    (u === true ? UnknownFieldHandler.onRead : u)(this.info.typeName, message, fieldNo, wireType, d);
+                continue;
+            }
+            // target object for the field we are reading
+            let target = message, repeated = field.repeat, localName = field.localName;
+            // if field is member of oneof ADT, use ADT as target
+            if (field.oneof) {
+                target = target[field.oneof];
+                // if other oneof member selected, set new ADT
+                if (target.oneofKind !== localName)
+                    target = message[field.oneof] = {
+                        oneofKind: localName
+                    };
+            }
+            // we have handled oneof above, we just have read the value into `target[localName]`
+            switch (field.kind) {
+                case "scalar":
+                case "enum":
+                    let T = field.kind == "enum" ? ScalarType.INT32 : field.T;
+                    let L = field.kind == "scalar" ? field.L : undefined;
+                    if (repeated) {
+                        let arr = target[localName]; // safe to assume presence of array, oneof cannot contain repeated values
+                        if (wireType == WireType.LengthDelimited && T != ScalarType.STRING && T != ScalarType.BYTES) {
+                            let e = reader.uint32() + reader.pos;
+                            while (reader.pos < e)
+                                arr.push(this.scalar(reader, T, L));
+                        }
+                        else
+                            arr.push(this.scalar(reader, T, L));
+                    }
+                    else
+                        target[localName] = this.scalar(reader, T, L);
+                    break;
+                case "message":
+                    if (repeated) {
+                        let arr = target[localName]; // safe to assume presence of array, oneof cannot contain repeated values
+                        let msg = field.T().internalBinaryRead(reader, reader.uint32(), options);
+                        arr.push(msg);
+                    }
+                    else
+                        target[localName] = field.T().internalBinaryRead(reader, reader.uint32(), options, target[localName]);
+                    break;
+                case "map":
+                    let [mapKey, mapVal] = this.mapEntry(field, reader, options);
+                    // safe to assume presence of map object, oneof cannot contain repeated values
+                    target[localName][mapKey] = mapVal;
+                    break;
+            }
+        }
+    }
+    /**
+     * Read a map field, expecting key field = 1, value field = 2
+     */
+    mapEntry(field, reader, options) {
+        let length = reader.uint32();
+        let end = reader.pos + length;
+        let key = undefined; // javascript only allows number or string for object properties
+        let val = undefined;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case 1:
+                    if (field.K == ScalarType.BOOL)
+                        key = reader.bool().toString();
+                    else
+                        // long types are read as string, number types are okay as number
+                        key = this.scalar(reader, field.K, LongType.STRING);
+                    break;
+                case 2:
+                    switch (field.V.kind) {
+                        case "scalar":
+                            val = this.scalar(reader, field.V.T, field.V.L);
+                            break;
+                        case "enum":
+                            val = reader.int32();
+                            break;
+                        case "message":
+                            val = field.V.T().internalBinaryRead(reader, reader.uint32(), options);
+                            break;
+                    }
+                    break;
+                default:
+                    throw new Error(`Unknown field ${fieldNo} (wire type ${wireType}) in map entry for ${this.info.typeName}#${field.name}`);
+            }
+        }
+        if (key === undefined) {
+            let keyRaw = reflectionScalarDefault(field.K);
+            key = field.K == ScalarType.BOOL ? keyRaw.toString() : keyRaw;
+        }
+        if (val === undefined)
+            switch (field.V.kind) {
+                case "scalar":
+                    val = reflectionScalarDefault(field.V.T, field.V.L);
+                    break;
+                case "enum":
+                    val = 0;
+                    break;
+                case "message":
+                    val = field.V.T().create();
+                    break;
+            }
+        return [key, val];
+    }
+    scalar(reader, type, longType) {
+        switch (type) {
+            case ScalarType.INT32:
+                return reader.int32();
+            case ScalarType.STRING:
+                return reader.string();
+            case ScalarType.BOOL:
+                return reader.bool();
+            case ScalarType.DOUBLE:
+                return reader.double();
+            case ScalarType.FLOAT:
+                return reader.float();
+            case ScalarType.INT64:
+                return reflectionLongConvert(reader.int64(), longType);
+            case ScalarType.UINT64:
+                return reflectionLongConvert(reader.uint64(), longType);
+            case ScalarType.FIXED64:
+                return reflectionLongConvert(reader.fixed64(), longType);
+            case ScalarType.FIXED32:
+                return reader.fixed32();
+            case ScalarType.BYTES:
+                return reader.bytes();
+            case ScalarType.UINT32:
+                return reader.uint32();
+            case ScalarType.SFIXED32:
+                return reader.sfixed32();
+            case ScalarType.SFIXED64:
+                return reflectionLongConvert(reader.sfixed64(), longType);
+            case ScalarType.SINT32:
+                return reader.sint32();
+            case ScalarType.SINT64:
+                return reflectionLongConvert(reader.sint64(), longType);
+        }
+    }
+}
+
+/**
+ * Writes proto3 messages in binary format using reflection information.
+ *
+ * https://developers.google.com/protocol-buffers/docs/encoding
+ */
+class ReflectionBinaryWriter {
+    constructor(info) {
+        this.info = info;
+    }
+    prepare() {
+        if (!this.fields) {
+            const fieldsInput = this.info.fields ? this.info.fields.concat() : [];
+            this.fields = fieldsInput.sort((a, b) => a.no - b.no);
+        }
+    }
+    /**
+     * Writes the message to binary format.
+     */
+    write(message, writer, options) {
+        this.prepare();
+        for (const field of this.fields) {
+            let value, // this will be our field value, whether it is member of a oneof or not
+            emitDefault, // whether we emit the default value (only true for oneof members)
+            repeated = field.repeat, localName = field.localName;
+            // handle oneof ADT
+            if (field.oneof) {
+                const group = message[field.oneof];
+                if (group.oneofKind !== localName)
+                    continue; // if field is not selected, skip
+                value = group[localName];
+                emitDefault = true;
+            }
+            else {
+                value = message[localName];
+                emitDefault = false;
+            }
+            // we have handled oneof above. we just have to honor `emitDefault`.
+            switch (field.kind) {
+                case "scalar":
+                case "enum":
+                    let T = field.kind == "enum" ? ScalarType.INT32 : field.T;
+                    if (repeated) {
+                        assert(Array.isArray(value));
+                        if (repeated == RepeatType.PACKED)
+                            this.packed(writer, T, field.no, value);
+                        else
+                            for (const item of value)
+                                this.scalar(writer, T, field.no, item, true);
+                    }
+                    else if (value === undefined)
+                        assert(field.opt);
+                    else
+                        this.scalar(writer, T, field.no, value, emitDefault || field.opt);
+                    break;
+                case "message":
+                    if (repeated) {
+                        assert(Array.isArray(value));
+                        for (const item of value)
+                            this.message(writer, options, field.T(), field.no, item);
+                    }
+                    else {
+                        this.message(writer, options, field.T(), field.no, value);
+                    }
+                    break;
+                case "map":
+                    assert(typeof value == 'object' && value !== null);
+                    for (const [key, val] of Object.entries(value))
+                        this.mapEntry(writer, options, field, key, val);
+                    break;
+            }
+        }
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u === true ? UnknownFieldHandler.onWrite : u)(this.info.typeName, message, writer);
+    }
+    mapEntry(writer, options, field, key, value) {
+        writer.tag(field.no, WireType.LengthDelimited);
+        writer.fork();
+        // javascript only allows number or string for object properties
+        // we convert from our representation to the protobuf type
+        let keyValue = key;
+        switch (field.K) {
+            case ScalarType.INT32:
+            case ScalarType.FIXED32:
+            case ScalarType.UINT32:
+            case ScalarType.SFIXED32:
+            case ScalarType.SINT32:
+                keyValue = Number.parseInt(key);
+                break;
+            case ScalarType.BOOL:
+                assert(key == 'true' || key == 'false');
+                keyValue = key == 'true';
+                break;
+        }
+        // write key, expecting key field number = 1
+        this.scalar(writer, field.K, 1, keyValue, true);
+        // write value, expecting value field number = 2
+        switch (field.V.kind) {
+            case 'scalar':
+                this.scalar(writer, field.V.T, 2, value, true);
+                break;
+            case 'enum':
+                this.scalar(writer, ScalarType.INT32, 2, value, true);
+                break;
+            case 'message':
+                this.message(writer, options, field.V.T(), 2, value);
+                break;
+        }
+        writer.join();
+    }
+    message(writer, options, handler, fieldNo, value) {
+        if (value === undefined)
+            return;
+        handler.internalBinaryWrite(value, writer.tag(fieldNo, WireType.LengthDelimited).fork(), options);
+        writer.join();
+    }
+    /**
+     * Write a single scalar value.
+     */
+    scalar(writer, type, fieldNo, value, emitDefault) {
+        let [wireType, method, isDefault] = this.scalarInfo(type, value);
+        if (!isDefault || emitDefault) {
+            writer.tag(fieldNo, wireType);
+            writer[method](value);
+        }
+    }
+    /**
+     * Write an array of scalar values in packed format.
+     */
+    packed(writer, type, fieldNo, value) {
+        if (!value.length)
+            return;
+        assert(type !== ScalarType.BYTES && type !== ScalarType.STRING);
+        // write tag
+        writer.tag(fieldNo, WireType.LengthDelimited);
+        // begin length-delimited
+        writer.fork();
+        // write values without tags
+        let [, method,] = this.scalarInfo(type);
+        for (let i = 0; i < value.length; i++)
+            writer[method](value[i]);
+        // end length delimited
+        writer.join();
+    }
+    /**
+     * Get information for writing a scalar value.
+     *
+     * Returns tuple:
+     * [0]: appropriate WireType
+     * [1]: name of the appropriate method of IBinaryWriter
+     * [2]: whether the given value is a default value
+     *
+     * If argument `value` is omitted, [2] is always false.
+     */
+    scalarInfo(type, value) {
+        let t = WireType.Varint;
+        let m;
+        let i = value === undefined;
+        let d = value === 0;
+        switch (type) {
+            case ScalarType.INT32:
+                m = "int32";
+                break;
+            case ScalarType.STRING:
+                d = i || !value.length;
+                t = WireType.LengthDelimited;
+                m = "string";
+                break;
+            case ScalarType.BOOL:
+                d = value === false;
+                m = "bool";
+                break;
+            case ScalarType.UINT32:
+                m = "uint32";
+                break;
+            case ScalarType.DOUBLE:
+                t = WireType.Bit64;
+                m = "double";
+                break;
+            case ScalarType.FLOAT:
+                t = WireType.Bit32;
+                m = "float";
+                break;
+            case ScalarType.INT64:
+                d = i || PbLong.from(value).isZero();
+                m = "int64";
+                break;
+            case ScalarType.UINT64:
+                d = i || PbULong.from(value).isZero();
+                m = "uint64";
+                break;
+            case ScalarType.FIXED64:
+                d = i || PbULong.from(value).isZero();
+                t = WireType.Bit64;
+                m = "fixed64";
+                break;
+            case ScalarType.BYTES:
+                d = i || !value.byteLength;
+                t = WireType.LengthDelimited;
+                m = "bytes";
+                break;
+            case ScalarType.FIXED32:
+                t = WireType.Bit32;
+                m = "fixed32";
+                break;
+            case ScalarType.SFIXED32:
+                t = WireType.Bit32;
+                m = "sfixed32";
+                break;
+            case ScalarType.SFIXED64:
+                d = i || PbLong.from(value).isZero();
+                t = WireType.Bit64;
+                m = "sfixed64";
+                break;
+            case ScalarType.SINT32:
+                m = "sint32";
+                break;
+            case ScalarType.SINT64:
+                d = i || PbLong.from(value).isZero();
+                m = "sint64";
+                break;
+        }
+        return [t, m, i || d];
+    }
+}
+
+/**
+ * Creates an instance of the generic message, using the field
+ * information.
+ */
+function reflectionCreate(type) {
+    /**
+     * This ternary can be removed in the next major version.
+     * The `Object.create()` code path utilizes a new `messagePrototype`
+     * property on the `IMessageType` which has this same `MESSAGE_TYPE`
+     * non-enumerable property on it. Doing it this way means that we only
+     * pay the cost of `Object.defineProperty()` once per `IMessageType`
+     * class of once per "instance". The falsy code path is only provided
+     * for backwards compatibility in cases where the runtime library is
+     * updated without also updating the generated code.
+     */
+    const msg = type.messagePrototype
+        ? Object.create(type.messagePrototype)
+        : Object.defineProperty({}, MESSAGE_TYPE, { value: type });
+    for (let field of type.fields) {
+        let name = field.localName;
+        if (field.opt)
+            continue;
+        if (field.oneof)
+            msg[field.oneof] = { oneofKind: undefined };
+        else if (field.repeat)
+            msg[name] = [];
+        else
+            switch (field.kind) {
+                case "scalar":
+                    msg[name] = reflectionScalarDefault(field.T, field.L);
+                    break;
+                case "enum":
+                    // we require 0 to be default value for all enums
+                    msg[name] = 0;
+                    break;
+                case "map":
+                    msg[name] = {};
+                    break;
+            }
+    }
+    return msg;
+}
+
+/**
+ * Copy partial data into the target message.
+ *
+ * If a singular scalar or enum field is present in the source, it
+ * replaces the field in the target.
+ *
+ * If a singular message field is present in the source, it is merged
+ * with the target field by calling mergePartial() of the responsible
+ * message type.
+ *
+ * If a repeated field is present in the source, its values replace
+ * all values in the target array, removing extraneous values.
+ * Repeated message fields are copied, not merged.
+ *
+ * If a map field is present in the source, entries are added to the
+ * target map, replacing entries with the same key. Entries that only
+ * exist in the target remain. Entries with message values are copied,
+ * not merged.
+ *
+ * Note that this function differs from protobuf merge semantics,
+ * which appends repeated fields.
+ */
+function reflectionMergePartial(info, target, source) {
+    let fieldValue, // the field value we are working with
+    input = source, output; // where we want our field value to go
+    for (let field of info.fields) {
+        let name = field.localName;
+        if (field.oneof) {
+            const group = input[field.oneof]; // this is the oneof`s group in the source
+            if ((group === null || group === void 0 ? void 0 : group.oneofKind) == undefined) { // the user is free to omit
+                continue; // we skip this field, and all other members too
+            }
+            fieldValue = group[name]; // our value comes from the the oneof group of the source
+            output = target[field.oneof]; // and our output is the oneof group of the target
+            output.oneofKind = group.oneofKind; // always update discriminator
+            if (fieldValue == undefined) {
+                delete output[name]; // remove any existing value
+                continue; // skip further work on field
+            }
+        }
+        else {
+            fieldValue = input[name]; // we are using the source directly
+            output = target; // we want our field value to go directly into the target
+            if (fieldValue == undefined) {
+                continue; // skip further work on field, existing value is used as is
+            }
+        }
+        if (field.repeat)
+            output[name].length = fieldValue.length; // resize target array to match source array
+        // now we just work with `fieldValue` and `output` to merge the value
+        switch (field.kind) {
+            case "scalar":
+            case "enum":
+                if (field.repeat)
+                    for (let i = 0; i < fieldValue.length; i++)
+                        output[name][i] = fieldValue[i]; // not a reference type
+                else
+                    output[name] = fieldValue; // not a reference type
+                break;
+            case "message":
+                let T = field.T();
+                if (field.repeat)
+                    for (let i = 0; i < fieldValue.length; i++)
+                        output[name][i] = T.create(fieldValue[i]);
+                else if (output[name] === undefined)
+                    output[name] = T.create(fieldValue); // nothing to merge with
+                else
+                    T.mergePartial(output[name], fieldValue);
+                break;
+            case "map":
+                // Map and repeated fields are simply overwritten, not appended or merged
+                switch (field.V.kind) {
+                    case "scalar":
+                    case "enum":
+                        Object.assign(output[name], fieldValue); // elements are not reference types
+                        break;
+                    case "message":
+                        let T = field.V.T();
+                        for (let k of Object.keys(fieldValue))
+                            output[name][k] = T.create(fieldValue[k]);
+                        break;
+                }
+                break;
+        }
+    }
+}
+
+/**
+ * Determines whether two message of the same type have the same field values.
+ * Checks for deep equality, traversing repeated fields, oneof groups, maps
+ * and messages recursively.
+ * Will also return true if both messages are `undefined`.
+ */
+function reflectionEquals(info, a, b) {
+    if (a === b)
+        return true;
+    if (!a || !b)
+        return false;
+    for (let field of info.fields) {
+        let localName = field.localName;
+        let val_a = field.oneof ? a[field.oneof][localName] : a[localName];
+        let val_b = field.oneof ? b[field.oneof][localName] : b[localName];
+        switch (field.kind) {
+            case "enum":
+            case "scalar":
+                let t = field.kind == "enum" ? ScalarType.INT32 : field.T;
+                if (!(field.repeat
+                    ? repeatedPrimitiveEq(t, val_a, val_b)
+                    : primitiveEq(t, val_a, val_b)))
+                    return false;
+                break;
+            case "map":
+                if (!(field.V.kind == "message"
+                    ? repeatedMsgEq(field.V.T(), objectValues(val_a), objectValues(val_b))
+                    : repeatedPrimitiveEq(field.V.kind == "enum" ? ScalarType.INT32 : field.V.T, objectValues(val_a), objectValues(val_b))))
+                    return false;
+                break;
+            case "message":
+                let T = field.T();
+                if (!(field.repeat
+                    ? repeatedMsgEq(T, val_a, val_b)
+                    : T.equals(val_a, val_b)))
+                    return false;
+                break;
+        }
+    }
+    return true;
+}
+const objectValues = Object.values;
+function primitiveEq(type, a, b) {
+    if (a === b)
+        return true;
+    if (type !== ScalarType.BYTES)
+        return false;
+    let ba = a;
+    let bb = b;
+    if (ba.length !== bb.length)
+        return false;
+    for (let i = 0; i < ba.length; i++)
+        if (ba[i] != bb[i])
+            return false;
+    return true;
+}
+function repeatedPrimitiveEq(type, a, b) {
+    if (a.length !== b.length)
+        return false;
+    for (let i = 0; i < a.length; i++)
+        if (!primitiveEq(type, a[i], b[i]))
+            return false;
+    return true;
+}
+function repeatedMsgEq(type, a, b) {
+    if (a.length !== b.length)
+        return false;
+    for (let i = 0; i < a.length; i++)
+        if (!type.equals(a[i], b[i]))
+            return false;
+    return true;
+}
+
+const baseDescriptors = Object.getOwnPropertyDescriptors(Object.getPrototypeOf({}));
+/**
+ * This standard message type provides reflection-based
+ * operations to work with a message.
+ */
+class MessageType {
+    constructor(name, fields, options) {
+        this.defaultCheckDepth = 16;
+        this.typeName = name;
+        this.fields = fields.map(normalizeFieldInfo);
+        this.options = options !== null && options !== void 0 ? options : {};
+        this.messagePrototype = Object.create(null, Object.assign(Object.assign({}, baseDescriptors), { [MESSAGE_TYPE]: { value: this } }));
+        this.refTypeCheck = new ReflectionTypeCheck(this);
+        this.refJsonReader = new ReflectionJsonReader(this);
+        this.refJsonWriter = new ReflectionJsonWriter(this);
+        this.refBinReader = new ReflectionBinaryReader(this);
+        this.refBinWriter = new ReflectionBinaryWriter(this);
+    }
+    create(value) {
+        let message = reflectionCreate(this);
+        if (value !== undefined) {
+            reflectionMergePartial(this, message, value);
+        }
+        return message;
+    }
+    /**
+     * Clone the message.
+     *
+     * Unknown fields are discarded.
+     */
+    clone(message) {
+        let copy = this.create();
+        reflectionMergePartial(this, copy, message);
+        return copy;
+    }
+    /**
+     * Determines whether two message of the same type have the same field values.
+     * Checks for deep equality, traversing repeated fields, oneof groups, maps
+     * and messages recursively.
+     * Will also return true if both messages are `undefined`.
+     */
+    equals(a, b) {
+        return reflectionEquals(this, a, b);
+    }
+    /**
+     * Is the given value assignable to our message type
+     * and contains no [excess properties](https://www.typescriptlang.org/docs/handbook/interfaces.html#excess-property-checks)?
+     */
+    is(arg, depth = this.defaultCheckDepth) {
+        return this.refTypeCheck.is(arg, depth, false);
+    }
+    /**
+     * Is the given value assignable to our message type,
+     * regardless of [excess properties](https://www.typescriptlang.org/docs/handbook/interfaces.html#excess-property-checks)?
+     */
+    isAssignable(arg, depth = this.defaultCheckDepth) {
+        return this.refTypeCheck.is(arg, depth, true);
+    }
+    /**
+     * Copy partial data into the target message.
+     */
+    mergePartial(target, source) {
+        reflectionMergePartial(this, target, source);
+    }
+    /**
+     * Create a new message from binary format.
+     */
+    fromBinary(data, options) {
+        let opt = binaryReadOptions(options);
+        return this.internalBinaryRead(opt.readerFactory(data), data.byteLength, opt);
+    }
+    /**
+     * Read a new message from a JSON value.
+     */
+    fromJson(json, options) {
+        return this.internalJsonRead(json, jsonReadOptions(options));
+    }
+    /**
+     * Read a new message from a JSON string.
+     * This is equivalent to `T.fromJson(JSON.parse(json))`.
+     */
+    fromJsonString(json, options) {
+        let value = JSON.parse(json);
+        return this.fromJson(value, options);
+    }
+    /**
+     * Write the message to canonical JSON value.
+     */
+    toJson(message, options) {
+        return this.internalJsonWrite(message, jsonWriteOptions(options));
+    }
+    /**
+     * Convert the message to canonical JSON string.
+     * This is equivalent to `JSON.stringify(T.toJson(t))`
+     */
+    toJsonString(message, options) {
+        var _a;
+        let value = this.toJson(message, options);
+        return JSON.stringify(value, null, (_a = options === null || options === void 0 ? void 0 : options.prettySpaces) !== null && _a !== void 0 ? _a : 0);
+    }
+    /**
+     * Write the message to binary format.
+     */
+    toBinary(message, options) {
+        let opt = binaryWriteOptions(options);
+        return this.internalBinaryWrite(message, opt.writerFactory(), opt).finish();
+    }
+    /**
+     * This is an internal method. If you just want to read a message from
+     * JSON, use `fromJson()` or `fromJsonString()`.
+     *
+     * Reads JSON value and merges the fields into the target
+     * according to protobuf rules. If the target is omitted,
+     * a new instance is created first.
+     */
+    internalJsonRead(json, options, target) {
+        if (json !== null && typeof json == "object" && !Array.isArray(json)) {
+            let message = target !== null && target !== void 0 ? target : this.create();
+            this.refJsonReader.read(json, message, options);
+            return message;
+        }
+        throw new Error(`Unable to parse message ${this.typeName} from JSON ${typeofJsonValue(json)}.`);
+    }
+    /**
+     * This is an internal method. If you just want to write a message
+     * to JSON, use `toJson()` or `toJsonString().
+     *
+     * Writes JSON value and returns it.
+     */
+    internalJsonWrite(message, options) {
+        return this.refJsonWriter.write(message, options);
+    }
+    /**
+     * This is an internal method. If you just want to write a message
+     * in binary format, use `toBinary()`.
+     *
+     * Serializes the message in binary format and appends it to the given
+     * writer. Returns passed writer.
+     */
+    internalBinaryWrite(message, writer, options) {
+        this.refBinWriter.write(message, writer, options);
+        return writer;
+    }
+    /**
+     * This is an internal method. If you just want to read a message from
+     * binary data, use `fromBinary()`.
+     *
+     * Reads data from binary format and merges the fields into
+     * the target according to protobuf rules. If the target is
+     * omitted, a new instance is created first.
+     */
+    internalBinaryRead(reader, length, options, target) {
+        let message = target !== null && target !== void 0 ? target : this.create();
+        this.refBinReader.read(reader, message, options, length);
+        return message;
+    }
+}
+
+// import { Any } from "./protobuf/google/protobuf/any.js";
+
+const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.6.0(1) response.beta");
 
 /***************** Processing *****************/
 // 解构URL
-const URL = URI.parse($request.url);
-$.log(`⚠ ${$.name}`, `URL: ${JSON.stringify(URL)}`, "");
+const url = new URL($request.url);
+$.log(`⚠ url: ${url.toJSON()}`, "");
 // 获取连接参数
-const METHOD = $request.method, HOST = URL.host, PATH = URL.path, PATHs = URL.paths;
-$.log(`⚠ ${$.name}`, `METHOD: ${METHOD}`, "");
+const METHOD = $request.method, HOST = url.hostname, PATH = url.pathname, PATHs = url.pathname.split("/").filter(Boolean);
+$.log(`⚠ METHOD: ${METHOD}, HOST: ${HOST}, PATH: ${PATH}` , "");
 // 解析格式
 const FORMAT = ($response.headers?.["Content-Type"] ?? $response.headers?.["content-type"])?.split(";")?.[0];
-$.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
-(async () => {
+$.log(`⚠ FORMAT: ${FORMAT}`, "");
+!(async () => {
 	// 读取设置
-	const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", DataBase);
-	$.log(`⚠ ${$.name}`, `Settings.Switch: ${Settings?.Switch}`, "");
+	const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", Database$1);
+	$.log(`⚠ Settings.Switch: ${Settings?.Switch}`, "");
 	switch (Settings.Switch) {
 		case true:
 		default:
@@ -41,7 +10742,6 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 					break;
 				case "application/x-www-form-urlencoded":
 				case "text/plain":
-				case "text/html":
 				default:
 					break;
 				case "application/x-mpegURL":
@@ -49,22 +10749,23 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 				case "application/vnd.apple.mpegurl":
 				case "audio/mpegurl":
 					//body = M3U8.parse($response.body);
-					//$.log(`🚧 ${$.name}`, `body: ${JSON.stringify(body)}`, "");
+					//$.log(`🚧 body: ${JSON.stringify(body)}`, "");
 					//$response.body = M3U8.stringify(body);
 					break;
 				case "text/xml":
+				case "text/html":
 				case "text/plist":
 				case "application/xml":
 				case "application/plist":
 				case "application/x-plist":
 					//body = XML.parse($response.body);
-					//$.log(`🚧 ${$.name}`, `body: ${JSON.stringify(body)}`, "");
+					//$.log(`🚧 body: ${JSON.stringify(body)}`, "");
 					//$response.body = XML.stringify(body);
 					break;
 				case "text/vtt":
 				case "application/vtt":
 					//body = VTT.parse($response.body);
-					//$.log(`🚧 ${$.name}`, `body: ${JSON.stringify(body)}`, "");
+					//$.log(`🚧 body: ${JSON.stringify(body)}`, "");
 					//$response.body = VTT.stringify(body);
 					break;
 				case "text/json":
@@ -77,10 +10778,10 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 						case "app.bilibili.com":
 						case "app.biliapi.net":
 							switch (PATH) {
-								case "x/v2/splash/show": // 开屏页
-								case "x/v2/splash/list": // 开屏页
-								case "x/v2/splash/brand/list": // 开屏页
-								case "x/v2/splash/event/list2": // 开屏页
+								case "/x/v2/splash/show": // 开屏页
+								case "/x/v2/splash/list": // 开屏页
+								case "/x/v2/splash/brand/list": // 开屏页
+								case "/x/v2/splash/event/list2": // 开屏页
 									switch (Settings?.Detail?.splash) {
 										case true:
 										default:
@@ -89,15 +10790,14 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 												item.forEach((i) => {
 													delete body.data[i];
 												});
-												$.log(`🎉 ${$.name}`, "开屏页广告去除");
+												$.log(`🎉 开屏页广告去除`);
 											}
 											break;
 										case false:
-											$.log(`🚧 ${$.name}`, "用户设置开屏页广告不去除");
+											$.log(`🚧 用户设置开屏页广告不去除`);
 											break;
-									};
-									break;
-								case "x/v2/feed/index": // 推荐页
+									}									break;
+								case "/x/v2/feed/index": // 推荐页
 									switch (Settings?.Detail?.feed) {
 										case true:
 										default:
@@ -111,14 +10811,14 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 																case true:
 																default:
 																	Caches.banner_hash = item.hash;
-																	$.setjson(Caches, "@BiliBili.ADBlock.Caches"); // 获取banner_hash,无此字段会有活动页且此字段无法伪造.
-																	$.log(`🎉 ${$.name}`, "推荐页活动大图去除");
+																	$Storage.setItem("@BiliBili.ADBlock.Caches", Caches); // 获取banner_hash,无此字段会有活动页且此字段无法伪造.
+																	$.log(`🎉 推荐页活动大图去除`);
 																	return undefined;
 																case false:
 																	if (item.banner_item) {
 																		item.banner_item = item.banner_item.filter(i => {
 																			if (i.type === 'ad') {
-																				$.log(`🎉 ${$.name}`, "推荐页大图广告去除");
+																				$.log(`🎉 推荐页大图广告去除`);
 																				return false;
 																			}
 																			return true;
@@ -128,8 +10828,8 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 															}
 														} else if (['cm_v2', 'cm_v1'].includes(cardType) && ['ad_web_s', 'ad_av', 'ad_web_gif'].includes(cardGoto)) {
 															// ad_player大视频广告 ad_web_gif大gif广告 ad_web_s普通小广告 ad_av创作推广广告 ad_inline_3d  上方大的视频3d广告 ad_inline_eggs 上方大的视频广告 ad_inline_live 华为问界
-															$.log(`🎉 ${$.name}`, `${cardGoto}广告去除`);
-															if (URL.query?.device !== "phone") {
+															$.log(`🎉 ${cardGoto}广告去除`);
+															if (url.searchParams.get("device") !== "phone") {
 																return undefined;//pad直接去除
 															} else {
 																await fixPosition().then(result => item = result);//小广告补位
@@ -140,31 +10840,31 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 																blockUpLiveList = blockUpLiveList.toString();
 															}
 															if (blockUpLiveList && blockUpLiveList.includes(item?.args?.up_id?.toString())) {
-																$.log(`🎉 ${$.name}`, `屏蔽Up主<${item?.args?.up_name}>直播推广`);
+																$.log(`🎉 屏蔽Up主<${item?.args?.up_name}>直播推广`);
 																await fixPosition().then(result => item = result);//小广告补位
 															}
 														} else if (cardType === 'cm_v2' && ['ad_player', 'ad_inline_3d', 'ad_inline_eggs', 'ad_inline_live'].includes(cardGoto)) {
-															$.log(`🎉 ${$.name}`, `${cardGoto}广告去除`);
-															return undefined;//大广告直接去除
+															$.log(`🎉 ${cardGoto}广告去除`);
+															return undefined; //大广告直接去除
 														} else if (cardType === 'small_cover_v10' && cardGoto === 'game') {
-															$.log(`🎉 ${$.name}`, "游戏广告去除");
-															if (URL.query?.device !== "phone") {
-																return undefined;//pad直接去除
+															$.log(`🎉 游戏广告去除`);
+															if (url.searchParams.get("device") !== "phone") {
+																return undefined; //pad直接去除
 															} else {
 																await fixPosition().then(result => item = result);//小广告补位
 															}
 														} else if (cardType === 'cm_double_v9' && cardGoto === 'ad_inline_av') {
-															$.log(`🎉 ${$.name}`, "大视频广告去除");
-															return undefined;//大广告直接去除
+															$.log(`🎉 大视频广告去除`);
+															return undefined; //大广告直接去除
 														} else if (Goto === 'vertical_av') {
 															switch (Settings?.Detail?.vertical) {
 																case true:
 																default:
-																	$.log(`🎉 ${$.name}`, "竖屏视频去除");
+																	$.log(`🎉 竖屏视频去除`);
 																	await fixPosition().then(result => item = result);//小视频补位
 																	break;
 																case false:
-																	$.log(`🚧 ${$.name}`, "用户设置推荐页竖屏视频不去除");
+																	$.log(`🚧 用户设置推荐页竖屏视频不去除`);
 																	break;
 															}
 														}
@@ -174,19 +10874,19 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 												body.data.items = body.data.items.filter(fix => fix !== undefined);
 											}
 											async function fixPosition() {
-												let itemsCache = $.getdata("@BiliBili.Index.Caches","");
+												let itemsCache = $Storage.getItem("@BiliBili.Index.Caches", "");
 												let singleItem = {};
 												if (itemsCache && itemsCache.length > 0) {
 													singleItem = itemsCache.pop();
-													$.log(`🎉 ${$.name}`, "推荐页空缺位填充成功");
-												} else {//重新获取填充位
+													$.log(`🎉 推荐页空缺位填充成功`);
+												} else { //重新获取填充位
 													const myRequest = {
 														url: $request.url,
 														headers: $request.heders
-													}
-													await $.http.get(myRequest).then(response => {
+													};
+													await $.fetch(myRequest).then(response => {
 														try {
-															const body = $.toObj(response.body)
+															const body = $.toObj(response.body);
 															if (body?.code === 0 && body?.message === "0") {
 																body.data.items = body.data.items.map(item => {
 																	const { card_type: cardType, card_goto: cardGoto, goto: Goto } = item;
@@ -207,31 +10907,30 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 																	}
 																	return item;
 																}).filter(fix => fix !== undefined);
-																$.setdata(body.data.items, "@BiliBili.Index.Caches");
-																$.log(`🎉 ${$.name}`, "推荐页缓存数组补充成功");
+																$Storage.setItem("@BiliBili.Index.Caches", body.data.items);
+																$.log(`🎉 推荐页缓存数组补充成功`);
 															} else {
-																$.log(`🚧 ${$.name}`, "访问推荐页尝试填补失败");
+																$.log(`🚧 访问推荐页尝试填补失败`);
 															}
 														} catch (e) {
-															$.logErr(e, response)
+															$.logErr(e, response);
 														}
-													})
-													itemsCache = $.getdata("@BiliBili.Index.Caches","");
+													});
+													itemsCache = $Storage.getItem("@BiliBili.Index.Caches", "");
 													if (itemsCache.length > 0) {
 														singleItem = itemsCache.pop();
-														$.log(`🎉 ${$.name}`, "推荐页空缺位填充成功");
+														$.log(`🎉 推荐页空缺位填充成功`);
 													}
 												}
-												$.setdata(itemsCache, "@BiliBili.Index.Caches");
+												$Storage.setItem("@BiliBili.Index.Caches", itemsCache);
 												return singleItem;
 											}
 											break;
 										case false:
-											$.log(`🚧 ${$.name}`, "用户设置推荐页广告不去除");
+											$.log(`🚧 用户设置推荐页广告不去除`);
 											break;
-									};
-									break;
-								case "x/v2/feed/index/story": // 首页短视频流
+									}									break;
+								case "/x/v2/feed/index/story": // 首页短视频流
 									switch (Settings?.Detail?.story) {
 										case true:
 										default:
@@ -243,37 +10942,35 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 														["vertical_ad_av", "vertical_pgc"].includes(i.card_goto)
 													)
 												);
-												$.log(`🎉 ${$.name}`, "首页短视频流广告去除");
+												$.log(`🎉 首页短视频流广告去除`);
 											}
 											break;
 										case false:
-											$.log(`🚧 ${$.name}`, "用户设置首页短视频流广告不去除");
+											$.log(`🚧 用户设置首页短视频流广告不去除`);
 											break;
-									};
-									break;
-								case "x/v2/search/square": // 搜索页
+									}									break;
+								case "/x/v2/search/square": // 搜索页
 									switch (Settings?.Detail?.Hot_search) {
 										case true:
 										default:
 											body.data = body.data.filter((i) => !(i.type === "trending"));
-											$.log(`🎉 ${$.name}`, "搜索页热搜内容去除");
+											$.log(`🎉 搜索页热搜内容去除`);
 											break;
 										case false:
-											$.log(`🚧 ${$.name}`, "用户设置搜索页热搜内容不去除");
+											$.log(`🚧 用户设置搜索页热搜内容不去除`);
 											break;
 									}
 									break;
-							};
-							break;
+							}							break;
 						case "api.bilibili.com":
 						case "api.biliapi.net":
 							switch (PATH) {
-								case "pgc/player/api/playurl": // 番剧-播放地址-api
-								case "pgc/player/web/playurl": // 番剧-播放地址-web
-								case "pgc/player/web/playurl/html5": // 番剧-播放地址-web-HTML5
+								case "/pgc/player/api/playurl": // 番剧-播放地址-api
+								case "/pgc/player/web/playurl": // 番剧-播放地址-web
+								case "/pgc/player/web/playurl/html5": // 番剧-播放地址-web-HTML5
 									break;
-								case "pgc/page/bangumi": // 追番页
-								case "pgc/page/cinema/tab": // 观影页
+								case "/pgc/page/bangumi": // 追番页
+								case "/pgc/page/cinema/tab": // 观影页
 									switch (Settings?.Detail?.cinema) {
 										case true:
 										default:
@@ -289,61 +10986,46 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 														i.items = [];
 													}
 												});
-												$.log(`🎉 ${$.name}`, "观影页广告去除");
+												$.log(`🎉 观影页广告去除`);
 											}
 											break;
 										case false:
-											$.log(`🚧 ${$.name}`, "用户设置观影页广告不去除");
+											$.log(`🚧 用户设置观影页广告不去除`);
 											break;
-									};
+									}									break;
+								case "/x/player/wbi/playurl": // UGC-用户生产内容-播放地址
 									break;
-								case "x/player/wbi/playurl": // UGC-用户生产内容-播放地址
-									break;
-								case "x/web-interface/wbi/index/top/feed/rcmd": // web首页
+								case "/x/web-interface/wbi/index/top/feed/rcmd": // web首页
 									switch (Settings?.Detail?.feed) {
 										case true:
 										default:
 											body.data.item = body.data.item.filter((i) => !(i.goto === "ad"));
-											$.log(`🎉 ${$.name}`, "首页广告内容去除");
+											$.log(`🎉 首页广告内容去除`);
 											break;
 										case false:
-											$.log(`🚧 ${$.name}`, "用户设置首页广告不去除");
+											$.log(`🚧 用户设置首页广告不去除`);
 											break;
-									};
-									break;
-								case "x/space/acc/info": // 用户空间-账号信息-pc
-								case "x/space/wbi/acc/info": // 用户空间-账号信息-wbi
-									switch (URL.query?.vmid || URL.query?.mid) {
-										case "11783021": // 哔哩哔哩番剧出差
-										case "1988098633": // b站_戲劇咖
-										case "2042149112": // b站_綜藝咖
-											break;
-										default:
-											break;
-									};
-									break;
-								case "pgc/view/v2/app/season": // 番剧页面-内容-app
-									break;
-								case "pgc/view/web/season": // 番剧-内容-web
-								case "pgc/view/pc/season": // 番剧-内容-pc
-									break;
-							};
-							break;
+									}									break;
+								case "/x/space/acc/info": // 用户空间-账号信息-pc
+								case "/x/space/wbi/acc/info": // 用户空间-账号信息-wbi
+									switch (url.searchParams.get("vmid") || url.searchParams.get("mid")) {
+																			}									break;
+							}							break;
 						case "api.live.bilibili.com":
 							switch (PATH) {
-								case "xlive/app-room/v1/index/getInfoByRoom": // 直播
+								case "/xlive/app-room/v1/index/getInfoByRoom": // 直播
 									switch (Settings?.Detail?.xlive) {
 										case true:
 										default:
 											if (body.data?.activity_banner_info) {
 												body.data.activity_banner_info = null;
-												$.log(`🎉 ${$.name}`, "直播banner广告去除");
+												$.log(`🎉 直播banner广告去除`);
 											}
 											if (body.data?.shopping_info) {
 												body.data.shopping_info = {
 													is_show: 0
 												};
-												$.log(`🎉 ${$.name}`, "直播购物广告去除");
+												$.log(`🎉 直播购物广告去除`);
 											}
 											if (body.data?.new_tab_info?.outer_list?.length > 0) {
 												body.data.new_tab_info.outer_list =
@@ -351,14 +11033,11 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 											}
 											break;
 										case false:
-											$.log(`🚧 ${$.name}`, "用户设置直播页广告不去除");
+											$.log(`🚧 用户设置直播页广告不去除`);
 											break;
-									};
-									break;
-							};
-							break;
-					};
-					$response.body = JSON.stringify(body);
+									}									break;
+							}							break;
+					}					$response.body = JSON.stringify(body);
 					break;
 				case "application/protobuf":
 				case "application/x-protobuf":
@@ -366,17 +11045,9 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 				case "application/grpc":
 				case "application/grpc+proto":
 				case "applecation/octet-stream":
-					//$.log(`🚧 ${$.name}`, `$response.body: ${JSON.stringify($response.body)}`, "");
+					//$.log(`🚧 $response.body: ${JSON.stringify($response.body)}`, "");
 					let rawBody = $.isQuanX() ? new Uint8Array($response.bodyBytes ?? []) : $response.body ?? new Uint8Array();
-					//$.log(`🚧 ${$.name}`, `isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`, "");
-					/******************  initialization start  *******************/
-					// timostamm/protobuf-ts 2.9.0
-					// text-decoder
-					!function(i){"use strict";function _(n,e,i){return e<=n&&n<=i}"undefined"!=typeof module&&module.exports&&!i["encoding-indexes"]&&(i["encoding-indexes"]=require("./encoding-indexes.js")["encoding-indexes"]);var l=Math.floor;function s(n){if(void 0===n)return{};if(n===Object(n))return n;throw TypeError("Could not convert argument to dictionary")}function u(n){return 0<=n&&n<=127}var a=u,b=-1;function c(n){this.tokens=[].slice.call(n),this.tokens.reverse()}c.prototype={endOfStream:function(){return!this.tokens.length},read:function(){return this.tokens.length?this.tokens.pop():b},prepend:function(n){if(Array.isArray(n))for(var e=n;e.length;)this.tokens.push(e.pop());else this.tokens.push(n)},push:function(n){if(Array.isArray(n))for(var e=n;e.length;)this.tokens.unshift(e.shift());else this.tokens.unshift(n)}};var w=-1;function m(n,e){if(n)throw TypeError("Decoder error");return e||65533}function f(n){throw TypeError("The code point "+n+" could not be encoded.")}function r(n){return n=String(n).trim().toLowerCase(),Object.prototype.hasOwnProperty.call(d,n)?d[n]:null}var t,o,n=[{encodings:[{labels:["unicode-1-1-utf-8","utf-8","utf8"],name:"UTF-8"}],heading:"The Encoding"},{encodings:[{labels:["866","cp866","csibm866","ibm866"],name:"IBM866"},{labels:["csisolatin2","iso-8859-2","iso-ir-101","iso8859-2","iso88592","iso_8859-2","iso_8859-2:1987","l2","latin2"],name:"ISO-8859-2"},{labels:["csisolatin3","iso-8859-3","iso-ir-109","iso8859-3","iso88593","iso_8859-3","iso_8859-3:1988","l3","latin3"],name:"ISO-8859-3"},{labels:["csisolatin4","iso-8859-4","iso-ir-110","iso8859-4","iso88594","iso_8859-4","iso_8859-4:1988","l4","latin4"],name:"ISO-8859-4"},{labels:["csisolatincyrillic","cyrillic","iso-8859-5","iso-ir-144","iso8859-5","iso88595","iso_8859-5","iso_8859-5:1988"],name:"ISO-8859-5"},{labels:["arabic","asmo-708","csiso88596e","csiso88596i","csisolatinarabic","ecma-114","iso-8859-6","iso-8859-6-e","iso-8859-6-i","iso-ir-127","iso8859-6","iso88596","iso_8859-6","iso_8859-6:1987"],name:"ISO-8859-6"},{labels:["csisolatingreek","ecma-118","elot_928","greek","greek8","iso-8859-7","iso-ir-126","iso8859-7","iso88597","iso_8859-7","iso_8859-7:1987","sun_eu_greek"],name:"ISO-8859-7"},{labels:["csiso88598e","csisolatinhebrew","hebrew","iso-8859-8","iso-8859-8-e","iso-ir-138","iso8859-8","iso88598","iso_8859-8","iso_8859-8:1988","visual"],name:"ISO-8859-8"},{labels:["csiso88598i","iso-8859-8-i","logical"],name:"ISO-8859-8-I"},{labels:["csisolatin6","iso-8859-10","iso-ir-157","iso8859-10","iso885910","l6","latin6"],name:"ISO-8859-10"},{labels:["iso-8859-13","iso8859-13","iso885913"],name:"ISO-8859-13"},{labels:["iso-8859-14","iso8859-14","iso885914"],name:"ISO-8859-14"},{labels:["csisolatin9","iso-8859-15","iso8859-15","iso885915","iso_8859-15","l9"],name:"ISO-8859-15"},{labels:["iso-8859-16"],name:"ISO-8859-16"},{labels:["cskoi8r","koi","koi8","koi8-r","koi8_r"],name:"KOI8-R"},{labels:["koi8-ru","koi8-u"],name:"KOI8-U"},{labels:["csmacintosh","mac","macintosh","x-mac-roman"],name:"macintosh"},{labels:["dos-874","iso-8859-11","iso8859-11","iso885911","tis-620","windows-874"],name:"windows-874"},{labels:["cp1250","windows-1250","x-cp1250"],name:"windows-1250"},{labels:["cp1251","windows-1251","x-cp1251"],name:"windows-1251"},{labels:["ansi_x3.4-1968","ascii","cp1252","cp819","csisolatin1","ibm819","iso-8859-1","iso-ir-100","iso8859-1","iso88591","iso_8859-1","iso_8859-1:1987","l1","latin1","us-ascii","windows-1252","x-cp1252"],name:"windows-1252"},{labels:["cp1253","windows-1253","x-cp1253"],name:"windows-1253"},{labels:["cp1254","csisolatin5","iso-8859-9","iso-ir-148","iso8859-9","iso88599","iso_8859-9","iso_8859-9:1989","l5","latin5","windows-1254","x-cp1254"],name:"windows-1254"},{labels:["cp1255","windows-1255","x-cp1255"],name:"windows-1255"},{labels:["cp1256","windows-1256","x-cp1256"],name:"windows-1256"},{labels:["cp1257","windows-1257","x-cp1257"],name:"windows-1257"},{labels:["cp1258","windows-1258","x-cp1258"],name:"windows-1258"},{labels:["x-mac-cyrillic","x-mac-ukrainian"],name:"x-mac-cyrillic"}],heading:"Legacy single-byte encodings"},{encodings:[{labels:["chinese","csgb2312","csiso58gb231280","gb2312","gb_2312","gb_2312-80","gbk","iso-ir-58","x-gbk"],name:"GBK"},{labels:["gb18030"],name:"gb18030"}],heading:"Legacy multi-byte Chinese (simplified) encodings"},{encodings:[{labels:["big5","big5-hkscs","cn-big5","csbig5","x-x-big5"],name:"Big5"}],heading:"Legacy multi-byte Chinese (traditional) encodings"},{encodings:[{labels:["cseucpkdfmtjapanese","euc-jp","x-euc-jp"],name:"EUC-JP"},{labels:["csiso2022jp","iso-2022-jp"],name:"ISO-2022-JP"},{labels:["csshiftjis","ms932","ms_kanji","shift-jis","shift_jis","sjis","windows-31j","x-sjis"],name:"Shift_JIS"}],heading:"Legacy multi-byte Japanese encodings"},{encodings:[{labels:["cseuckr","csksc56011987","euc-kr","iso-ir-149","korean","ks_c_5601-1987","ks_c_5601-1989","ksc5601","ksc_5601","windows-949"],name:"EUC-KR"}],heading:"Legacy multi-byte Korean encodings"},{encodings:[{labels:["csiso2022kr","hz-gb-2312","iso-2022-cn","iso-2022-cn-ext","iso-2022-kr"],name:"replacement"},{labels:["utf-16be"],name:"UTF-16BE"},{labels:["utf-16","utf-16le"],name:"UTF-16LE"},{labels:["x-user-defined"],name:"x-user-defined"}],heading:"Legacy miscellaneous encodings"}],d={},h=(n.forEach(function(n){n.encodings.forEach(function(e){e.labels.forEach(function(n){d[n]=e})})}),{}),g={};function y(n,e){return e&&e[n]||null}function p(n,e){e=e.indexOf(n);return-1===e?null:e}function v(n){if("encoding-indexes"in i)return i["encoding-indexes"][n];throw Error("Indexes missing. Did you forget to include encoding-indexes.js first?")}var x="utf-8";function O(n,e){if(!(this instanceof O))throw TypeError("Called as a function. Did you forget 'new'?");n=void 0!==n?String(n):x,e=s(e),this._encoding=null,this._decoder=null,this._ignoreBOM=!1,this._BOMseen=!1,this._error_mode="replacement",this._do_not_flush=!1;var i=r(n);if(null===i||"replacement"===i.name)throw RangeError("Unknown encoding: "+n);if(g[i.name])return(n=this)._encoding=i,Boolean(e.fatal)&&(n._error_mode="fatal"),Boolean(e.ignoreBOM)&&(n._ignoreBOM=!0),Object.defineProperty||(this.encoding=n._encoding.name.toLowerCase(),this.fatal="fatal"===n._error_mode,this.ignoreBOM=n._ignoreBOM),n;throw Error("Decoder not present. Did you forget to include encoding-indexes.js first?")}function k(n,e){if(!(this instanceof k))throw TypeError("Called as a function. Did you forget 'new'?");e=s(e),this._encoding=null,this._encoder=null,this._do_not_flush=!1,this._fatal=Boolean(e.fatal)?"fatal":"replacement";if(Boolean(e.NONSTANDARD_allowLegacyEncoding)){e=r(n=void 0!==n?String(n):x);if(null===e||"replacement"===e.name)throw RangeError("Unknown encoding: "+n);if(!h[e.name])throw Error("Encoder not present. Did you forget to include encoding-indexes.js first?");this._encoding=e}else this._encoding=r("utf-8"),void 0!==n&&"console"in i&&console.warn("TextEncoder constructor called with encoding label, which is ignored.");return Object.defineProperty||(this.encoding=this._encoding.name.toLowerCase()),this}function e(n){var r=n.fatal,t=0,o=0,s=0,l=128,a=191;this.handler=function(n,e){if(e===b&&0!==s)return s=0,m(r);if(e===b)return w;if(0===s){if(_(e,0,127))return e;if(_(e,194,223))s=1,t=31&e;else if(_(e,224,239))224===e&&(l=160),237===e&&(a=159),s=2,t=15&e;else{if(!_(e,240,244))return m(r);240===e&&(l=144),244===e&&(a=143),s=3,t=7&e}return null}var i;return _(e,l,a)?(l=128,a=191,t=t<<6|63&e,(o+=1)!==s?null:(i=t,t=s=o=0,i)):(t=s=o=0,l=128,a=191,n.prepend(e),m(r))}}function E(n){n.fatal;this.handler=function(n,e){if(e===b)return w;if(a(e))return e;_(e,128,2047)?(i=1,r=192):_(e,2048,65535)?(i=2,r=224):_(e,65536,1114111)&&(i=3,r=240);for(var i,r,t=[(e>>6*i)+r];0<i;)t.push(128|63&e>>6*(i-1)),--i;return t}}function j(i,n){var r=n.fatal;this.handler=function(n,e){return e===b?w:u(e)?e:null===(e=i[e-128])?m(r):e}}function B(r,n){n.fatal;this.handler=function(n,e){var i;return e===b?w:a(e)?e:(null===(i=p(e,r))&&f(e),i+128)}}function S(n){var o=n.fatal,s=0,l=0,a=0;this.handler=function(n,e){var i,r,t;return e===b&&0===s&&0===l&&0===a?w:(e!==b||0===s&&0===l&&0===a||(a=l=s=0,m(o)),0!==a?(i=null,_(e,48,57)&&(i=function(n){if(39419<n&&n<189e3||1237575<n)return null;if(7457===n)return 59335;for(var e=0,i=0,r=v("gb18030-ranges"),t=0;t<r.length;++t){var o=r[t];if(!(o[0]<=n))break;e=o[0],i=o[1]}return i+n-e}(10*(126*(10*(s-129)+l-48)+a-129)+e-48)),r=[l,a,e],a=l=s=0,null===i?(n.prepend(r),m(o)):i):0!==l?_(e,129,254)?(a=e,null):(n.prepend([l,e]),l=s=0,m(o)):0!==s?_(e,48,57)?(l=e,null):(r=s,s=0,(t=null)===(i=null===(t=_(e,64,126)||_(e,128,254)?190*(r-129)+(e-(e<127?64:65)):t)?null:y(t,v("gb18030")))&&u(e)&&n.prepend(e),null===i?m(o):i):u(e)?e:128===e?8364:_(e,129,254)?(s=e,null):m(o))}}function T(n,t){n.fatal;this.handler=function(n,e){var i,r;return e===b?w:a(e)?e:58853===e?f(e):t&&8364===e?128:null!==(i=p(e,v("gb18030")))?(r=i%190,[l(i/190)+129,r+(r<63?64:65)]):t?f(e):(i=function(n){if(59335===n)return 7457;for(var e=0,i=0,r=v("gb18030-ranges"),t=0;t<r.length;++t){var o=r[t];if(!(o[1]<=n))break;e=o[1],i=o[0]}return i+n-e}(e),[(r=l(i/10/126/10))+129,(e=l((i-=10*r*126*10)/10/126))+48,(r=l((i-=10*e*126)/10))+129,48+(i-10*r)])}}function I(n){var t=n.fatal,o=0;this.handler=function(n,e){if(e===b&&0!==o)return o=0,m(t);if(e===b&&0===o)return w;if(0===o)return u(e)?e:_(e,129,254)?(o=e,null):m(t);var i=o,r=null;switch(o=0,r=_(e,64,126)||_(e,161,254)?157*(i-129)+(e-(e<127?64:98)):r){case 1133:return[202,772];case 1135:return[202,780];case 1164:return[234,772];case 1166:return[234,780]}i=null===r?null:y(r,v("big5"));return null===i&&u(e)&&n.prepend(e),null===i?m(t):i}}function U(n){n.fatal;this.handler=function(n,e){var i,r;return e===b?w:a(e)?e:(i=e,r=o=o||v("big5").map(function(n,e){return e<5024?null:n}),null===(i=9552===i||9566===i||9569===i||9578===i||21313===i||21317===i?r.lastIndexOf(i):p(i,r))||(r=l(i/157)+129)<161?f(e):[r,(e=i%157)+(e<63?64:98)])}}function C(n){var t=n.fatal,o=!1,s=0;this.handler=function(n,e){var i,r;return e===b&&0!==s?(s=0,m(t)):e===b&&0===s?w:142===s&&_(e,161,223)?(s=0,65216+e):143===s&&_(e,161,254)?(o=!0,s=e,null):0!==s?(i=s,s=0,r=null,_(i,161,254)&&_(e,161,254)&&(r=y(94*(i-161)+(e-161),v(o?"jis0212":"jis0208"))),o=!1,_(e,161,254)||n.prepend(e),null===r?m(t):r):u(e)?e:142===e||143===e||_(e,161,254)?(s=e,null):m(t)}}function P(n){n.fatal;this.handler=function(n,e){var i;return e===b?w:a(e)?e:165===e?92:8254===e?126:_(e,65377,65439)?[142,e-65377+161]:null===(i=p(e=8722===e?65293:e,v("jis0208")))?f(e):[l(i/94)+161,i%94+161]}}function D(n){var t=n.fatal,o=0,s=1,l=2,a=3,u=4,c=5,f=6,d=o,h=o,g=0,p=!1;this.handler=function(n,e){switch(d){default:case o:return 27===e?(d=c,null):_(e,0,127)&&14!==e&&15!==e&&27!==e?(p=!1,e):e===b?w:(p=!1,m(t));case s:return 27===e?(d=c,null):92===e?(p=!1,165):126===e?(p=!1,8254):_(e,0,127)&&14!==e&&15!==e&&27!==e&&92!==e&&126!==e?(p=!1,e):e===b?w:(p=!1,m(t));case l:return 27===e?(d=c,null):_(e,33,95)?(p=!1,65344+e):e===b?w:(p=!1,m(t));case a:return 27===e?(d=c,null):_(e,33,126)?(p=!1,g=e,d=u,null):e===b?w:(p=!1,m(t));case u:if(27===e)d=c;else{if(_(e,33,126))return d=a,null===(i=y(94*(g-33)+e-33,v("jis0208")))?m(t):i;e===b?(d=a,n.prepend(e)):d=a}return m(t);case c:return 36===e||40===e?(g=e,d=f,null):(n.prepend(e),p=!1,d=h,m(t));case f:var i=g,r=(g=0,null);return(40===i&&66===e&&(r=o),40===i&&74===e&&(r=s),40===i&&73===e&&(r=l),null!==(r=36!==i||64!==e&&66!==e?r:a))?(d=r,r=p,p=!0,r?m(t):null):(n.prepend([i,e]),p=!1,d=h,m(t))}}}function F(n){n.fatal;var r=0,t=1,o=2,s=r;this.handler=function(n,e){if(e===b&&s!==r)return n.prepend(e),s=r,[27,40,66];if(e===b&&s===r)return w;if(!(s!==r&&s!==t||14!==e&&15!==e&&27!==e))return f(65533);if(s===r&&a(e))return e;if(s===t&&(a(e)&&92!==e&&126!==e||165==e||8254==e)){if(a(e))return e;if(165===e)return 92;if(8254===e)return 126}var i;return a(e)&&s!==r?(n.prepend(e),s=r,[27,40,66]):165!==e&&8254!==e||s===t?null===(i=p(e=8722===e?65293:e,v("jis0208")))?f(e):s!==o?(n.prepend(e),s=o,[27,36,66]):[l(i/94)+33,i%94+33]:(n.prepend(e),s=t,[27,40,74])}}function J(n){var t=n.fatal,o=0;this.handler=function(n,e){var i,r;return e===b&&0!==o?(o=0,m(t)):e===b&&0===o?w:0!==o?(r=o,i=null,o=0,(_(e,64,126)||_(e,128,252))&&(i=188*(r-(r<160?129:193))+e-(e<127?64:65)),_(i,8836,10715)?48508+i:(null===(r=null===i?null:y(i,v("jis0208")))&&u(e)&&n.prepend(e),null===r?m(t):r)):u(e)||128===e?e:_(e,161,223)?65216+e:_(e,129,159)||_(e,224,252)?(o=e,null):m(t)}}function K(n){n.fatal;this.handler=function(n,e){var i;return e===b?w:a(e)||128===e?e:165===e?92:8254===e?126:_(e,65377,65439)?e-65377+161:(i=e=8722===e?65293:e,null===(i=(t=t||v("jis0208").map(function(n,e){return _(e,8272,8835)?null:n})).indexOf(i))?f(e):[(e=l(i/188))+(e<31?129:193),(e=i%188)+(e<63?64:65)])}}function R(n){var t=n.fatal,o=0;this.handler=function(n,e){var i,r;return e===b&&0!==o?(o=0,m(t)):e===b&&0===o?w:0!==o?(r=o,o=0,r=(i=null)===(i=_(e,65,254)?190*(r-129)+(e-65):i)?null:y(i,v("euc-kr")),null===i&&u(e)&&n.prepend(e),null===r?m(t):r):u(e)?e:_(e,129,254)?(o=e,null):m(t)}}function G(n){n.fatal;this.handler=function(n,e){var i;return e===b?w:a(e)?e:null===(i=p(e,v("euc-kr")))?f(e):[l(i/190)+129,i%190+65]}}function A(n,e){var i=n>>8,n=255&n;return e?[i,n]:[n,i]}function L(r,n){var t=n.fatal,o=null,s=null;this.handler=function(n,e){var i;return e!==b||null===o&&null===s?e===b&&null===o&&null===s?w:null===o?(o=e,null):(e=r?(o<<8)+e:(e<<8)+o,(o=null)!==s?(i=s,s=null,_(e,56320,57343)?65536+1024*(i-55296)+(e-56320):(n.prepend(A(e,r)),m(t))):_(e,55296,56319)?(s=e,null):_(e,56320,57343)?m(t):e):m(t)}}function M(r,n){n.fatal;this.handler=function(n,e){var i;return e===b?w:_(e,0,65535)?A(e,r):(i=A(55296+(e-65536>>10),r),e=A(56320+(e-65536&1023),r),i.concat(e))}}function N(n){n.fatal;this.handler=function(n,e){return e===b?w:u(e)?e:63360+e-128}}function q(n){n.fatal;this.handler=function(n,e){return e===b?w:a(e)?e:_(e,63360,63487)?e-63360+128:f(e)}}Object.defineProperty&&(Object.defineProperty(O.prototype,"encoding",{get:function(){return this._encoding.name.toLowerCase()}}),Object.defineProperty(O.prototype,"fatal",{get:function(){return"fatal"===this._error_mode}}),Object.defineProperty(O.prototype,"ignoreBOM",{get:function(){return this._ignoreBOM}})),O.prototype.decode=function(n,e){n="object"==typeof n&&n instanceof ArrayBuffer?new Uint8Array(n):"object"==typeof n&&"buffer"in n&&n.buffer instanceof ArrayBuffer?new Uint8Array(n.buffer,n.byteOffset,n.byteLength):new Uint8Array(0);e=s(e),this._do_not_flush||(this._decoder=g[this._encoding.name]({fatal:"fatal"===this._error_mode}),this._BOMseen=!1),this._do_not_flush=Boolean(e.stream);for(var i,r=new c(n),t=[];;){var o=r.read();if(o===b)break;if((i=this._decoder.handler(r,o))===w)break;null!==i&&(Array.isArray(i)?t.push.apply(t,i):t.push(i))}if(!this._do_not_flush){for(;(i=this._decoder.handler(r,r.read()))!==w&&(null!==i&&(Array.isArray(i)?t.push.apply(t,i):t.push(i)),!r.endOfStream()););this._decoder=null}return function(n){e=["UTF-8","UTF-16LE","UTF-16BE"],i=this._encoding.name,-1===e.indexOf(i)||this._ignoreBOM||this._BOMseen||(0<n.length&&65279===n[0]?(this._BOMseen=!0,n.shift()):0<n.length&&(this._BOMseen=!0));for(var e,i,r=n,t="",o=0;o<r.length;++o){var s=r[o];s<=65535?t+=String.fromCharCode(s):(s-=65536,t+=String.fromCharCode(55296+(s>>10),56320+(1023&s)))}return t}.call(this,t)},Object.defineProperty&&Object.defineProperty(k.prototype,"encoding",{get:function(){return this._encoding.name.toLowerCase()}}),k.prototype.encode=function(n,e){n=void 0===n?"":String(n),e=s(e),this._do_not_flush||(this._encoder=h[this._encoding.name]({fatal:"fatal"===this._fatal})),this._do_not_flush=Boolean(e.stream);for(var i,r=new c(function(n){for(var e=String(n),i=e.length,r=0,t=[];r<i;){var o,s=e.charCodeAt(r);s<55296||57343<s?t.push(s):56320<=s&&s<=57343?t.push(65533):55296<=s&&s<=56319&&(r!==i-1&&56320<=(o=e.charCodeAt(r+1))&&o<=57343?(t.push(65536+((1023&s)<<10)+(1023&o)),r+=1):t.push(65533)),r+=1}return t}(n)),t=[];;){var o=r.read();if(o===b)break;if((i=this._encoder.handler(r,o))===w)break;Array.isArray(i)?t.push.apply(t,i):t.push(i)}if(!this._do_not_flush){for(;;){if((i=this._encoder.handler(r,r.read()))===w)break;Array.isArray(i)?t.push.apply(t,i):t.push(i)}this._encoder=null}return new Uint8Array(t)},h["UTF-8"]=function(n){return new E(n)},g["UTF-8"]=function(n){return new e(n)},"encoding-indexes"in i&&n.forEach(function(n){"Legacy single-byte encodings"===n.heading&&n.encodings.forEach(function(n){var n=n.name,e=v(n.toLowerCase());g[n]=function(n){return new j(e,n)},h[n]=function(n){return new B(e,n)}})}),g.GBK=function(n){return new S(n)},h.GBK=function(n){return new T(n,!0)},h.gb18030=function(n){return new T(n)},g.gb18030=function(n){return new S(n)},h.Big5=function(n){return new U(n)},g.Big5=function(n){return new I(n)},h["EUC-JP"]=function(n){return new P(n)},g["EUC-JP"]=function(n){return new C(n)},h["ISO-2022-JP"]=function(n){return new F(n)},g["ISO-2022-JP"]=function(n){return new D(n)},h.Shift_JIS=function(n){return new K(n)},g.Shift_JIS=function(n){return new J(n)},h["EUC-KR"]=function(n){return new G(n)},g["EUC-KR"]=function(n){return new R(n)},h["UTF-16BE"]=function(n){return new M(!0,n)},g["UTF-16BE"]=function(n){return new L(!0,n)},h["UTF-16LE"]=function(n){return new M(!1,n)},g["UTF-16LE"]=function(n){return new L(!1,n)},h["x-user-defined"]=function(n){return new q(n)},g["x-user-defined"]=function(n){return new N(n)},i.TextEncoder||(i.TextEncoder=k),i.TextDecoder||(i.TextDecoder=O),"undefined"!=typeof module&&module.exports&&(module.exports={TextEncoder:i.TextEncoder,TextDecoder:i.TextDecoder,EncodingIndexes:i["encoding-indexes"]})}(this||{});
-					// @protobuf-ts/runtime
-					(i=>{i.symbol=Symbol.for("protobuf-ts/unknown"),i.onRead=(e,r,t,a,n)=>{(s(r)?r[i.symbol]:r[i.symbol]=[]).push({no:t,wireType:a,data:n})},i.onWrite=(e,r,t)=>{for(var{no:a,wireType:n,data:s}of i.list(r))t.tag(a,n).raw(s)},i.list=(e,r)=>{return s(e)?(e=e[i.symbol],r?e.filter(e=>e.no==r):e):[]},i.last=(e,r)=>(0,i.list)(e,r).slice(-1)[0];const s=e=>e&&Array.isArray(e[i.symbol])})(UnknownFieldHandler=UnknownFieldHandler||{});
-					var UnknownFieldHandler,WireType=(e=>(e[e.Varint=0]="Varint",e[e.Bit64=1]="Bit64",e[e.LengthDelimited=2]="LengthDelimited",e[e.StartGroup=3]="StartGroup",e[e.EndGroup=4]="EndGroup",e[e.Bit32=5]="Bit32",e))(WireType||{});const MESSAGE_TYPE=Symbol.for("protobuf-ts/message-type");function lowerCamelCase(r){let t=!1;var a=[];for(let e=0;e<r.length;e++){var n=r.charAt(e);"_"==n?t=!0:/\d/.test(n)?(a.push(n),t=!0):t?(a.push(n.toUpperCase()),t=!1):0==e?a.push(n.toLowerCase()):a.push(n)}return a.join("")}var ScalarType=(e=>(e[e.DOUBLE=1]="DOUBLE",e[e.FLOAT=2]="FLOAT",e[e.INT64=3]="INT64",e[e.UINT64=4]="UINT64",e[e.INT32=5]="INT32",e[e.FIXED64=6]="FIXED64",e[e.FIXED32=7]="FIXED32",e[e.BOOL=8]="BOOL",e[e.STRING=9]="STRING",e[e.BYTES=12]="BYTES",e[e.UINT32=13]="UINT32",e[e.SFIXED32=15]="SFIXED32",e[e.SFIXED64=16]="SFIXED64",e[e.SINT32=17]="SINT32",e[e.SINT64=18]="SINT64",e))(ScalarType||{}),LongType=(e=>(e[e.BIGINT=0]="BIGINT",e[e.STRING=1]="STRING",e[e.NUMBER=2]="NUMBER",e))(LongType||{}),RepeatType=(e=>(e[e.NO=0]="NO",e[e.PACKED=1]="PACKED",e[e.UNPACKED=2]="UNPACKED",e))(RepeatType||{});function normalizeFieldInfo(e){return e.localName=e.localName??lowerCamelCase(e.name),e.jsonName=e.jsonName??lowerCamelCase(e.name),e.repeat=e.repeat??0,e.opt=e.opt??(!e.repeat&&(!e.oneof&&"message"==e.kind)),e}function isOneofGroup(e){if("object"!=typeof e||null===e||!e.hasOwnProperty("oneofKind"))return!1;switch(typeof e.oneofKind){case"string":return void 0===e[e.oneofKind]?!1:2==Object.keys(e).length;case"undefined":return 1==Object.keys(e).length;default:return!1}}class ReflectionTypeCheck{constructor(e){this.fields=e.fields??[]}prepare(){if(!this.data){var e,r=[],t=[],a=[];for(e of this.fields)if(e.oneof)a.includes(e.oneof)||(a.push(e.oneof),r.push(e.oneof),t.push(e.oneof));else switch(t.push(e.localName),e.kind){case"scalar":case"enum":e.opt&&!e.repeat||r.push(e.localName);break;case"message":e.repeat&&r.push(e.localName);break;case"map":r.push(e.localName)}this.data={req:r,known:t,oneofs:Object.values(a)}}}is(e,a,n=!1){if(!(a<0)){if(null==e||"object"!=typeof e)return!1;this.prepare();let r=Object.keys(e),t=this.data;if(r.length<t.req.length||t.req.some(e=>!r.includes(e)))return!1;if(!n&&r.some(e=>!t.known.includes(e)))return!1;if(!(a<1)){for(const i of t.oneofs){const o=e[i];if(!isOneofGroup(o))return!1;if(void 0!==o.oneofKind){var s=this.fields.find(e=>e.localName===o.oneofKind);if(!s)return!1;if(!this.field(o[o.oneofKind],s,n,a))return!1}}for(const l of this.fields)if(void 0===l.oneof&&!this.field(e[l.localName],l,n,a))return!1}}return!0}field(e,r,t,a){var n=r.repeat;switch(r.kind){case"scalar":return void 0===e?r.opt:n?this.scalars(e,r.T,a,r.L):this.scalar(e,r.T,r.L);case"enum":return void 0===e?r.opt:n?this.scalars(e,ScalarType.INT32,a):this.scalar(e,ScalarType.INT32);case"message":return void 0===e?!0:n?this.messages(e,r.T(),t,a):this.message(e,r.T(),t,a);case"map":if("object"!=typeof e||null===e)return!1;if(a<2)return!0;if(!this.mapKeys(e,r.K,a))return!1;switch(r.V.kind){case"scalar":return this.scalars(Object.values(e),r.V.T,a,r.V.L);case"enum":return this.scalars(Object.values(e),ScalarType.INT32,a);case"message":return this.messages(Object.values(e),r.V.T(),t,a)}}return!0}message(e,r,t,a){return t?r.isAssignable(e,a):r.is(e,a)}messages(r,t,e,a){if(!Array.isArray(r))return!1;if(!(a<2))if(e){for(let e=0;e<r.length&&e<a;e++)if(!t.isAssignable(r[e],a-1))return!1}else for(let e=0;e<r.length&&e<a;e++)if(!t.is(r[e],a-1))return!1;return!0}scalar(e,r,t){var a=typeof e;switch(r){case ScalarType.UINT64:case ScalarType.FIXED64:case ScalarType.INT64:case ScalarType.SFIXED64:case ScalarType.SINT64:switch(t){case LongType.BIGINT:return"bigint"==a;case LongType.NUMBER:return"number"==a&&!isNaN(e);default:return"string"==a}case ScalarType.BOOL:return"boolean"==a;case ScalarType.STRING:return"string"==a;case ScalarType.BYTES:return e instanceof Uint8Array;case ScalarType.DOUBLE:case ScalarType.FLOAT:return"number"==a&&!isNaN(e);default:return"number"==a&&Number.isInteger(e)}}scalars(r,t,a,n){if(!Array.isArray(r))return!1;if(!(a<2)&&Array.isArray(r))for(let e=0;e<r.length&&e<a;e++)if(!this.scalar(r[e],t,n))return!1;return!0}mapKeys(e,r,t){var a=Object.keys(e);switch(r){case ScalarType.INT32:case ScalarType.FIXED32:case ScalarType.SFIXED32:case ScalarType.SINT32:case ScalarType.UINT32:return this.scalars(a.slice(0,t).map(e=>parseInt(e)),r,t);case ScalarType.BOOL:return this.scalars(a.slice(0,t).map(e=>"true"==e||"false"!=e&&e),r,t);default:return this.scalars(a,r,t,LongType.STRING)}}}function typeofJsonValue(e){var r=typeof e;if("object"==r){if(Array.isArray(e))return"array";if(null===e)return"null"}return r}function isJsonObject(e){return null!==e&&"object"==typeof e&&!Array.isArray(e)}let encTable="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".split(""),decTable=[];for(let e=0;e<encTable.length;e++)decTable[encTable[e].charCodeAt(0)]=e;function base64decode(r){let e=3*r.length/4,t=("="==r[r.length-2]?e-=2:"="==r[r.length-1]&&--e,new Uint8Array(e)),a=0,n=0,s,i=0;for(let e=0;e<r.length;e++){if(void 0===(s=decTable[r.charCodeAt(e)]))switch(r[e]){case"=":n=0;case"\n":case"\r":case"\t":case" ":continue;default:throw Error("invalid base64 string.")}switch(n){case 0:i=s,n=1;break;case 1:t[a++]=i<<2|(48&s)>>4,i=s,n=2;break;case 2:t[a++]=(15&i)<<4|(60&s)>>2,i=s,n=3;break;case 3:t[a++]=(3&i)<<6|s,n=0}}if(1==n)throw Error("invalid base64 string.");return t.subarray(0,a)}function base64encode(r){let t="",a=0,n,s=0;for(let e=0;e<r.length;e++)switch(n=r[e],a){case 0:t+=encTable[n>>2],s=(3&n)<<4,a=1;break;case 1:t+=encTable[s|n>>4],s=(15&n)<<2,a=2;break;case 2:t=(t+=encTable[s|n>>6])+encTable[63&n],a=0}return a&&(t=t+encTable[s]+"=",1==a&&(t+="=")),t}function varint64read(){let r=0,t=0;for(let e=0;e<28;e+=7){var a=this.buf[this.pos++];if(r|=(127&a)<<e,0==(128&a))return this.assertBounds(),[r,t]}var e=this.buf[this.pos++];if(r|=(15&e)<<28,t=(112&e)>>4,0==(128&e))return this.assertBounds(),[r,t];for(let e=3;e<=31;e+=7){var n=this.buf[this.pos++];if(t|=(127&n)<<e,0==(128&n))return this.assertBounds(),[r,t]}throw new Error("invalid varint")}function varint64write(r,t,a){for(let e=0;e<28;e+=7){var n=r>>>e,s=!(n>>>7==0&&0==t);if(a.push(255&(s?128|n:n)),!s)return}var e=r>>>28&15|(7&t)<<4,i=!(t>>3==0);if(a.push(255&(i?128|e:e)),i){for(let e=3;e<31;e+=7){var o=t>>>e,l=!(o>>>7==0);if(a.push(255&(l?128|o:o)),!l)return}a.push(t>>>31&1)}}decTable["-".charCodeAt(0)]=encTable.indexOf("+"),decTable["_".charCodeAt(0)]=encTable.indexOf("/");const TWO_PWR_32_DBL$1=4294967296;function int64fromString(t){var e="-"==t[0];e&&(t=t.slice(1));let a=0,n=0;function r(e,r){e=Number(t.slice(e,r));n*=1e6,(a=1e6*a+e)>=TWO_PWR_32_DBL$1&&(n+=a/TWO_PWR_32_DBL$1|0,a%=TWO_PWR_32_DBL$1)}return r(-24,-18),r(-18,-12),r(-12,-6),r(-6),[e,a,n]}function int64toString(e,r){if(r<=2097151)return""+(TWO_PWR_32_DBL$1*r+(e>>>0));var t=(e>>>24|r<<8)>>>0&16777215,r=r>>16&65535;let a=(16777215&e)+6777216*t+6710656*r,n=t+8147497*r,s=2*r;function i(e,r){e=e?String(e):"";return r?"0000000".slice(e.length)+e:e}return 1e7<=a&&(n+=Math.floor(a/1e7),a%=1e7),1e7<=n&&(s+=Math.floor(n/1e7),n%=1e7),i(s,0)+i(n,s)+i(a,1)}function varint32write(r,t){if(0<=r){for(;127<r;)t.push(127&r|128),r>>>=7;t.push(r)}else{for(let e=0;e<9;e++)t.push(127&r|128),r>>=7;t.push(1)}}function varint32read(){let r=this.buf[this.pos++];var e=127&r;if(0==(128&r))return this.assertBounds(),e;if(e|=(127&(r=this.buf[this.pos++]))<<7,0==(128&r))return this.assertBounds(),e;if(e|=(127&(r=this.buf[this.pos++]))<<14,0==(128&r))return this.assertBounds(),e;if(e|=(127&(r=this.buf[this.pos++]))<<21,0==(128&r))return this.assertBounds(),e;e|=(15&(r=this.buf[this.pos++]))<<28;for(let e=5;0!=(128&r)&&e<10;e++)r=this.buf[this.pos++];if(0!=(128&r))throw new Error("invalid varint");return this.assertBounds(),e>>>0}function detectBi(){var e=new DataView(new ArrayBuffer(8));return void 0!==globalThis.BigInt&&"function"==typeof e.getBigInt64&&"function"==typeof e.getBigUint64&&"function"==typeof e.setBigInt64&&"function"==typeof e.setBigUint64?{MIN:BigInt("-9223372036854775808"),MAX:BigInt("9223372036854775807"),UMIN:BigInt("0"),UMAX:BigInt("18446744073709551615"),C:BigInt,V:e}:void 0}const BI=detectBi();function assertBi(e){if(!e)throw new Error("BigInt unavailable, see https://github.com/timostamm/protobuf-ts/blob/v1.0.8/MANUAL.md#bigint-support")}const RE_DECIMAL_STR=/^-?[0-9]+$/,TWO_PWR_32_DBL=4294967296;class SharedPbLong{constructor(e,r){this.lo=0|e,this.hi=0|r}isZero(){return 0==this.lo&&0==this.hi}toNumber(){var e=this.hi*TWO_PWR_32_DBL+(this.lo>>>0);if(Number.isSafeInteger(e))return e;throw new Error("cannot convert to safe number")}}const _PbULong=class extends SharedPbLong{static from(e){if(BI)switch(typeof e){case"string":if("0"==e)return this.ZERO;if(""==e)throw new Error("string is no integer");e=BI.C(e);case"number":if(0===e)return this.ZERO;e=BI.C(e);case"bigint":if(!e)return this.ZERO;if(e<BI.UMIN)throw new Error("signed value for ulong");if(e>BI.UMAX)throw new Error("ulong too large");return BI.V.setBigUint64(0,e,!0),new _PbULong(BI.V.getInt32(0,!0),BI.V.getInt32(4,!0))}else switch(typeof e){case"string":if("0"==e)return this.ZERO;if(e=e.trim(),!RE_DECIMAL_STR.test(e))throw new Error("string is no integer");var[r,t,a]=int64fromString(e);if(r)throw new Error("signed value");return new _PbULong(t,a);case"number":if(0==e)return this.ZERO;if(!Number.isSafeInteger(e))throw new Error("number is no integer");if(e<0)throw new Error("signed value for ulong");return new _PbULong(e,e/TWO_PWR_32_DBL)}throw new Error("unknown value "+typeof e)}toString(){return BI?this.toBigInt().toString():int64toString(this.lo,this.hi)}toBigInt(){return assertBi(BI),BI.V.setInt32(0,this.lo,!0),BI.V.setInt32(4,this.hi,!0),BI.V.getBigUint64(0,!0)}};let PbULong=_PbULong;PbULong.ZERO=new _PbULong(0,0);const _PbLong=class extends SharedPbLong{static from(e){if(BI)switch(typeof e){case"string":if("0"==e)return this.ZERO;if(""==e)throw new Error("string is no integer");e=BI.C(e);case"number":if(0===e)return this.ZERO;e=BI.C(e);case"bigint":if(!e)return this.ZERO;if(e<BI.MIN)throw new Error("ulong too small");if(e>BI.MAX)throw new Error("ulong too large");return BI.V.setBigInt64(0,e,!0),new _PbLong(BI.V.getInt32(0,!0),BI.V.getInt32(4,!0))}else switch(typeof e){case"string":if("0"==e)return this.ZERO;var r,t,a;if(e=e.trim(),RE_DECIMAL_STR.test(e))return[r,a,t]=int64fromString(e),a=new _PbLong(a,t),r?a.negate():a;throw new Error("string is no integer");case"number":if(0==e)return this.ZERO;if(Number.isSafeInteger(e))return 0<e?new _PbLong(e,e/TWO_PWR_32_DBL):new _PbLong(-e,-e/TWO_PWR_32_DBL).negate();throw new Error("number is no integer")}throw new Error("unknown value "+typeof e)}isNegative(){return 0!=(2147483648&this.hi)}negate(){let e=~this.hi,r=this.lo;return r?r=1+~r:e+=1,new _PbLong(r,e)}toString(){var e;return BI?this.toBigInt().toString():this.isNegative()?"-"+int64toString((e=this.negate()).lo,e.hi):int64toString(this.lo,this.hi)}toBigInt(){return assertBi(BI),BI.V.setInt32(0,this.lo,!0),BI.V.setInt32(4,this.hi,!0),BI.V.getBigInt64(0,!0)}};let PbLong=_PbLong;function assert(e,r){if(!e)throw new Error(r)}PbLong.ZERO=new _PbLong(0,0);const FLOAT32_MAX=34028234663852886e22,FLOAT32_MIN=-34028234663852886e22,UINT32_MAX=4294967295,INT32_MAX=2147483647,INT32_MIN=-2147483648;function assertInt32(e){if("number"!=typeof e)throw new Error("invalid int 32: "+typeof e);if(!Number.isInteger(e)||e>INT32_MAX||e<INT32_MIN)throw new Error("invalid int 32: "+e)}function assertUInt32(e){if("number"!=typeof e)throw new Error("invalid uint 32: "+typeof e);if(!Number.isInteger(e)||e>UINT32_MAX||e<0)throw new Error("invalid uint 32: "+e)}function assertFloat32(e){if("number"!=typeof e)throw new Error("invalid float 32: "+typeof e);if(Number.isFinite(e)&&(e>FLOAT32_MAX||e<FLOAT32_MIN))throw new Error("invalid float 32: "+e)}function reflectionLongConvert(e,r){switch(r){case LongType.BIGINT:return e.toBigInt();case LongType.NUMBER:return e.toNumber();default:return e.toString()}}class ReflectionJsonReader{constructor(e){this.info=e}prepare(){if(void 0===this.fMap){this.fMap={};for(const e of this.info.fields??[])this.fMap[e.name]=e,this.fMap[e.jsonName]=e,this.fMap[e.localName]=e}}assert(e,r,t){if(!e){let e=typeofJsonValue(t);throw"number"!=e&&"boolean"!=e||(e=t.toString()),new Error(`Cannot parse JSON ${e} for ${this.info.typeName}#`+r)}}read(e,r,t){this.prepare();var a,n,s=[];for([a,n]of Object.entries(e)){var i=this.fMap[a];if(!i){if(t.ignoreUnknownFields)continue;throw new Error(`Found unknown field while reading ${this.info.typeName} from JSON format. JSON key: `+a)}var o=i.localName;let e;if(i.oneof){if(s.includes(i.oneof))throw new Error(`Multiple members of the oneof group "${i.oneof}" of ${this.info.typeName} are present in JSON.`);s.push(i.oneof),e=r[i.oneof]={oneofKind:o}}else e=r;if("map"==i.kind){if(null!==n){this.assert(isJsonObject(n),i.name,n);var l,c,f=e[o];for([l,c]of Object.entries(n)){this.assert(null!==c,i.name+" map value",null);let e;switch(i.V.kind){case"message":e=i.V.T().internalJsonRead(c,t);break;case"enum":if(!1===(e=this.enum(i.V.T(),c,i.name,t.ignoreUnknownFields)))continue;break;case"scalar":e=this.scalar(c,i.V.T,i.V.L,i.name)}this.assert(void 0!==e,i.name+" map value",c);let r=l;i.K==ScalarType.BOOL&&(r="true"==r||"false"!=r&&r),f[r=this.scalar(r,i.K,LongType.STRING,i.name).toString()]=e}}}else if(i.repeat){if(null!==n){this.assert(Array.isArray(n),i.name,n);var u=e[o];for(const p of n){this.assert(null!==p,i.name,null);let e;switch(i.kind){case"message":e=i.T().internalJsonRead(p,t);break;case"enum":if(!1===(e=this.enum(i.T(),p,i.name,t.ignoreUnknownFields)))continue;break;case"scalar":e=this.scalar(p,i.T,i.L,i.name)}this.assert(void 0!==e,i.name,n),u.push(e)}}}else switch(i.kind){case"message":null===n&&"google.protobuf.Value"!=i.T().typeName?this.assert(void 0===i.oneof,i.name+" (oneof member)",null):e[o]=i.T().internalJsonRead(n,t,e[o]);break;case"enum":var h=this.enum(i.T(),n,i.name,t.ignoreUnknownFields);!1!==h&&(e[o]=h);break;case"scalar":e[o]=this.scalar(n,i.T,i.L,i.name)}}}enum(r,t,a,n){if("google.protobuf.NullValue"==r[0]&&assert(null===t,`Unable to parse field ${this.info.typeName}#${a}, enum ${r[0]} only accepts null.`),null===t)return 0;switch(typeof t){case"number":return assert(Number.isInteger(t),`Unable to parse field ${this.info.typeName}#${a}, enum can only be integral number, got ${t}.`),t;case"string":let e=t;r[2]&&t.substring(0,r[2].length)===r[2]&&(e=t.substring(r[2].length));var s=r[1][e];return void 0===s&&n?!1:(assert("number"==typeof s,`Unable to parse field ${this.info.typeName}#${a}, enum ${r[0]} has no value for "${t}".`),s)}assert(!1,`Unable to parse field ${this.info.typeName}#${a}, cannot parse enum value from ${typeof t}".`)}scalar(r,t,a,e){let n;try{switch(t){case ScalarType.DOUBLE:case ScalarType.FLOAT:if(null===r)return 0;if("NaN"===r)return Number.NaN;if("Infinity"===r)return Number.POSITIVE_INFINITY;if("-Infinity"===r)return Number.NEGATIVE_INFINITY;if(""===r)n="empty string";else if("string"==typeof r&&r.trim().length!==r.length)n="extra whitespace";else if("string"==typeof r||"number"==typeof r){var s=Number(r);if(Number.isNaN(s))n="not a number";else{if(Number.isFinite(s))return t==ScalarType.FLOAT&&assertFloat32(s),s;n="too large or small"}}break;case ScalarType.INT32:case ScalarType.FIXED32:case ScalarType.SFIXED32:case ScalarType.SINT32:case ScalarType.UINT32:if(null===r)return 0;let e;if("number"==typeof r?e=r:""===r?n="empty string":"string"==typeof r&&(r.trim().length!==r.length?n="extra whitespace":e=Number(r)),void 0===e)break;return(t==ScalarType.UINT32?assertUInt32:assertInt32)(e),e;case ScalarType.INT64:case ScalarType.SFIXED64:case ScalarType.SINT64:if(null===r)return reflectionLongConvert(PbLong.ZERO,a);if("number"!=typeof r&&"string"!=typeof r)break;return reflectionLongConvert(PbLong.from(r),a);case ScalarType.FIXED64:case ScalarType.UINT64:if(null===r)return reflectionLongConvert(PbULong.ZERO,a);if("number"!=typeof r&&"string"!=typeof r)break;return reflectionLongConvert(PbULong.from(r),a);case ScalarType.BOOL:if(null===r)return!1;if("boolean"!=typeof r)break;return r;case ScalarType.STRING:if(null===r)return"";if("string"!=typeof r){n="extra whitespace";break}try{encodeURIComponent(r)}catch(e){0;break}return r;case ScalarType.BYTES:if(null===r||""===r)return new Uint8Array(0);if("string"!=typeof r)break;return base64decode(r)}}catch(e){n=e.message}this.assert(!1,e+(n?" - "+n:""),r)}}class ReflectionJsonWriter{constructor(e){this.fields=e.fields??[]}write(e,r){var t,a,n={},s=e;for(const i of this.fields)i.oneof?(t=s[i.oneof]).oneofKind===i.localName&&(a="scalar"==i.kind||"enum"==i.kind?{...r,emitDefaultValues:!0}:r,assert(void 0!==(t=this.field(i,t[i.localName],a))),n[r.useProtoFieldName?i.name:i.jsonName]=t):void 0!==(a=this.field(i,s[i.localName],r))&&(n[r.useProtoFieldName?i.name:i.jsonName]=a);return n}field(r,t,a){let e=void 0;if("map"==r.kind){assert("object"==typeof t&&null!==t);var n={};switch(r.V.kind){case"scalar":for(var[s,i]of Object.entries(t)){i=this.scalar(r.V.T,i,r.name,!1,!0);assert(void 0!==i),n[s.toString()]=i}break;case"message":var o,l,c=r.V.T();for([o,l]of Object.entries(t)){var f=this.message(c,l,r.name,a);assert(void 0!==f),n[o.toString()]=f}break;case"enum":var u,h,p=r.V.T();for([u,h]of Object.entries(t)){assert(void 0===h||"number"==typeof h);var T=this.enum(p,h,r.name,!1,!0,a.enumAsInteger);assert(void 0!==T),n[u.toString()]=T}}(a.emitDefaultValues||0<Object.keys(n).length)&&(e=n)}else if(r.repeat){assert(Array.isArray(t));var d=[];switch(r.kind){case"scalar":for(let e=0;e<t.length;e++){var y=this.scalar(r.T,t[e],r.name,r.opt,!0);assert(void 0!==y),d.push(y)}break;case"enum":var g=r.T();for(let e=0;e<t.length;e++){assert(void 0===t[e]||"number"==typeof t[e]);var b=this.enum(g,t[e],r.name,r.opt,!0,a.enumAsInteger);assert(void 0!==b),d.push(b)}break;case"message":var m=r.T();for(let e=0;e<t.length;e++){var I=this.message(m,t[e],r.name,a);assert(void 0!==I),d.push(I)}}(a.emitDefaultValues||0<d.length||a.emitDefaultValues)&&(e=d)}else switch(r.kind){case"scalar":e=this.scalar(r.T,t,r.name,r.opt,a.emitDefaultValues);break;case"enum":e=this.enum(r.T(),t,r.name,r.opt,a.emitDefaultValues,a.enumAsInteger);break;case"message":e=this.message(r.T(),t,r.name,a)}return e}enum(e,r,t,a,n,s){if("google.protobuf.NullValue"==e[0])return null;if(void 0===r)assert(a);else if(0!==r||n||a)return assert("number"==typeof r),assert(Number.isInteger(r)),s||!e[1].hasOwnProperty(r)?r:e[2]?e[2]+e[1][r]:e[1][r]}message(e,r,t,a){return void 0===r?a.emitDefaultValues?null:void 0:e.internalJsonWrite(r,a)}scalar(e,r,t,a,n){if(void 0===r)assert(a);else{var s=n||a;switch(e){case ScalarType.INT32:case ScalarType.SFIXED32:case ScalarType.SINT32:return 0===r?s?0:void 0:(assertInt32(r),r);case ScalarType.FIXED32:case ScalarType.UINT32:return 0===r?s?0:void 0:(assertUInt32(r),r);case ScalarType.FLOAT:assertFloat32(r);case ScalarType.DOUBLE:return 0===r?s?0:void 0:(assert("number"==typeof r),Number.isNaN(r)?"NaN":r===Number.POSITIVE_INFINITY?"Infinity":r===Number.NEGATIVE_INFINITY?"-Infinity":r);case ScalarType.STRING:return""===r?s?"":void 0:(assert("string"==typeof r),r);case ScalarType.BOOL:return!1===r?!s&&void 0:(assert("boolean"==typeof r),r);case ScalarType.UINT64:case ScalarType.FIXED64:assert("number"==typeof r||"string"==typeof r||"bigint"==typeof r);var i=PbULong.from(r);return i.isZero()&&!s?void 0:i.toString();case ScalarType.INT64:case ScalarType.SFIXED64:case ScalarType.SINT64:assert("number"==typeof r||"string"==typeof r||"bigint"==typeof r);i=PbLong.from(r);return i.isZero()&&!s?void 0:i.toString();case ScalarType.BYTES:return(assert(r instanceof Uint8Array),r.byteLength)?base64encode(r):s?"":void 0}}}}function reflectionScalarDefault(e,r=LongType.STRING){switch(e){case ScalarType.BOOL:return!1;case ScalarType.UINT64:case ScalarType.FIXED64:return reflectionLongConvert(PbULong.ZERO,r);case ScalarType.INT64:case ScalarType.SFIXED64:case ScalarType.SINT64:return reflectionLongConvert(PbLong.ZERO,r);case ScalarType.DOUBLE:case ScalarType.FLOAT:return 0;case ScalarType.BYTES:return new Uint8Array(0);case ScalarType.STRING:return"";default:return 0}}class ReflectionBinaryReader{constructor(e){this.info=e}prepare(){var e;this.fieldNoToField||(e=this.info.fields??[],this.fieldNoToField=new Map(e.map(e=>[e.no,e])))}read(a,n,s,e){this.prepare();for(var r=void 0===e?a.len:a.pos+e;a.pos<r;){var[t,i]=a.tag(),o=this.fieldNoToField.get(t);if(o){let e=n,r=o.repeat,t=o.localName;switch(o.oneof&&(e=e[o.oneof]).oneofKind!==t&&(e=n[o.oneof]={oneofKind:t}),o.kind){case"scalar":case"enum":var l="enum"==o.kind?ScalarType.INT32:o.T,c="scalar"==o.kind?o.L:void 0;if(r){var f=e[t];if(i==WireType.LengthDelimited&&l!=ScalarType.STRING&&l!=ScalarType.BYTES)for(var u=a.uint32()+a.pos;a.pos<u;)f.push(this.scalar(a,l,c));else f.push(this.scalar(a,l,c))}else e[t]=this.scalar(a,l,c);break;case"message":r?(h=e[t],p=o.T().internalBinaryRead(a,a.uint32(),s),h.push(p)):e[t]=o.T().internalBinaryRead(a,a.uint32(),s,e[t]);break;case"map":var[h,p]=this.mapEntry(o,a,s);e[t][h]=p}}else{var T=s.readUnknownField;if("throw"==T)throw new Error(`Unknown field ${t} (wire type ${i}) for `+this.info.typeName);var d=a.skip(i);!1!==T&&(!0===T?UnknownFieldHandler.onRead:T)(this.info.typeName,n,t,i,d)}}}mapEntry(e,r,t){var a=r.uint32(),n=r.pos+a;let s=void 0,i=void 0;for(;r.pos<n;){var[o,l]=r.tag();switch(o){case 1:s=e.K==ScalarType.BOOL?r.bool().toString():this.scalar(r,e.K,LongType.STRING);break;case 2:switch(e.V.kind){case"scalar":i=this.scalar(r,e.V.T,e.V.L);break;case"enum":i=r.int32();break;case"message":i=e.V.T().internalBinaryRead(r,r.uint32(),t)}break;default:throw new Error(`Unknown field ${o} (wire type ${l}) in map entry for ${this.info.typeName}#`+e.name)}}if(void 0===s&&(a=reflectionScalarDefault(e.K),s=e.K==ScalarType.BOOL?a.toString():a),void 0===i)switch(e.V.kind){case"scalar":i=reflectionScalarDefault(e.V.T,e.V.L);break;case"enum":i=0;break;case"message":i=e.V.T().create()}return[s,i]}scalar(e,r,t){switch(r){case ScalarType.INT32:return e.int32();case ScalarType.STRING:return e.string();case ScalarType.BOOL:return e.bool();case ScalarType.DOUBLE:return e.double();case ScalarType.FLOAT:return e.float();case ScalarType.INT64:return reflectionLongConvert(e.int64(),t);case ScalarType.UINT64:return reflectionLongConvert(e.uint64(),t);case ScalarType.FIXED64:return reflectionLongConvert(e.fixed64(),t);case ScalarType.FIXED32:return e.fixed32();case ScalarType.BYTES:return e.bytes();case ScalarType.UINT32:return e.uint32();case ScalarType.SFIXED32:return e.sfixed32();case ScalarType.SFIXED64:return reflectionLongConvert(e.sfixed64(),t);case ScalarType.SINT32:return e.sint32();case ScalarType.SINT64:return reflectionLongConvert(e.sint64(),t)}}}class ReflectionBinaryWriter{constructor(e){this.info=e}prepare(){var e;this.fields||(e=this.info.fields?this.info.fields.concat():[],this.fields=e.sort((e,r)=>e.no-r.no))}write(n,s,i){this.prepare();for(const u of this.fields){let e,r,t=u.repeat,a=u.localName;if(u.oneof){var o=n[u.oneof];if(o.oneofKind!==a)continue;e=o[a],r=!0}else e=n[a],r=!1;switch(u.kind){case"scalar":case"enum":var l="enum"==u.kind?ScalarType.INT32:u.T;if(t)if(assert(Array.isArray(e)),t==RepeatType.PACKED)this.packed(s,l,u.no,e);else for(const h of e)this.scalar(s,l,u.no,h,!0);else void 0===e?assert(u.opt):this.scalar(s,l,u.no,e,r||u.opt);break;case"message":if(t){assert(Array.isArray(e));for(const p of e)this.message(s,i,u.T(),u.no,p)}else this.message(s,i,u.T(),u.no,e);break;case"map":assert("object"==typeof e&&null!==e);for(var[c,f]of Object.entries(e))this.mapEntry(s,i,u,c,f)}}var e=i.writeUnknownFields;!1!==e&&(!0===e?UnknownFieldHandler.onWrite:e)(this.info.typeName,n,s)}mapEntry(e,r,t,a,n){e.tag(t.no,WireType.LengthDelimited),e.fork();let s=a;switch(t.K){case ScalarType.INT32:case ScalarType.FIXED32:case ScalarType.UINT32:case ScalarType.SFIXED32:case ScalarType.SINT32:s=Number.parseInt(a);break;case ScalarType.BOOL:assert("true"==a||"false"==a),s="true"==a}switch(this.scalar(e,t.K,1,s,!0),t.V.kind){case"scalar":this.scalar(e,t.V.T,2,n,!0);break;case"enum":this.scalar(e,ScalarType.INT32,2,n,!0);break;case"message":this.message(e,r,t.V.T(),2,n)}e.join()}message(e,r,t,a,n){void 0!==n&&(t.internalBinaryWrite(n,e.tag(a,WireType.LengthDelimited).fork(),r),e.join())}scalar(e,r,t,a,n){var[r,s,i]=this.scalarInfo(r,a);i&&!n||(e.tag(t,r),e[s](a))}packed(r,e,t,a){if(a.length){assert(e!==ScalarType.BYTES&&e!==ScalarType.STRING),r.tag(t,WireType.LengthDelimited),r.fork();var[,n]=this.scalarInfo(e);for(let e=0;e<a.length;e++)r[n](a[e]);r.join()}}scalarInfo(e,r){let t=WireType.Varint,a;var n=void 0===r;let s=0===r;switch(e){case ScalarType.INT32:a="int32";break;case ScalarType.STRING:s=n||!r.length,t=WireType.LengthDelimited,a="string";break;case ScalarType.BOOL:s=!1===r,a="bool";break;case ScalarType.UINT32:a="uint32";break;case ScalarType.DOUBLE:t=WireType.Bit64,a="double";break;case ScalarType.FLOAT:t=WireType.Bit32,a="float";break;case ScalarType.INT64:s=n||PbLong.from(r).isZero(),a="int64";break;case ScalarType.UINT64:s=n||PbULong.from(r).isZero(),a="uint64";break;case ScalarType.FIXED64:s=n||PbULong.from(r).isZero(),t=WireType.Bit64,a="fixed64";break;case ScalarType.BYTES:s=n||!r.byteLength,t=WireType.LengthDelimited,a="bytes";break;case ScalarType.FIXED32:t=WireType.Bit32,a="fixed32";break;case ScalarType.SFIXED32:t=WireType.Bit32,a="sfixed32";break;case ScalarType.SFIXED64:s=n||PbLong.from(r).isZero(),t=WireType.Bit64,a="sfixed64";break;case ScalarType.SINT32:a="sint32";break;case ScalarType.SINT64:s=n||PbLong.from(r).isZero(),a="sint64"}return[t,a,n||s]}}function reflectionCreate(e){var r,t={};Object.defineProperty(t,MESSAGE_TYPE,{enumerable:!1,value:e});for(r of e.fields){var a=r.localName;if(!r.opt)if(r.oneof)t[r.oneof]={oneofKind:void 0};else if(r.repeat)t[a]=[];else switch(r.kind){case"scalar":t[a]=reflectionScalarDefault(r.T,r.L);break;case"enum":t[a]=0;break;case"map":t[a]={}}}return t}function reflectionMergePartial(e,r,t){let a,n=t,s;for(var i of e.fields){var o=i.localName;if(i.oneof){var l=n[i.oneof];if(null==(null==l?void 0:l.oneofKind))continue;if(a=l[o],(s=r[i.oneof]).oneofKind=l.oneofKind,null==a){delete s[o];continue}}else if(a=n[o],s=r,null==a)continue;switch(i.repeat&&(s[o].length=a.length),i.kind){case"scalar":case"enum":if(i.repeat)for(let e=0;e<a.length;e++)s[o][e]=a[e];else s[o]=a;break;case"message":var c=i.T();if(i.repeat)for(let e=0;e<a.length;e++)s[o][e]=c.create(a[e]);else void 0===s[o]?s[o]=c.create(a):c.mergePartial(s[o],a);break;case"map":switch(i.V.kind){case"scalar":case"enum":Object.assign(s[o],a);break;case"message":var f,u=i.V.T();for(f of Object.keys(a))s[o][f]=u.create(a[f])}}}}const defaultsWrite$1={emitDefaultValues:!1,enumAsInteger:!1,useProtoFieldName:!1,prettySpaces:0},defaultsRead$1={ignoreUnknownFields:!1};function jsonReadOptions(e){return e?{...defaultsRead$1,...e}:defaultsRead$1}function jsonWriteOptions(e){return e?{...defaultsWrite$1,...e}:defaultsWrite$1}function reflectionEquals(e,r,t){if(r!==t){if(!r||!t)return!1;for(var a of e.fields){var n=a.localName,s=(a.oneof?r[a.oneof]:r)[n],i=(a.oneof?t[a.oneof]:t)[n];switch(a.kind){case"enum":case"scalar":var o="enum"==a.kind?ScalarType.INT32:a.T;if((a.repeat?repeatedPrimitiveEq:primitiveEq)(o,s,i))break;return!1;case"map":if("message"==a.V.kind?repeatedMsgEq(a.V.T(),objectValues(s),objectValues(i)):repeatedPrimitiveEq("enum"==a.V.kind?ScalarType.INT32:a.V.T,objectValues(s),objectValues(i)))break;return!1;case"message":o=a.T();if(a.repeat?repeatedMsgEq(o,s,i):o.equals(s,i))break;return!1}}}return!0}const objectValues=Object.values;function primitiveEq(e,r,t){if(r!==t){if(e!==ScalarType.BYTES)return!1;var a=r,n=t;if(a.length!==n.length)return!1;for(let e=0;e<a.length;e++)if(a[e]!=n[e])return!1}return!0}function repeatedPrimitiveEq(r,t,a){if(t.length!==a.length)return!1;for(let e=0;e<t.length;e++)if(!primitiveEq(r,t[e],a[e]))return!1;return!0}function repeatedMsgEq(r,t,a){if(t.length!==a.length)return!1;for(let e=0;e<t.length;e++)if(!r.equals(t[e],a[e]))return!1;return!0}const defaultsWrite={writeUnknownFields:!0,writerFactory:()=>new BinaryWriter};function binaryWriteOptions(e){return e?{...defaultsWrite,...e}:defaultsWrite}class BinaryWriter{constructor(e){this.stack=[],this.textEncoder=e??new TextEncoder,this.chunks=[],this.buf=[]}finish(){this.chunks.push(new Uint8Array(this.buf));let r=0;for(let e=0;e<this.chunks.length;e++)r+=this.chunks[e].length;var t=new Uint8Array(r);let a=0;for(let e=0;e<this.chunks.length;e++)t.set(this.chunks[e],a),a+=this.chunks[e].length;return this.chunks=[],t}fork(){return this.stack.push({chunks:this.chunks,buf:this.buf}),this.chunks=[],this.buf=[],this}join(){var e=this.finish(),r=this.stack.pop();if(r)return this.chunks=r.chunks,this.buf=r.buf,this.uint32(e.byteLength),this.raw(e);throw new Error("invalid state, fork stack empty")}tag(e,r){return this.uint32((e<<3|r)>>>0)}raw(e){return this.buf.length&&(this.chunks.push(new Uint8Array(this.buf)),this.buf=[]),this.chunks.push(e),this}uint32(e){for(assertUInt32(e);127<e;)this.buf.push(127&e|128),e>>>=7;return this.buf.push(e),this}int32(e){return assertInt32(e),varint32write(e,this.buf),this}bool(e){return this.buf.push(e?1:0),this}bytes(e){return this.uint32(e.byteLength),this.raw(e)}string(e){e=this.textEncoder.encode(e);return this.uint32(e.byteLength),this.raw(e)}float(e){assertFloat32(e);var r=new Uint8Array(4);return new DataView(r.buffer).setFloat32(0,e,!0),this.raw(r)}double(e){var r=new Uint8Array(8);return new DataView(r.buffer).setFloat64(0,e,!0),this.raw(r)}fixed32(e){assertUInt32(e);var r=new Uint8Array(4);return new DataView(r.buffer).setUint32(0,e,!0),this.raw(r)}sfixed32(e){assertInt32(e);var r=new Uint8Array(4);return new DataView(r.buffer).setInt32(0,e,!0),this.raw(r)}sint32(e){return assertInt32(e),varint32write(e=(e<<1^e>>31)>>>0,this.buf),this}sfixed64(e){var r=new Uint8Array(8),t=new DataView(r.buffer),e=PbLong.from(e);return t.setInt32(0,e.lo,!0),t.setInt32(4,e.hi,!0),this.raw(r)}fixed64(e){var r=new Uint8Array(8),t=new DataView(r.buffer),e=PbULong.from(e);return t.setInt32(0,e.lo,!0),t.setInt32(4,e.hi,!0),this.raw(r)}int64(e){e=PbLong.from(e);return varint64write(e.lo,e.hi,this.buf),this}sint64(e){var e=PbLong.from(e),r=e.hi>>31;return varint64write(e.lo<<1^r,(e.hi<<1|e.lo>>>31)^r,this.buf),this}uint64(e){e=PbULong.from(e);return varint64write(e.lo,e.hi,this.buf),this}}const defaultsRead={readUnknownField:!0,readerFactory:e=>new BinaryReader(e)};function binaryReadOptions(e){return e?{...defaultsRead,...e}:defaultsRead}class BinaryReader{constructor(e,r){this.varint64=varint64read,this.uint32=varint32read,this.buf=e,this.len=e.length,this.pos=0,this.view=new DataView(e.buffer,e.byteOffset,e.byteLength),this.textDecoder=r??new TextDecoder("utf-8",{fatal:!0,ignoreBOM:!0})}tag(){var e=this.uint32(),r=e>>>3,e=7&e;if(r<=0||e<0||5<e)throw new Error("illegal tag: field no "+r+" wire type "+e);return[r,e]}skip(e){var r,t=this.pos;switch(e){case WireType.Varint:for(;128&this.buf[this.pos++];);break;case WireType.Bit64:this.pos+=4;case WireType.Bit32:this.pos+=4;break;case WireType.LengthDelimited:var a=this.uint32();this.pos+=a;break;case WireType.StartGroup:for(;(r=this.tag()[1])!==WireType.EndGroup;)this.skip(r);break;default:throw new Error("cant skip wire type "+e)}return this.assertBounds(),this.buf.subarray(t,this.pos)}assertBounds(){if(this.pos>this.len)throw new RangeError("premature EOF")}int32(){return 0|this.uint32()}sint32(){var e=this.uint32();return e>>>1^-(1&e)}int64(){return new PbLong(...this.varint64())}uint64(){return new PbULong(...this.varint64())}sint64(){var[e,r]=this.varint64(),t=-(1&e),e=(e>>>1|(1&r)<<31)^t,r=r>>>1^t;return new PbLong(e,r)}bool(){var[e,r]=this.varint64();return 0!==e||0!==r}fixed32(){return this.view.getUint32((this.pos+=4)-4,!0)}sfixed32(){return this.view.getInt32((this.pos+=4)-4,!0)}fixed64(){return new PbULong(this.sfixed32(),this.sfixed32())}sfixed64(){return new PbLong(this.sfixed32(),this.sfixed32())}float(){return this.view.getFloat32((this.pos+=4)-4,!0)}double(){return this.view.getFloat64((this.pos+=8)-8,!0)}bytes(){var e=this.uint32(),r=this.pos;return this.pos+=e,this.assertBounds(),this.buf.subarray(r,r+e)}string(){return this.textDecoder.decode(this.bytes())}}class MessageType{constructor(e,r,t){this.defaultCheckDepth=16,this.typeName=e,this.fields=r.map(normalizeFieldInfo),this.options=t??{},this.refTypeCheck=new ReflectionTypeCheck(this),this.refJsonReader=new ReflectionJsonReader(this),this.refJsonWriter=new ReflectionJsonWriter(this),this.refBinReader=new ReflectionBinaryReader(this),this.refBinWriter=new ReflectionBinaryWriter(this)}create(e){var r=reflectionCreate(this);return void 0!==e&&reflectionMergePartial(this,r,e),r}clone(e){var r=this.create();return reflectionMergePartial(this,r,e),r}equals(e,r){return reflectionEquals(this,e,r)}is(e,r=this.defaultCheckDepth){return this.refTypeCheck.is(e,r,!1)}isAssignable(e,r=this.defaultCheckDepth){return this.refTypeCheck.is(e,r,!0)}mergePartial(e,r){reflectionMergePartial(this,e,r)}fromBinary(e,r){r=binaryReadOptions(r);return this.internalBinaryRead(r.readerFactory(e),e.byteLength,r)}fromJson(e,r){return this.internalJsonRead(e,jsonReadOptions(r))}fromJsonString(e,r){e=JSON.parse(e);return this.fromJson(e,r)}toJson(e,r){return this.internalJsonWrite(e,jsonWriteOptions(r))}toJsonString(e,r){e=this.toJson(e,r);return JSON.stringify(e,null,(null==r?void 0:r.prettySpaces)??0)}toBinary(e,r){r=binaryWriteOptions(r);return this.internalBinaryWrite(e,r.writerFactory(),r).finish()}internalJsonRead(e,r,t){if(null===e||"object"!=typeof e||Array.isArray(e))throw new Error(`Unable to parse message ${this.typeName} from JSON ${typeofJsonValue(e)}.`);return t=t??this.create(),this.refJsonReader.read(e,t,r),t}internalJsonWrite(e,r){return this.refJsonWriter.write(e,r)}internalBinaryWrite(e,r,t){return this.refBinWriter.write(e,r,t),r}internalBinaryRead(e,r,t,a){a=a??this.create();return this.refBinReader.read(e,a,t,r),a}}
-					/******************  initialization finish  ******************/
+					//$.log(`🚧 isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`, "");
 					switch (FORMAT) {
 						case "application/protobuf":
 						case "application/x-protobuf":
@@ -384,10 +11055,6 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 							break;
 						case "application/grpc":
 						case "application/grpc+proto":
-							/******************  initialization start  *******************/
-							// pako 2.0.4
-							!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"function"==typeof define&&define.amd?define(["exports"],e):e((t="undefined"!=typeof globalThis?globalThis:t||self).pako={})}(this,(function(t){"use strict";function e(t){let e=t.length;for(;--e>=0;)t[e]=0}const a=256,i=286,n=30,s=15,r=new Uint8Array([0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0]),l=new Uint8Array([0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13]),o=new Uint8Array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,7]),h=new Uint8Array([16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15]),d=new Array(576);e(d);const _=new Array(60);e(_);const f=new Array(512);e(f);const c=new Array(256);e(c);const u=new Array(29);e(u);const w=new Array(n);function b(t,e,a,i,n){this.static_tree=t,this.extra_bits=e,this.extra_base=a,this.elems=i,this.max_length=n,this.has_stree=t&&t.length}let g,p,m;function k(t,e){this.dyn_tree=t,this.max_code=0,this.stat_desc=e}e(w);const v=t=>t<256?f[t]:f[256+(t>>>7)],y=(t,e)=>{t.pending_buf[t.pending++]=255&e,t.pending_buf[t.pending++]=e>>>8&255},x=(t,e,a)=>{t.bi_valid>16-a?(t.bi_buf|=e<<t.bi_valid&65535,y(t,t.bi_buf),t.bi_buf=e>>16-t.bi_valid,t.bi_valid+=a-16):(t.bi_buf|=e<<t.bi_valid&65535,t.bi_valid+=a)},z=(t,e,a)=>{x(t,a[2*e],a[2*e+1])},A=(t,e)=>{let a=0;do{a|=1&t,t>>>=1,a<<=1}while(--e>0);return a>>>1},E=(t,e,a)=>{const i=new Array(16);let n,r,l=0;for(n=1;n<=s;n++)i[n]=l=l+a[n-1]<<1;for(r=0;r<=e;r++){let e=t[2*r+1];0!==e&&(t[2*r]=A(i[e]++,e))}},R=t=>{let e;for(e=0;e<i;e++)t.dyn_ltree[2*e]=0;for(e=0;e<n;e++)t.dyn_dtree[2*e]=0;for(e=0;e<19;e++)t.bl_tree[2*e]=0;t.dyn_ltree[512]=1,t.opt_len=t.static_len=0,t.last_lit=t.matches=0},Z=t=>{t.bi_valid>8?y(t,t.bi_buf):t.bi_valid>0&&(t.pending_buf[t.pending++]=t.bi_buf),t.bi_buf=0,t.bi_valid=0},U=(t,e,a,i)=>{const n=2*e,s=2*a;return t[n]<t[s]||t[n]===t[s]&&i[e]<=i[a]},S=(t,e,a)=>{const i=t.heap[a];let n=a<<1;for(;n<=t.heap_len&&(n<t.heap_len&&U(e,t.heap[n+1],t.heap[n],t.depth)&&n++,!U(e,i,t.heap[n],t.depth));)t.heap[a]=t.heap[n],a=n,n<<=1;t.heap[a]=i},D=(t,e,i)=>{let n,s,o,h,d=0;if(0!==t.last_lit)do{n=t.pending_buf[t.d_buf+2*d]<<8|t.pending_buf[t.d_buf+2*d+1],s=t.pending_buf[t.l_buf+d],d++,0===n?z(t,s,e):(o=c[s],z(t,o+a+1,e),h=r[o],0!==h&&(s-=u[o],x(t,s,h)),n--,o=v(n),z(t,o,i),h=l[o],0!==h&&(n-=w[o],x(t,n,h)))}while(d<t.last_lit);z(t,256,e)},T=(t,e)=>{const a=e.dyn_tree,i=e.stat_desc.static_tree,n=e.stat_desc.has_stree,r=e.stat_desc.elems;let l,o,h,d=-1;for(t.heap_len=0,t.heap_max=573,l=0;l<r;l++)0!==a[2*l]?(t.heap[++t.heap_len]=d=l,t.depth[l]=0):a[2*l+1]=0;for(;t.heap_len<2;)h=t.heap[++t.heap_len]=d<2?++d:0,a[2*h]=1,t.depth[h]=0,t.opt_len--,n&&(t.static_len-=i[2*h+1]);for(e.max_code=d,l=t.heap_len>>1;l>=1;l--)S(t,a,l);h=r;do{l=t.heap[1],t.heap[1]=t.heap[t.heap_len--],S(t,a,1),o=t.heap[1],t.heap[--t.heap_max]=l,t.heap[--t.heap_max]=o,a[2*h]=a[2*l]+a[2*o],t.depth[h]=(t.depth[l]>=t.depth[o]?t.depth[l]:t.depth[o])+1,a[2*l+1]=a[2*o+1]=h,t.heap[1]=h++,S(t,a,1)}while(t.heap_len>=2);t.heap[--t.heap_max]=t.heap[1],((t,e)=>{const a=e.dyn_tree,i=e.max_code,n=e.stat_desc.static_tree,r=e.stat_desc.has_stree,l=e.stat_desc.extra_bits,o=e.stat_desc.extra_base,h=e.stat_desc.max_length;let d,_,f,c,u,w,b=0;for(c=0;c<=s;c++)t.bl_count[c]=0;for(a[2*t.heap[t.heap_max]+1]=0,d=t.heap_max+1;d<573;d++)_=t.heap[d],c=a[2*a[2*_+1]+1]+1,c>h&&(c=h,b++),a[2*_+1]=c,_>i||(t.bl_count[c]++,u=0,_>=o&&(u=l[_-o]),w=a[2*_],t.opt_len+=w*(c+u),r&&(t.static_len+=w*(n[2*_+1]+u)));if(0!==b){do{for(c=h-1;0===t.bl_count[c];)c--;t.bl_count[c]--,t.bl_count[c+1]+=2,t.bl_count[h]--,b-=2}while(b>0);for(c=h;0!==c;c--)for(_=t.bl_count[c];0!==_;)f=t.heap[--d],f>i||(a[2*f+1]!==c&&(t.opt_len+=(c-a[2*f+1])*a[2*f],a[2*f+1]=c),_--)}})(t,e),E(a,d,t.bl_count)},O=(t,e,a)=>{let i,n,s=-1,r=e[1],l=0,o=7,h=4;for(0===r&&(o=138,h=3),e[2*(a+1)+1]=65535,i=0;i<=a;i++)n=r,r=e[2*(i+1)+1],++l<o&&n===r||(l<h?t.bl_tree[2*n]+=l:0!==n?(n!==s&&t.bl_tree[2*n]++,t.bl_tree[32]++):l<=10?t.bl_tree[34]++:t.bl_tree[36]++,l=0,s=n,0===r?(o=138,h=3):n===r?(o=6,h=3):(o=7,h=4))},I=(t,e,a)=>{let i,n,s=-1,r=e[1],l=0,o=7,h=4;for(0===r&&(o=138,h=3),i=0;i<=a;i++)if(n=r,r=e[2*(i+1)+1],!(++l<o&&n===r)){if(l<h)do{z(t,n,t.bl_tree)}while(0!=--l);else 0!==n?(n!==s&&(z(t,n,t.bl_tree),l--),z(t,16,t.bl_tree),x(t,l-3,2)):l<=10?(z(t,17,t.bl_tree),x(t,l-3,3)):(z(t,18,t.bl_tree),x(t,l-11,7));l=0,s=n,0===r?(o=138,h=3):n===r?(o=6,h=3):(o=7,h=4)}};let F=!1;const L=(t,e,a,i)=>{x(t,0+(i?1:0),3),((t,e,a,i)=>{Z(t),i&&(y(t,a),y(t,~a)),t.pending_buf.set(t.window.subarray(e,e+a),t.pending),t.pending+=a})(t,e,a,!0)};var N={_tr_init:t=>{F||((()=>{let t,e,a,h,k;const v=new Array(16);for(a=0,h=0;h<28;h++)for(u[h]=a,t=0;t<1<<r[h];t++)c[a++]=h;for(c[a-1]=h,k=0,h=0;h<16;h++)for(w[h]=k,t=0;t<1<<l[h];t++)f[k++]=h;for(k>>=7;h<n;h++)for(w[h]=k<<7,t=0;t<1<<l[h]-7;t++)f[256+k++]=h;for(e=0;e<=s;e++)v[e]=0;for(t=0;t<=143;)d[2*t+1]=8,t++,v[8]++;for(;t<=255;)d[2*t+1]=9,t++,v[9]++;for(;t<=279;)d[2*t+1]=7,t++,v[7]++;for(;t<=287;)d[2*t+1]=8,t++,v[8]++;for(E(d,287,v),t=0;t<n;t++)_[2*t+1]=5,_[2*t]=A(t,5);g=new b(d,r,257,i,s),p=new b(_,l,0,n,s),m=new b(new Array(0),o,0,19,7)})(),F=!0),t.l_desc=new k(t.dyn_ltree,g),t.d_desc=new k(t.dyn_dtree,p),t.bl_desc=new k(t.bl_tree,m),t.bi_buf=0,t.bi_valid=0,R(t)},_tr_stored_block:L,_tr_flush_block:(t,e,i,n)=>{let s,r,l=0;t.level>0?(2===t.strm.data_type&&(t.strm.data_type=(t=>{let e,i=4093624447;for(e=0;e<=31;e++,i>>>=1)if(1&i&&0!==t.dyn_ltree[2*e])return 0;if(0!==t.dyn_ltree[18]||0!==t.dyn_ltree[20]||0!==t.dyn_ltree[26])return 1;for(e=32;e<a;e++)if(0!==t.dyn_ltree[2*e])return 1;return 0})(t)),T(t,t.l_desc),T(t,t.d_desc),l=(t=>{let e;for(O(t,t.dyn_ltree,t.l_desc.max_code),O(t,t.dyn_dtree,t.d_desc.max_code),T(t,t.bl_desc),e=18;e>=3&&0===t.bl_tree[2*h[e]+1];e--);return t.opt_len+=3*(e+1)+5+5+4,e})(t),s=t.opt_len+3+7>>>3,r=t.static_len+3+7>>>3,r<=s&&(s=r)):s=r=i+5,i+4<=s&&-1!==e?L(t,e,i,n):4===t.strategy||r===s?(x(t,2+(n?1:0),3),D(t,d,_)):(x(t,4+(n?1:0),3),((t,e,a,i)=>{let n;for(x(t,e-257,5),x(t,a-1,5),x(t,i-4,4),n=0;n<i;n++)x(t,t.bl_tree[2*h[n]+1],3);I(t,t.dyn_ltree,e-1),I(t,t.dyn_dtree,a-1)})(t,t.l_desc.max_code+1,t.d_desc.max_code+1,l+1),D(t,t.dyn_ltree,t.dyn_dtree)),R(t),n&&Z(t)},_tr_tally:(t,e,i)=>(t.pending_buf[t.d_buf+2*t.last_lit]=e>>>8&255,t.pending_buf[t.d_buf+2*t.last_lit+1]=255&e,t.pending_buf[t.l_buf+t.last_lit]=255&i,t.last_lit++,0===e?t.dyn_ltree[2*i]++:(t.matches++,e--,t.dyn_ltree[2*(c[i]+a+1)]++,t.dyn_dtree[2*v(e)]++),t.last_lit===t.lit_bufsize-1),_tr_align:t=>{x(t,2,3),z(t,256,d),(t=>{16===t.bi_valid?(y(t,t.bi_buf),t.bi_buf=0,t.bi_valid=0):t.bi_valid>=8&&(t.pending_buf[t.pending++]=255&t.bi_buf,t.bi_buf>>=8,t.bi_valid-=8)})(t)}};var B=(t,e,a,i)=>{let n=65535&t|0,s=t>>>16&65535|0,r=0;for(;0!==a;){r=a>2e3?2e3:a,a-=r;do{n=n+e[i++]|0,s=s+n|0}while(--r);n%=65521,s%=65521}return n|s<<16|0};const C=new Uint32Array((()=>{let t,e=[];for(var a=0;a<256;a++){t=a;for(var i=0;i<8;i++)t=1&t?3988292384^t>>>1:t>>>1;e[a]=t}return e})());var M=(t,e,a,i)=>{const n=C,s=i+a;t^=-1;for(let a=i;a<s;a++)t=t>>>8^n[255&(t^e[a])];return-1^t},H={2:"need dictionary",1:"stream end",0:"","-1":"file error","-2":"stream error","-3":"data error","-4":"insufficient memory","-5":"buffer error","-6":"incompatible version"},j={Z_NO_FLUSH:0,Z_PARTIAL_FLUSH:1,Z_SYNC_FLUSH:2,Z_FULL_FLUSH:3,Z_FINISH:4,Z_BLOCK:5,Z_TREES:6,Z_OK:0,Z_STREAM_END:1,Z_NEED_DICT:2,Z_ERRNO:-1,Z_STREAM_ERROR:-2,Z_DATA_ERROR:-3,Z_MEM_ERROR:-4,Z_BUF_ERROR:-5,Z_NO_COMPRESSION:0,Z_BEST_SPEED:1,Z_BEST_COMPRESSION:9,Z_DEFAULT_COMPRESSION:-1,Z_FILTERED:1,Z_HUFFMAN_ONLY:2,Z_RLE:3,Z_FIXED:4,Z_DEFAULT_STRATEGY:0,Z_BINARY:0,Z_TEXT:1,Z_UNKNOWN:2,Z_DEFLATED:8};const{_tr_init:K,_tr_stored_block:P,_tr_flush_block:Y,_tr_tally:G,_tr_align:X}=N,{Z_NO_FLUSH:W,Z_PARTIAL_FLUSH:q,Z_FULL_FLUSH:J,Z_FINISH:Q,Z_BLOCK:V,Z_OK:$,Z_STREAM_END:tt,Z_STREAM_ERROR:et,Z_DATA_ERROR:at,Z_BUF_ERROR:it,Z_DEFAULT_COMPRESSION:nt,Z_FILTERED:st,Z_HUFFMAN_ONLY:rt,Z_RLE:lt,Z_FIXED:ot,Z_DEFAULT_STRATEGY:ht,Z_UNKNOWN:dt,Z_DEFLATED:_t}=j,ft=258,ct=262,ut=103,wt=113,bt=666,gt=(t,e)=>(t.msg=H[e],e),pt=t=>(t<<1)-(t>4?9:0),mt=t=>{let e=t.length;for(;--e>=0;)t[e]=0};let kt=(t,e,a)=>(e<<t.hash_shift^a)&t.hash_mask;const vt=t=>{const e=t.state;let a=e.pending;a>t.avail_out&&(a=t.avail_out),0!==a&&(t.output.set(e.pending_buf.subarray(e.pending_out,e.pending_out+a),t.next_out),t.next_out+=a,e.pending_out+=a,t.total_out+=a,t.avail_out-=a,e.pending-=a,0===e.pending&&(e.pending_out=0))},yt=(t,e)=>{Y(t,t.block_start>=0?t.block_start:-1,t.strstart-t.block_start,e),t.block_start=t.strstart,vt(t.strm)},xt=(t,e)=>{t.pending_buf[t.pending++]=e},zt=(t,e)=>{t.pending_buf[t.pending++]=e>>>8&255,t.pending_buf[t.pending++]=255&e},At=(t,e,a,i)=>{let n=t.avail_in;return n>i&&(n=i),0===n?0:(t.avail_in-=n,e.set(t.input.subarray(t.next_in,t.next_in+n),a),1===t.state.wrap?t.adler=B(t.adler,e,n,a):2===t.state.wrap&&(t.adler=M(t.adler,e,n,a)),t.next_in+=n,t.total_in+=n,n)},Et=(t,e)=>{let a,i,n=t.max_chain_length,s=t.strstart,r=t.prev_length,l=t.nice_match;const o=t.strstart>t.w_size-ct?t.strstart-(t.w_size-ct):0,h=t.window,d=t.w_mask,_=t.prev,f=t.strstart+ft;let c=h[s+r-1],u=h[s+r];t.prev_length>=t.good_match&&(n>>=2),l>t.lookahead&&(l=t.lookahead);do{if(a=e,h[a+r]===u&&h[a+r-1]===c&&h[a]===h[s]&&h[++a]===h[s+1]){s+=2,a++;do{}while(h[++s]===h[++a]&&h[++s]===h[++a]&&h[++s]===h[++a]&&h[++s]===h[++a]&&h[++s]===h[++a]&&h[++s]===h[++a]&&h[++s]===h[++a]&&h[++s]===h[++a]&&s<f);if(i=ft-(f-s),s=f-ft,i>r){if(t.match_start=e,r=i,i>=l)break;c=h[s+r-1],u=h[s+r]}}}while((e=_[e&d])>o&&0!=--n);return r<=t.lookahead?r:t.lookahead},Rt=t=>{const e=t.w_size;let a,i,n,s,r;do{if(s=t.window_size-t.lookahead-t.strstart,t.strstart>=e+(e-ct)){t.window.set(t.window.subarray(e,e+e),0),t.match_start-=e,t.strstart-=e,t.block_start-=e,i=t.hash_size,a=i;do{n=t.head[--a],t.head[a]=n>=e?n-e:0}while(--i);i=e,a=i;do{n=t.prev[--a],t.prev[a]=n>=e?n-e:0}while(--i);s+=e}if(0===t.strm.avail_in)break;if(i=At(t.strm,t.window,t.strstart+t.lookahead,s),t.lookahead+=i,t.lookahead+t.insert>=3)for(r=t.strstart-t.insert,t.ins_h=t.window[r],t.ins_h=kt(t,t.ins_h,t.window[r+1]);t.insert&&(t.ins_h=kt(t,t.ins_h,t.window[r+3-1]),t.prev[r&t.w_mask]=t.head[t.ins_h],t.head[t.ins_h]=r,r++,t.insert--,!(t.lookahead+t.insert<3)););}while(t.lookahead<ct&&0!==t.strm.avail_in)},Zt=(t,e)=>{let a,i;for(;;){if(t.lookahead<ct){if(Rt(t),t.lookahead<ct&&e===W)return 1;if(0===t.lookahead)break}if(a=0,t.lookahead>=3&&(t.ins_h=kt(t,t.ins_h,t.window[t.strstart+3-1]),a=t.prev[t.strstart&t.w_mask]=t.head[t.ins_h],t.head[t.ins_h]=t.strstart),0!==a&&t.strstart-a<=t.w_size-ct&&(t.match_length=Et(t,a)),t.match_length>=3)if(i=G(t,t.strstart-t.match_start,t.match_length-3),t.lookahead-=t.match_length,t.match_length<=t.max_lazy_match&&t.lookahead>=3){t.match_length--;do{t.strstart++,t.ins_h=kt(t,t.ins_h,t.window[t.strstart+3-1]),a=t.prev[t.strstart&t.w_mask]=t.head[t.ins_h],t.head[t.ins_h]=t.strstart}while(0!=--t.match_length);t.strstart++}else t.strstart+=t.match_length,t.match_length=0,t.ins_h=t.window[t.strstart],t.ins_h=kt(t,t.ins_h,t.window[t.strstart+1]);else i=G(t,0,t.window[t.strstart]),t.lookahead--,t.strstart++;if(i&&(yt(t,!1),0===t.strm.avail_out))return 1}return t.insert=t.strstart<2?t.strstart:2,e===Q?(yt(t,!0),0===t.strm.avail_out?3:4):t.last_lit&&(yt(t,!1),0===t.strm.avail_out)?1:2},Ut=(t,e)=>{let a,i,n;for(;;){if(t.lookahead<ct){if(Rt(t),t.lookahead<ct&&e===W)return 1;if(0===t.lookahead)break}if(a=0,t.lookahead>=3&&(t.ins_h=kt(t,t.ins_h,t.window[t.strstart+3-1]),a=t.prev[t.strstart&t.w_mask]=t.head[t.ins_h],t.head[t.ins_h]=t.strstart),t.prev_length=t.match_length,t.prev_match=t.match_start,t.match_length=2,0!==a&&t.prev_length<t.max_lazy_match&&t.strstart-a<=t.w_size-ct&&(t.match_length=Et(t,a),t.match_length<=5&&(t.strategy===st||3===t.match_length&&t.strstart-t.match_start>4096)&&(t.match_length=2)),t.prev_length>=3&&t.match_length<=t.prev_length){n=t.strstart+t.lookahead-3,i=G(t,t.strstart-1-t.prev_match,t.prev_length-3),t.lookahead-=t.prev_length-1,t.prev_length-=2;do{++t.strstart<=n&&(t.ins_h=kt(t,t.ins_h,t.window[t.strstart+3-1]),a=t.prev[t.strstart&t.w_mask]=t.head[t.ins_h],t.head[t.ins_h]=t.strstart)}while(0!=--t.prev_length);if(t.match_available=0,t.match_length=2,t.strstart++,i&&(yt(t,!1),0===t.strm.avail_out))return 1}else if(t.match_available){if(i=G(t,0,t.window[t.strstart-1]),i&&yt(t,!1),t.strstart++,t.lookahead--,0===t.strm.avail_out)return 1}else t.match_available=1,t.strstart++,t.lookahead--}return t.match_available&&(i=G(t,0,t.window[t.strstart-1]),t.match_available=0),t.insert=t.strstart<2?t.strstart:2,e===Q?(yt(t,!0),0===t.strm.avail_out?3:4):t.last_lit&&(yt(t,!1),0===t.strm.avail_out)?1:2};function St(t,e,a,i,n){this.good_length=t,this.max_lazy=e,this.nice_length=a,this.max_chain=i,this.func=n}const Dt=[new St(0,0,0,0,((t,e)=>{let a=65535;for(a>t.pending_buf_size-5&&(a=t.pending_buf_size-5);;){if(t.lookahead<=1){if(Rt(t),0===t.lookahead&&e===W)return 1;if(0===t.lookahead)break}t.strstart+=t.lookahead,t.lookahead=0;const i=t.block_start+a;if((0===t.strstart||t.strstart>=i)&&(t.lookahead=t.strstart-i,t.strstart=i,yt(t,!1),0===t.strm.avail_out))return 1;if(t.strstart-t.block_start>=t.w_size-ct&&(yt(t,!1),0===t.strm.avail_out))return 1}return t.insert=0,e===Q?(yt(t,!0),0===t.strm.avail_out?3:4):(t.strstart>t.block_start&&(yt(t,!1),t.strm.avail_out),1)})),new St(4,4,8,4,Zt),new St(4,5,16,8,Zt),new St(4,6,32,32,Zt),new St(4,4,16,16,Ut),new St(8,16,32,32,Ut),new St(8,16,128,128,Ut),new St(8,32,128,256,Ut),new St(32,128,258,1024,Ut),new St(32,258,258,4096,Ut)];function Tt(){this.strm=null,this.status=0,this.pending_buf=null,this.pending_buf_size=0,this.pending_out=0,this.pending=0,this.wrap=0,this.gzhead=null,this.gzindex=0,this.method=_t,this.last_flush=-1,this.w_size=0,this.w_bits=0,this.w_mask=0,this.window=null,this.window_size=0,this.prev=null,this.head=null,this.ins_h=0,this.hash_size=0,this.hash_bits=0,this.hash_mask=0,this.hash_shift=0,this.block_start=0,this.match_length=0,this.prev_match=0,this.match_available=0,this.strstart=0,this.match_start=0,this.lookahead=0,this.prev_length=0,this.max_chain_length=0,this.max_lazy_match=0,this.level=0,this.strategy=0,this.good_match=0,this.nice_match=0,this.dyn_ltree=new Uint16Array(1146),this.dyn_dtree=new Uint16Array(122),this.bl_tree=new Uint16Array(78),mt(this.dyn_ltree),mt(this.dyn_dtree),mt(this.bl_tree),this.l_desc=null,this.d_desc=null,this.bl_desc=null,this.bl_count=new Uint16Array(16),this.heap=new Uint16Array(573),mt(this.heap),this.heap_len=0,this.heap_max=0,this.depth=new Uint16Array(573),mt(this.depth),this.l_buf=0,this.lit_bufsize=0,this.last_lit=0,this.d_buf=0,this.opt_len=0,this.static_len=0,this.matches=0,this.insert=0,this.bi_buf=0,this.bi_valid=0}const Ot=t=>{if(!t||!t.state)return gt(t,et);t.total_in=t.total_out=0,t.data_type=dt;const e=t.state;return e.pending=0,e.pending_out=0,e.wrap<0&&(e.wrap=-e.wrap),e.status=e.wrap?42:wt,t.adler=2===e.wrap?0:1,e.last_flush=W,K(e),$},It=t=>{const e=Ot(t);var a;return e===$&&((a=t.state).window_size=2*a.w_size,mt(a.head),a.max_lazy_match=Dt[a.level].max_lazy,a.good_match=Dt[a.level].good_length,a.nice_match=Dt[a.level].nice_length,a.max_chain_length=Dt[a.level].max_chain,a.strstart=0,a.block_start=0,a.lookahead=0,a.insert=0,a.match_length=a.prev_length=2,a.match_available=0,a.ins_h=0),e},Ft=(t,e,a,i,n,s)=>{if(!t)return et;let r=1;if(e===nt&&(e=6),i<0?(r=0,i=-i):i>15&&(r=2,i-=16),n<1||n>9||a!==_t||i<8||i>15||e<0||e>9||s<0||s>ot)return gt(t,et);8===i&&(i=9);const l=new Tt;return t.state=l,l.strm=t,l.wrap=r,l.gzhead=null,l.w_bits=i,l.w_size=1<<l.w_bits,l.w_mask=l.w_size-1,l.hash_bits=n+7,l.hash_size=1<<l.hash_bits,l.hash_mask=l.hash_size-1,l.hash_shift=~~((l.hash_bits+3-1)/3),l.window=new Uint8Array(2*l.w_size),l.head=new Uint16Array(l.hash_size),l.prev=new Uint16Array(l.w_size),l.lit_bufsize=1<<n+6,l.pending_buf_size=4*l.lit_bufsize,l.pending_buf=new Uint8Array(l.pending_buf_size),l.d_buf=1*l.lit_bufsize,l.l_buf=3*l.lit_bufsize,l.level=e,l.strategy=s,l.method=a,It(t)};var Lt={deflateInit:(t,e)=>Ft(t,e,_t,15,8,ht),deflateInit2:Ft,deflateReset:It,deflateResetKeep:Ot,deflateSetHeader:(t,e)=>t&&t.state?2!==t.state.wrap?et:(t.state.gzhead=e,$):et,deflate:(t,e)=>{let a,i;if(!t||!t.state||e>V||e<0)return t?gt(t,et):et;const n=t.state;if(!t.output||!t.input&&0!==t.avail_in||n.status===bt&&e!==Q)return gt(t,0===t.avail_out?it:et);n.strm=t;const s=n.last_flush;if(n.last_flush=e,42===n.status)if(2===n.wrap)t.adler=0,xt(n,31),xt(n,139),xt(n,8),n.gzhead?(xt(n,(n.gzhead.text?1:0)+(n.gzhead.hcrc?2:0)+(n.gzhead.extra?4:0)+(n.gzhead.name?8:0)+(n.gzhead.comment?16:0)),xt(n,255&n.gzhead.time),xt(n,n.gzhead.time>>8&255),xt(n,n.gzhead.time>>16&255),xt(n,n.gzhead.time>>24&255),xt(n,9===n.level?2:n.strategy>=rt||n.level<2?4:0),xt(n,255&n.gzhead.os),n.gzhead.extra&&n.gzhead.extra.length&&(xt(n,255&n.gzhead.extra.length),xt(n,n.gzhead.extra.length>>8&255)),n.gzhead.hcrc&&(t.adler=M(t.adler,n.pending_buf,n.pending,0)),n.gzindex=0,n.status=69):(xt(n,0),xt(n,0),xt(n,0),xt(n,0),xt(n,0),xt(n,9===n.level?2:n.strategy>=rt||n.level<2?4:0),xt(n,3),n.status=wt);else{let e=_t+(n.w_bits-8<<4)<<8,a=-1;a=n.strategy>=rt||n.level<2?0:n.level<6?1:6===n.level?2:3,e|=a<<6,0!==n.strstart&&(e|=32),e+=31-e%31,n.status=wt,zt(n,e),0!==n.strstart&&(zt(n,t.adler>>>16),zt(n,65535&t.adler)),t.adler=1}if(69===n.status)if(n.gzhead.extra){for(a=n.pending;n.gzindex<(65535&n.gzhead.extra.length)&&(n.pending!==n.pending_buf_size||(n.gzhead.hcrc&&n.pending>a&&(t.adler=M(t.adler,n.pending_buf,n.pending-a,a)),vt(t),a=n.pending,n.pending!==n.pending_buf_size));)xt(n,255&n.gzhead.extra[n.gzindex]),n.gzindex++;n.gzhead.hcrc&&n.pending>a&&(t.adler=M(t.adler,n.pending_buf,n.pending-a,a)),n.gzindex===n.gzhead.extra.length&&(n.gzindex=0,n.status=73)}else n.status=73;if(73===n.status)if(n.gzhead.name){a=n.pending;do{if(n.pending===n.pending_buf_size&&(n.gzhead.hcrc&&n.pending>a&&(t.adler=M(t.adler,n.pending_buf,n.pending-a,a)),vt(t),a=n.pending,n.pending===n.pending_buf_size)){i=1;break}i=n.gzindex<n.gzhead.name.length?255&n.gzhead.name.charCodeAt(n.gzindex++):0,xt(n,i)}while(0!==i);n.gzhead.hcrc&&n.pending>a&&(t.adler=M(t.adler,n.pending_buf,n.pending-a,a)),0===i&&(n.gzindex=0,n.status=91)}else n.status=91;if(91===n.status)if(n.gzhead.comment){a=n.pending;do{if(n.pending===n.pending_buf_size&&(n.gzhead.hcrc&&n.pending>a&&(t.adler=M(t.adler,n.pending_buf,n.pending-a,a)),vt(t),a=n.pending,n.pending===n.pending_buf_size)){i=1;break}i=n.gzindex<n.gzhead.comment.length?255&n.gzhead.comment.charCodeAt(n.gzindex++):0,xt(n,i)}while(0!==i);n.gzhead.hcrc&&n.pending>a&&(t.adler=M(t.adler,n.pending_buf,n.pending-a,a)),0===i&&(n.status=ut)}else n.status=ut;if(n.status===ut&&(n.gzhead.hcrc?(n.pending+2>n.pending_buf_size&&vt(t),n.pending+2<=n.pending_buf_size&&(xt(n,255&t.adler),xt(n,t.adler>>8&255),t.adler=0,n.status=wt)):n.status=wt),0!==n.pending){if(vt(t),0===t.avail_out)return n.last_flush=-1,$}else if(0===t.avail_in&&pt(e)<=pt(s)&&e!==Q)return gt(t,it);if(n.status===bt&&0!==t.avail_in)return gt(t,it);if(0!==t.avail_in||0!==n.lookahead||e!==W&&n.status!==bt){let a=n.strategy===rt?((t,e)=>{let a;for(;;){if(0===t.lookahead&&(Rt(t),0===t.lookahead)){if(e===W)return 1;break}if(t.match_length=0,a=G(t,0,t.window[t.strstart]),t.lookahead--,t.strstart++,a&&(yt(t,!1),0===t.strm.avail_out))return 1}return t.insert=0,e===Q?(yt(t,!0),0===t.strm.avail_out?3:4):t.last_lit&&(yt(t,!1),0===t.strm.avail_out)?1:2})(n,e):n.strategy===lt?((t,e)=>{let a,i,n,s;const r=t.window;for(;;){if(t.lookahead<=ft){if(Rt(t),t.lookahead<=ft&&e===W)return 1;if(0===t.lookahead)break}if(t.match_length=0,t.lookahead>=3&&t.strstart>0&&(n=t.strstart-1,i=r[n],i===r[++n]&&i===r[++n]&&i===r[++n])){s=t.strstart+ft;do{}while(i===r[++n]&&i===r[++n]&&i===r[++n]&&i===r[++n]&&i===r[++n]&&i===r[++n]&&i===r[++n]&&i===r[++n]&&n<s);t.match_length=ft-(s-n),t.match_length>t.lookahead&&(t.match_length=t.lookahead)}if(t.match_length>=3?(a=G(t,1,t.match_length-3),t.lookahead-=t.match_length,t.strstart+=t.match_length,t.match_length=0):(a=G(t,0,t.window[t.strstart]),t.lookahead--,t.strstart++),a&&(yt(t,!1),0===t.strm.avail_out))return 1}return t.insert=0,e===Q?(yt(t,!0),0===t.strm.avail_out?3:4):t.last_lit&&(yt(t,!1),0===t.strm.avail_out)?1:2})(n,e):Dt[n.level].func(n,e);if(3!==a&&4!==a||(n.status=bt),1===a||3===a)return 0===t.avail_out&&(n.last_flush=-1),$;if(2===a&&(e===q?X(n):e!==V&&(P(n,0,0,!1),e===J&&(mt(n.head),0===n.lookahead&&(n.strstart=0,n.block_start=0,n.insert=0))),vt(t),0===t.avail_out))return n.last_flush=-1,$}return e!==Q?$:n.wrap<=0?tt:(2===n.wrap?(xt(n,255&t.adler),xt(n,t.adler>>8&255),xt(n,t.adler>>16&255),xt(n,t.adler>>24&255),xt(n,255&t.total_in),xt(n,t.total_in>>8&255),xt(n,t.total_in>>16&255),xt(n,t.total_in>>24&255)):(zt(n,t.adler>>>16),zt(n,65535&t.adler)),vt(t),n.wrap>0&&(n.wrap=-n.wrap),0!==n.pending?$:tt)},deflateEnd:t=>{if(!t||!t.state)return et;const e=t.state.status;return 42!==e&&69!==e&&73!==e&&91!==e&&e!==ut&&e!==wt&&e!==bt?gt(t,et):(t.state=null,e===wt?gt(t,at):$)},deflateSetDictionary:(t,e)=>{let a=e.length;if(!t||!t.state)return et;const i=t.state,n=i.wrap;if(2===n||1===n&&42!==i.status||i.lookahead)return et;if(1===n&&(t.adler=B(t.adler,e,a,0)),i.wrap=0,a>=i.w_size){0===n&&(mt(i.head),i.strstart=0,i.block_start=0,i.insert=0);let t=new Uint8Array(i.w_size);t.set(e.subarray(a-i.w_size,a),0),e=t,a=i.w_size}const s=t.avail_in,r=t.next_in,l=t.input;for(t.avail_in=a,t.next_in=0,t.input=e,Rt(i);i.lookahead>=3;){let t=i.strstart,e=i.lookahead-2;do{i.ins_h=kt(i,i.ins_h,i.window[t+3-1]),i.prev[t&i.w_mask]=i.head[i.ins_h],i.head[i.ins_h]=t,t++}while(--e);i.strstart=t,i.lookahead=2,Rt(i)}return i.strstart+=i.lookahead,i.block_start=i.strstart,i.insert=i.lookahead,i.lookahead=0,i.match_length=i.prev_length=2,i.match_available=0,t.next_in=r,t.input=l,t.avail_in=s,i.wrap=n,$},deflateInfo:"pako deflate (from Nodeca project)"};const Nt=(t,e)=>Object.prototype.hasOwnProperty.call(t,e);var Bt=function(t){const e=Array.prototype.slice.call(arguments,1);for(;e.length;){const a=e.shift();if(a){if("object"!=typeof a)throw new TypeError(a+"must be non-object");for(const e in a)Nt(a,e)&&(t[e]=a[e])}}return t},Ct=t=>{let e=0;for(let a=0,i=t.length;a<i;a++)e+=t[a].length;const a=new Uint8Array(e);for(let e=0,i=0,n=t.length;e<n;e++){let n=t[e];a.set(n,i),i+=n.length}return a};let Mt=!0;try{String.fromCharCode.apply(null,new Uint8Array(1))}catch(t){Mt=!1}const Ht=new Uint8Array(256);for(let t=0;t<256;t++)Ht[t]=t>=252?6:t>=248?5:t>=240?4:t>=224?3:t>=192?2:1;Ht[254]=Ht[254]=1;var jt=t=>{if("function"==typeof TextEncoder&&TextEncoder.prototype.encode)return(new TextEncoder).encode(t);let e,a,i,n,s,r=t.length,l=0;for(n=0;n<r;n++)a=t.charCodeAt(n),55296==(64512&a)&&n+1<r&&(i=t.charCodeAt(n+1),56320==(64512&i)&&(a=65536+(a-55296<<10)+(i-56320),n++)),l+=a<128?1:a<2048?2:a<65536?3:4;for(e=new Uint8Array(l),s=0,n=0;s<l;n++)a=t.charCodeAt(n),55296==(64512&a)&&n+1<r&&(i=t.charCodeAt(n+1),56320==(64512&i)&&(a=65536+(a-55296<<10)+(i-56320),n++)),a<128?e[s++]=a:a<2048?(e[s++]=192|a>>>6,e[s++]=128|63&a):a<65536?(e[s++]=224|a>>>12,e[s++]=128|a>>>6&63,e[s++]=128|63&a):(e[s++]=240|a>>>18,e[s++]=128|a>>>12&63,e[s++]=128|a>>>6&63,e[s++]=128|63&a);return e},Kt=(t,e)=>{const a=e||t.length;if("function"==typeof TextDecoder&&TextDecoder.prototype.decode)return(new TextDecoder).decode(t.subarray(0,e));let i,n;const s=new Array(2*a);for(n=0,i=0;i<a;){let e=t[i++];if(e<128){s[n++]=e;continue}let r=Ht[e];if(r>4)s[n++]=65533,i+=r-1;else{for(e&=2===r?31:3===r?15:7;r>1&&i<a;)e=e<<6|63&t[i++],r--;r>1?s[n++]=65533:e<65536?s[n++]=e:(e-=65536,s[n++]=55296|e>>10&1023,s[n++]=56320|1023&e)}}return((t,e)=>{if(e<65534&&t.subarray&&Mt)return String.fromCharCode.apply(null,t.length===e?t:t.subarray(0,e));let a="";for(let i=0;i<e;i++)a+=String.fromCharCode(t[i]);return a})(s,n)},Pt=(t,e)=>{(e=e||t.length)>t.length&&(e=t.length);let a=e-1;for(;a>=0&&128==(192&t[a]);)a--;return a<0||0===a?e:a+Ht[t[a]]>e?a:e};var Yt=function(){this.input=null,this.next_in=0,this.avail_in=0,this.total_in=0,this.output=null,this.next_out=0,this.avail_out=0,this.total_out=0,this.msg="",this.state=null,this.data_type=2,this.adler=0};const Gt=Object.prototype.toString,{Z_NO_FLUSH:Xt,Z_SYNC_FLUSH:Wt,Z_FULL_FLUSH:qt,Z_FINISH:Jt,Z_OK:Qt,Z_STREAM_END:Vt,Z_DEFAULT_COMPRESSION:$t,Z_DEFAULT_STRATEGY:te,Z_DEFLATED:ee}=j;function ae(t){this.options=Bt({level:$t,method:ee,chunkSize:16384,windowBits:15,memLevel:8,strategy:te},t||{});let e=this.options;e.raw&&e.windowBits>0?e.windowBits=-e.windowBits:e.gzip&&e.windowBits>0&&e.windowBits<16&&(e.windowBits+=16),this.err=0,this.msg="",this.ended=!1,this.chunks=[],this.strm=new Yt,this.strm.avail_out=0;let a=Lt.deflateInit2(this.strm,e.level,e.method,e.windowBits,e.memLevel,e.strategy);if(a!==Qt)throw new Error(H[a]);if(e.header&&Lt.deflateSetHeader(this.strm,e.header),e.dictionary){let t;if(t="string"==typeof e.dictionary?jt(e.dictionary):"[object ArrayBuffer]"===Gt.call(e.dictionary)?new Uint8Array(e.dictionary):e.dictionary,a=Lt.deflateSetDictionary(this.strm,t),a!==Qt)throw new Error(H[a]);this._dict_set=!0}}function ie(t,e){const a=new ae(e);if(a.push(t,!0),a.err)throw a.msg||H[a.err];return a.result}ae.prototype.push=function(t,e){const a=this.strm,i=this.options.chunkSize;let n,s;if(this.ended)return!1;for(s=e===~~e?e:!0===e?Jt:Xt,"string"==typeof t?a.input=jt(t):"[object ArrayBuffer]"===Gt.call(t)?a.input=new Uint8Array(t):a.input=t,a.next_in=0,a.avail_in=a.input.length;;)if(0===a.avail_out&&(a.output=new Uint8Array(i),a.next_out=0,a.avail_out=i),(s===Wt||s===qt)&&a.avail_out<=6)this.onData(a.output.subarray(0,a.next_out)),a.avail_out=0;else{if(n=Lt.deflate(a,s),n===Vt)return a.next_out>0&&this.onData(a.output.subarray(0,a.next_out)),n=Lt.deflateEnd(this.strm),this.onEnd(n),this.ended=!0,n===Qt;if(0!==a.avail_out){if(s>0&&a.next_out>0)this.onData(a.output.subarray(0,a.next_out)),a.avail_out=0;else if(0===a.avail_in)break}else this.onData(a.output)}return!0},ae.prototype.onData=function(t){this.chunks.push(t)},ae.prototype.onEnd=function(t){t===Qt&&(this.result=Ct(this.chunks)),this.chunks=[],this.err=t,this.msg=this.strm.msg};var ne={Deflate:ae,deflate:ie,deflateRaw:function(t,e){return(e=e||{}).raw=!0,ie(t,e)},gzip:function(t,e){return(e=e||{}).gzip=!0,ie(t,e)},constants:j};var se=function(t,e){let a,i,n,s,r,l,o,h,d,_,f,c,u,w,b,g,p,m,k,v,y,x,z,A;const E=t.state;a=t.next_in,z=t.input,i=a+(t.avail_in-5),n=t.next_out,A=t.output,s=n-(e-t.avail_out),r=n+(t.avail_out-257),l=E.dmax,o=E.wsize,h=E.whave,d=E.wnext,_=E.window,f=E.hold,c=E.bits,u=E.lencode,w=E.distcode,b=(1<<E.lenbits)-1,g=(1<<E.distbits)-1;t:do{c<15&&(f+=z[a++]<<c,c+=8,f+=z[a++]<<c,c+=8),p=u[f&b];e:for(;;){if(m=p>>>24,f>>>=m,c-=m,m=p>>>16&255,0===m)A[n++]=65535&p;else{if(!(16&m)){if(0==(64&m)){p=u[(65535&p)+(f&(1<<m)-1)];continue e}if(32&m){E.mode=12;break t}t.msg="invalid literal/length code",E.mode=30;break t}k=65535&p,m&=15,m&&(c<m&&(f+=z[a++]<<c,c+=8),k+=f&(1<<m)-1,f>>>=m,c-=m),c<15&&(f+=z[a++]<<c,c+=8,f+=z[a++]<<c,c+=8),p=w[f&g];a:for(;;){if(m=p>>>24,f>>>=m,c-=m,m=p>>>16&255,!(16&m)){if(0==(64&m)){p=w[(65535&p)+(f&(1<<m)-1)];continue a}t.msg="invalid distance code",E.mode=30;break t}if(v=65535&p,m&=15,c<m&&(f+=z[a++]<<c,c+=8,c<m&&(f+=z[a++]<<c,c+=8)),v+=f&(1<<m)-1,v>l){t.msg="invalid distance too far back",E.mode=30;break t}if(f>>>=m,c-=m,m=n-s,v>m){if(m=v-m,m>h&&E.sane){t.msg="invalid distance too far back",E.mode=30;break t}if(y=0,x=_,0===d){if(y+=o-m,m<k){k-=m;do{A[n++]=_[y++]}while(--m);y=n-v,x=A}}else if(d<m){if(y+=o+d-m,m-=d,m<k){k-=m;do{A[n++]=_[y++]}while(--m);if(y=0,d<k){m=d,k-=m;do{A[n++]=_[y++]}while(--m);y=n-v,x=A}}}else if(y+=d-m,m<k){k-=m;do{A[n++]=_[y++]}while(--m);y=n-v,x=A}for(;k>2;)A[n++]=x[y++],A[n++]=x[y++],A[n++]=x[y++],k-=3;k&&(A[n++]=x[y++],k>1&&(A[n++]=x[y++]))}else{y=n-v;do{A[n++]=A[y++],A[n++]=A[y++],A[n++]=A[y++],k-=3}while(k>2);k&&(A[n++]=A[y++],k>1&&(A[n++]=A[y++]))}break}}break}}while(a<i&&n<r);k=c>>3,a-=k,c-=k<<3,f&=(1<<c)-1,t.next_in=a,t.next_out=n,t.avail_in=a<i?i-a+5:5-(a-i),t.avail_out=n<r?r-n+257:257-(n-r),E.hold=f,E.bits=c};const re=15,le=new Uint16Array([3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258,0,0]),oe=new Uint8Array([16,16,16,16,16,16,16,16,17,17,17,17,18,18,18,18,19,19,19,19,20,20,20,20,21,21,21,21,16,72,78]),he=new Uint16Array([1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577,0,0]),de=new Uint8Array([16,16,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23,24,24,25,25,26,26,27,27,28,28,29,29,64,64]);var _e=(t,e,a,i,n,s,r,l)=>{const o=l.bits;let h,d,_,f,c,u,w=0,b=0,g=0,p=0,m=0,k=0,v=0,y=0,x=0,z=0,A=null,E=0;const R=new Uint16Array(16),Z=new Uint16Array(16);let U,S,D,T=null,O=0;for(w=0;w<=re;w++)R[w]=0;for(b=0;b<i;b++)R[e[a+b]]++;for(m=o,p=re;p>=1&&0===R[p];p--);if(m>p&&(m=p),0===p)return n[s++]=20971520,n[s++]=20971520,l.bits=1,0;for(g=1;g<p&&0===R[g];g++);for(m<g&&(m=g),y=1,w=1;w<=re;w++)if(y<<=1,y-=R[w],y<0)return-1;if(y>0&&(0===t||1!==p))return-1;for(Z[1]=0,w=1;w<re;w++)Z[w+1]=Z[w]+R[w];for(b=0;b<i;b++)0!==e[a+b]&&(r[Z[e[a+b]]++]=b);if(0===t?(A=T=r,u=19):1===t?(A=le,E-=257,T=oe,O-=257,u=256):(A=he,T=de,u=-1),z=0,b=0,w=g,c=s,k=m,v=0,_=-1,x=1<<m,f=x-1,1===t&&x>852||2===t&&x>592)return 1;for(;;){U=w-v,r[b]<u?(S=0,D=r[b]):r[b]>u?(S=T[O+r[b]],D=A[E+r[b]]):(S=96,D=0),h=1<<w-v,d=1<<k,g=d;do{d-=h,n[c+(z>>v)+d]=U<<24|S<<16|D|0}while(0!==d);for(h=1<<w-1;z&h;)h>>=1;if(0!==h?(z&=h-1,z+=h):z=0,b++,0==--R[w]){if(w===p)break;w=e[a+r[b]]}if(w>m&&(z&f)!==_){for(0===v&&(v=m),c+=g,k=w-v,y=1<<k;k+v<p&&(y-=R[k+v],!(y<=0));)k++,y<<=1;if(x+=1<<k,1===t&&x>852||2===t&&x>592)return 1;_=z&f,n[_]=m<<24|k<<16|c-s|0}}return 0!==z&&(n[c+z]=w-v<<24|64<<16|0),l.bits=m,0};const{Z_FINISH:fe,Z_BLOCK:ce,Z_TREES:ue,Z_OK:we,Z_STREAM_END:be,Z_NEED_DICT:ge,Z_STREAM_ERROR:pe,Z_DATA_ERROR:me,Z_MEM_ERROR:ke,Z_BUF_ERROR:ve,Z_DEFLATED:ye}=j,xe=12,ze=30,Ae=t=>(t>>>24&255)+(t>>>8&65280)+((65280&t)<<8)+((255&t)<<24);function Ee(){this.mode=0,this.last=!1,this.wrap=0,this.havedict=!1,this.flags=0,this.dmax=0,this.check=0,this.total=0,this.head=null,this.wbits=0,this.wsize=0,this.whave=0,this.wnext=0,this.window=null,this.hold=0,this.bits=0,this.length=0,this.offset=0,this.extra=0,this.lencode=null,this.distcode=null,this.lenbits=0,this.distbits=0,this.ncode=0,this.nlen=0,this.ndist=0,this.have=0,this.next=null,this.lens=new Uint16Array(320),this.work=new Uint16Array(288),this.lendyn=null,this.distdyn=null,this.sane=0,this.back=0,this.was=0}const Re=t=>{if(!t||!t.state)return pe;const e=t.state;return t.total_in=t.total_out=e.total=0,t.msg="",e.wrap&&(t.adler=1&e.wrap),e.mode=1,e.last=0,e.havedict=0,e.dmax=32768,e.head=null,e.hold=0,e.bits=0,e.lencode=e.lendyn=new Int32Array(852),e.distcode=e.distdyn=new Int32Array(592),e.sane=1,e.back=-1,we},Ze=t=>{if(!t||!t.state)return pe;const e=t.state;return e.wsize=0,e.whave=0,e.wnext=0,Re(t)},Ue=(t,e)=>{let a;if(!t||!t.state)return pe;const i=t.state;return e<0?(a=0,e=-e):(a=1+(e>>4),e<48&&(e&=15)),e&&(e<8||e>15)?pe:(null!==i.window&&i.wbits!==e&&(i.window=null),i.wrap=a,i.wbits=e,Ze(t))},Se=(t,e)=>{if(!t)return pe;const a=new Ee;t.state=a,a.window=null;const i=Ue(t,e);return i!==we&&(t.state=null),i};let De,Te,Oe=!0;const Ie=t=>{if(Oe){De=new Int32Array(512),Te=new Int32Array(32);let e=0;for(;e<144;)t.lens[e++]=8;for(;e<256;)t.lens[e++]=9;for(;e<280;)t.lens[e++]=7;for(;e<288;)t.lens[e++]=8;for(_e(1,t.lens,0,288,De,0,t.work,{bits:9}),e=0;e<32;)t.lens[e++]=5;_e(2,t.lens,0,32,Te,0,t.work,{bits:5}),Oe=!1}t.lencode=De,t.lenbits=9,t.distcode=Te,t.distbits=5},Fe=(t,e,a,i)=>{let n;const s=t.state;return null===s.window&&(s.wsize=1<<s.wbits,s.wnext=0,s.whave=0,s.window=new Uint8Array(s.wsize)),i>=s.wsize?(s.window.set(e.subarray(a-s.wsize,a),0),s.wnext=0,s.whave=s.wsize):(n=s.wsize-s.wnext,n>i&&(n=i),s.window.set(e.subarray(a-i,a-i+n),s.wnext),(i-=n)?(s.window.set(e.subarray(a-i,a),0),s.wnext=i,s.whave=s.wsize):(s.wnext+=n,s.wnext===s.wsize&&(s.wnext=0),s.whave<s.wsize&&(s.whave+=n))),0};var Le={inflateReset:Ze,inflateReset2:Ue,inflateResetKeep:Re,inflateInit:t=>Se(t,15),inflateInit2:Se,inflate:(t,e)=>{let a,i,n,s,r,l,o,h,d,_,f,c,u,w,b,g,p,m,k,v,y,x,z=0;const A=new Uint8Array(4);let E,R;const Z=new Uint8Array([16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15]);if(!t||!t.state||!t.output||!t.input&&0!==t.avail_in)return pe;a=t.state,a.mode===xe&&(a.mode=13),r=t.next_out,n=t.output,o=t.avail_out,s=t.next_in,i=t.input,l=t.avail_in,h=a.hold,d=a.bits,_=l,f=o,x=we;t:for(;;)switch(a.mode){case 1:if(0===a.wrap){a.mode=13;break}for(;d<16;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}if(2&a.wrap&&35615===h){a.check=0,A[0]=255&h,A[1]=h>>>8&255,a.check=M(a.check,A,2,0),h=0,d=0,a.mode=2;break}if(a.flags=0,a.head&&(a.head.done=!1),!(1&a.wrap)||(((255&h)<<8)+(h>>8))%31){t.msg="incorrect header check",a.mode=ze;break}if((15&h)!==ye){t.msg="unknown compression method",a.mode=ze;break}if(h>>>=4,d-=4,y=8+(15&h),0===a.wbits)a.wbits=y;else if(y>a.wbits){t.msg="invalid window size",a.mode=ze;break}a.dmax=1<<a.wbits,t.adler=a.check=1,a.mode=512&h?10:xe,h=0,d=0;break;case 2:for(;d<16;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}if(a.flags=h,(255&a.flags)!==ye){t.msg="unknown compression method",a.mode=ze;break}if(57344&a.flags){t.msg="unknown header flags set",a.mode=ze;break}a.head&&(a.head.text=h>>8&1),512&a.flags&&(A[0]=255&h,A[1]=h>>>8&255,a.check=M(a.check,A,2,0)),h=0,d=0,a.mode=3;case 3:for(;d<32;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}a.head&&(a.head.time=h),512&a.flags&&(A[0]=255&h,A[1]=h>>>8&255,A[2]=h>>>16&255,A[3]=h>>>24&255,a.check=M(a.check,A,4,0)),h=0,d=0,a.mode=4;case 4:for(;d<16;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}a.head&&(a.head.xflags=255&h,a.head.os=h>>8),512&a.flags&&(A[0]=255&h,A[1]=h>>>8&255,a.check=M(a.check,A,2,0)),h=0,d=0,a.mode=5;case 5:if(1024&a.flags){for(;d<16;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}a.length=h,a.head&&(a.head.extra_len=h),512&a.flags&&(A[0]=255&h,A[1]=h>>>8&255,a.check=M(a.check,A,2,0)),h=0,d=0}else a.head&&(a.head.extra=null);a.mode=6;case 6:if(1024&a.flags&&(c=a.length,c>l&&(c=l),c&&(a.head&&(y=a.head.extra_len-a.length,a.head.extra||(a.head.extra=new Uint8Array(a.head.extra_len)),a.head.extra.set(i.subarray(s,s+c),y)),512&a.flags&&(a.check=M(a.check,i,c,s)),l-=c,s+=c,a.length-=c),a.length))break t;a.length=0,a.mode=7;case 7:if(2048&a.flags){if(0===l)break t;c=0;do{y=i[s+c++],a.head&&y&&a.length<65536&&(a.head.name+=String.fromCharCode(y))}while(y&&c<l);if(512&a.flags&&(a.check=M(a.check,i,c,s)),l-=c,s+=c,y)break t}else a.head&&(a.head.name=null);a.length=0,a.mode=8;case 8:if(4096&a.flags){if(0===l)break t;c=0;do{y=i[s+c++],a.head&&y&&a.length<65536&&(a.head.comment+=String.fromCharCode(y))}while(y&&c<l);if(512&a.flags&&(a.check=M(a.check,i,c,s)),l-=c,s+=c,y)break t}else a.head&&(a.head.comment=null);a.mode=9;case 9:if(512&a.flags){for(;d<16;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}if(h!==(65535&a.check)){t.msg="header crc mismatch",a.mode=ze;break}h=0,d=0}a.head&&(a.head.hcrc=a.flags>>9&1,a.head.done=!0),t.adler=a.check=0,a.mode=xe;break;case 10:for(;d<32;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}t.adler=a.check=Ae(h),h=0,d=0,a.mode=11;case 11:if(0===a.havedict)return t.next_out=r,t.avail_out=o,t.next_in=s,t.avail_in=l,a.hold=h,a.bits=d,ge;t.adler=a.check=1,a.mode=xe;case xe:if(e===ce||e===ue)break t;case 13:if(a.last){h>>>=7&d,d-=7&d,a.mode=27;break}for(;d<3;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}switch(a.last=1&h,h>>>=1,d-=1,3&h){case 0:a.mode=14;break;case 1:if(Ie(a),a.mode=20,e===ue){h>>>=2,d-=2;break t}break;case 2:a.mode=17;break;case 3:t.msg="invalid block type",a.mode=ze}h>>>=2,d-=2;break;case 14:for(h>>>=7&d,d-=7&d;d<32;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}if((65535&h)!=(h>>>16^65535)){t.msg="invalid stored block lengths",a.mode=ze;break}if(a.length=65535&h,h=0,d=0,a.mode=15,e===ue)break t;case 15:a.mode=16;case 16:if(c=a.length,c){if(c>l&&(c=l),c>o&&(c=o),0===c)break t;n.set(i.subarray(s,s+c),r),l-=c,s+=c,o-=c,r+=c,a.length-=c;break}a.mode=xe;break;case 17:for(;d<14;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}if(a.nlen=257+(31&h),h>>>=5,d-=5,a.ndist=1+(31&h),h>>>=5,d-=5,a.ncode=4+(15&h),h>>>=4,d-=4,a.nlen>286||a.ndist>30){t.msg="too many length or distance symbols",a.mode=ze;break}a.have=0,a.mode=18;case 18:for(;a.have<a.ncode;){for(;d<3;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}a.lens[Z[a.have++]]=7&h,h>>>=3,d-=3}for(;a.have<19;)a.lens[Z[a.have++]]=0;if(a.lencode=a.lendyn,a.lenbits=7,E={bits:a.lenbits},x=_e(0,a.lens,0,19,a.lencode,0,a.work,E),a.lenbits=E.bits,x){t.msg="invalid code lengths set",a.mode=ze;break}a.have=0,a.mode=19;case 19:for(;a.have<a.nlen+a.ndist;){for(;z=a.lencode[h&(1<<a.lenbits)-1],b=z>>>24,g=z>>>16&255,p=65535&z,!(b<=d);){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}if(p<16)h>>>=b,d-=b,a.lens[a.have++]=p;else{if(16===p){for(R=b+2;d<R;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}if(h>>>=b,d-=b,0===a.have){t.msg="invalid bit length repeat",a.mode=ze;break}y=a.lens[a.have-1],c=3+(3&h),h>>>=2,d-=2}else if(17===p){for(R=b+3;d<R;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}h>>>=b,d-=b,y=0,c=3+(7&h),h>>>=3,d-=3}else{for(R=b+7;d<R;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}h>>>=b,d-=b,y=0,c=11+(127&h),h>>>=7,d-=7}if(a.have+c>a.nlen+a.ndist){t.msg="invalid bit length repeat",a.mode=ze;break}for(;c--;)a.lens[a.have++]=y}}if(a.mode===ze)break;if(0===a.lens[256]){t.msg="invalid code -- missing end-of-block",a.mode=ze;break}if(a.lenbits=9,E={bits:a.lenbits},x=_e(1,a.lens,0,a.nlen,a.lencode,0,a.work,E),a.lenbits=E.bits,x){t.msg="invalid literal/lengths set",a.mode=ze;break}if(a.distbits=6,a.distcode=a.distdyn,E={bits:a.distbits},x=_e(2,a.lens,a.nlen,a.ndist,a.distcode,0,a.work,E),a.distbits=E.bits,x){t.msg="invalid distances set",a.mode=ze;break}if(a.mode=20,e===ue)break t;case 20:a.mode=21;case 21:if(l>=6&&o>=258){t.next_out=r,t.avail_out=o,t.next_in=s,t.avail_in=l,a.hold=h,a.bits=d,se(t,f),r=t.next_out,n=t.output,o=t.avail_out,s=t.next_in,i=t.input,l=t.avail_in,h=a.hold,d=a.bits,a.mode===xe&&(a.back=-1);break}for(a.back=0;z=a.lencode[h&(1<<a.lenbits)-1],b=z>>>24,g=z>>>16&255,p=65535&z,!(b<=d);){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}if(g&&0==(240&g)){for(m=b,k=g,v=p;z=a.lencode[v+((h&(1<<m+k)-1)>>m)],b=z>>>24,g=z>>>16&255,p=65535&z,!(m+b<=d);){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}h>>>=m,d-=m,a.back+=m}if(h>>>=b,d-=b,a.back+=b,a.length=p,0===g){a.mode=26;break}if(32&g){a.back=-1,a.mode=xe;break}if(64&g){t.msg="invalid literal/length code",a.mode=ze;break}a.extra=15&g,a.mode=22;case 22:if(a.extra){for(R=a.extra;d<R;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}a.length+=h&(1<<a.extra)-1,h>>>=a.extra,d-=a.extra,a.back+=a.extra}a.was=a.length,a.mode=23;case 23:for(;z=a.distcode[h&(1<<a.distbits)-1],b=z>>>24,g=z>>>16&255,p=65535&z,!(b<=d);){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}if(0==(240&g)){for(m=b,k=g,v=p;z=a.distcode[v+((h&(1<<m+k)-1)>>m)],b=z>>>24,g=z>>>16&255,p=65535&z,!(m+b<=d);){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}h>>>=m,d-=m,a.back+=m}if(h>>>=b,d-=b,a.back+=b,64&g){t.msg="invalid distance code",a.mode=ze;break}a.offset=p,a.extra=15&g,a.mode=24;case 24:if(a.extra){for(R=a.extra;d<R;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}a.offset+=h&(1<<a.extra)-1,h>>>=a.extra,d-=a.extra,a.back+=a.extra}if(a.offset>a.dmax){t.msg="invalid distance too far back",a.mode=ze;break}a.mode=25;case 25:if(0===o)break t;if(c=f-o,a.offset>c){if(c=a.offset-c,c>a.whave&&a.sane){t.msg="invalid distance too far back",a.mode=ze;break}c>a.wnext?(c-=a.wnext,u=a.wsize-c):u=a.wnext-c,c>a.length&&(c=a.length),w=a.window}else w=n,u=r-a.offset,c=a.length;c>o&&(c=o),o-=c,a.length-=c;do{n[r++]=w[u++]}while(--c);0===a.length&&(a.mode=21);break;case 26:if(0===o)break t;n[r++]=a.length,o--,a.mode=21;break;case 27:if(a.wrap){for(;d<32;){if(0===l)break t;l--,h|=i[s++]<<d,d+=8}if(f-=o,t.total_out+=f,a.total+=f,f&&(t.adler=a.check=a.flags?M(a.check,n,f,r-f):B(a.check,n,f,r-f)),f=o,(a.flags?h:Ae(h))!==a.check){t.msg="incorrect data check",a.mode=ze;break}h=0,d=0}a.mode=28;case 28:if(a.wrap&&a.flags){for(;d<32;){if(0===l)break t;l--,h+=i[s++]<<d,d+=8}if(h!==(4294967295&a.total)){t.msg="incorrect length check",a.mode=ze;break}h=0,d=0}a.mode=29;case 29:x=be;break t;case ze:x=me;break t;case 31:return ke;case 32:default:return pe}return t.next_out=r,t.avail_out=o,t.next_in=s,t.avail_in=l,a.hold=h,a.bits=d,(a.wsize||f!==t.avail_out&&a.mode<ze&&(a.mode<27||e!==fe))&&Fe(t,t.output,t.next_out,f-t.avail_out),_-=t.avail_in,f-=t.avail_out,t.total_in+=_,t.total_out+=f,a.total+=f,a.wrap&&f&&(t.adler=a.check=a.flags?M(a.check,n,f,t.next_out-f):B(a.check,n,f,t.next_out-f)),t.data_type=a.bits+(a.last?64:0)+(a.mode===xe?128:0)+(20===a.mode||15===a.mode?256:0),(0===_&&0===f||e===fe)&&x===we&&(x=ve),x},inflateEnd:t=>{if(!t||!t.state)return pe;let e=t.state;return e.window&&(e.window=null),t.state=null,we},inflateGetHeader:(t,e)=>{if(!t||!t.state)return pe;const a=t.state;return 0==(2&a.wrap)?pe:(a.head=e,e.done=!1,we)},inflateSetDictionary:(t,e)=>{const a=e.length;let i,n,s;return t&&t.state?(i=t.state,0!==i.wrap&&11!==i.mode?pe:11===i.mode&&(n=1,n=B(n,e,a,0),n!==i.check)?me:(s=Fe(t,e,a,a),s?(i.mode=31,ke):(i.havedict=1,we))):pe},inflateInfo:"pako inflate (from Nodeca project)"};var Ne=function(){this.text=0,this.time=0,this.xflags=0,this.os=0,this.extra=null,this.extra_len=0,this.name="",this.comment="",this.hcrc=0,this.done=!1};const Be=Object.prototype.toString,{Z_NO_FLUSH:Ce,Z_FINISH:Me,Z_OK:He,Z_STREAM_END:je,Z_NEED_DICT:Ke,Z_STREAM_ERROR:Pe,Z_DATA_ERROR:Ye,Z_MEM_ERROR:Ge}=j;function Xe(t){this.options=Bt({chunkSize:65536,windowBits:15,to:""},t||{});const e=this.options;e.raw&&e.windowBits>=0&&e.windowBits<16&&(e.windowBits=-e.windowBits,0===e.windowBits&&(e.windowBits=-15)),!(e.windowBits>=0&&e.windowBits<16)||t&&t.windowBits||(e.windowBits+=32),e.windowBits>15&&e.windowBits<48&&0==(15&e.windowBits)&&(e.windowBits|=15),this.err=0,this.msg="",this.ended=!1,this.chunks=[],this.strm=new Yt,this.strm.avail_out=0;let a=Le.inflateInit2(this.strm,e.windowBits);if(a!==He)throw new Error(H[a]);if(this.header=new Ne,Le.inflateGetHeader(this.strm,this.header),e.dictionary&&("string"==typeof e.dictionary?e.dictionary=jt(e.dictionary):"[object ArrayBuffer]"===Be.call(e.dictionary)&&(e.dictionary=new Uint8Array(e.dictionary)),e.raw&&(a=Le.inflateSetDictionary(this.strm,e.dictionary),a!==He)))throw new Error(H[a])}function We(t,e){const a=new Xe(e);if(a.push(t),a.err)throw a.msg||H[a.err];return a.result}Xe.prototype.push=function(t,e){const a=this.strm,i=this.options.chunkSize,n=this.options.dictionary;let s,r,l;if(this.ended)return!1;for(r=e===~~e?e:!0===e?Me:Ce,"[object ArrayBuffer]"===Be.call(t)?a.input=new Uint8Array(t):a.input=t,a.next_in=0,a.avail_in=a.input.length;;){for(0===a.avail_out&&(a.output=new Uint8Array(i),a.next_out=0,a.avail_out=i),s=Le.inflate(a,r),s===Ke&&n&&(s=Le.inflateSetDictionary(a,n),s===He?s=Le.inflate(a,r):s===Ye&&(s=Ke));a.avail_in>0&&s===je&&a.state.wrap>0&&0!==t[a.next_in];)Le.inflateReset(a),s=Le.inflate(a,r);switch(s){case Pe:case Ye:case Ke:case Ge:return this.onEnd(s),this.ended=!0,!1}if(l=a.avail_out,a.next_out&&(0===a.avail_out||s===je))if("string"===this.options.to){let t=Pt(a.output,a.next_out),e=a.next_out-t,n=Kt(a.output,t);a.next_out=e,a.avail_out=i-e,e&&a.output.set(a.output.subarray(t,t+e),0),this.onData(n)}else this.onData(a.output.length===a.next_out?a.output:a.output.subarray(0,a.next_out));if(s!==He||0!==l){if(s===je)return s=Le.inflateEnd(this.strm),this.onEnd(s),this.ended=!0,!0;if(0===a.avail_in)break}}return!0},Xe.prototype.onData=function(t){this.chunks.push(t)},Xe.prototype.onEnd=function(t){t===He&&("string"===this.options.to?this.result=this.chunks.join(""):this.result=Ct(this.chunks)),this.chunks=[],this.err=t,this.msg=this.strm.msg};var qe={Inflate:Xe,inflate:We,inflateRaw:function(t,e){return(e=e||{}).raw=!0,We(t,e)},ungzip:We,constants:j};const{Deflate:Je,deflate:Qe,deflateRaw:Ve,gzip:$e}=ne,{Inflate:ta,inflate:ea,inflateRaw:aa,ungzip:ia}=qe;var na=Je,sa=Qe,ra=Ve,la=$e,oa=ta,ha=ea,da=aa,_a=ia,fa=j,ca={Deflate:na,deflate:sa,deflateRaw:ra,gzip:la,Inflate:oa,inflate:ha,inflateRaw:da,ungzip:_a,constants:fa};t.Deflate=na,t.Inflate=oa,t.constants=fa,t.default=ca,t.deflate=sa,t.deflateRaw=ra,t.gzip=la,t.inflate=ha,t.inflateRaw=da,t.ungzip=_a,Object.defineProperty(t,"__esModule",{value:!0})}));
-							/******************  initialization finish  ******************/
 							// 先拆分B站gRPC校验头和protobuf数据体
 							let header = rawBody.slice(0, 5);
 							body = rawBody.slice(5);
@@ -396,19 +11063,18 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 								case 0: // unGzip
 									break;
 								case 1: // Gzip
-									body = pako.ungzip(body);
+									body = pako$1.ungzip(body);
 									header[0] = 0; // unGzip
 									break;
-							};
-							// 解析链接并处理protobuf数据
+							}							// 解析链接并处理protobuf数据
 							switch (HOST) {
 								case "grpc.biliapi.net": // HTTP/2
 								case "app.bilibili.com": // HTTP/1.1
 									/******************  initialization start  *******************/
 									// google.protobuf.Any
-									class Any$Type extends MessageType{constructor(){super("google.protobuf.Any",[{no:1,name:"type_url",kind:"scalar",T:9},{no:2,name:"value",kind:"scalar",T:12}])}pack(message,type){return{typeUrl:this.typeNameToUrl(type.typeName),value:type.toBinary(message),}}unpack(any,type,options){if(!this.contains(any,type))throw new Error("Cannot unpack google.protobuf.Any with typeUrl '"+any.typeUrl+"' as "+type.typeName+".");return type.fromBinary(any.value,options)}contains(any,type){if(!any.typeUrl.length)return false;let wants=typeof type=="string"?type:type.typeName;let has=this.typeUrlToName(any.typeUrl);return wants===has}internalJsonWrite(any,options){if(any.typeUrl==="")return{};let typeName=this.typeUrlToName(any.typeUrl);let opt=jsonWriteOptions(options);let type=opt.typeRegistry?.find(t=>t.typeName===typeName);if(!type)throw new globalThis.Error("Unable to convert google.protobuf.Any with typeUrl '"+any.typeUrl+"' to JSON. The specified type "+typeName+" is not available in the type registry.");let value=type.fromBinary(any.value,{readUnknownField:false});let json=type.internalJsonWrite(value,opt);if(typeName.startsWith("google.protobuf.")||!isJsonObject(json))json={value:json};json["@type"]=any.typeUrl;return json}internalJsonRead(json,options,target){if(!isJsonObject(json))throw new globalThis.Error("Unable to parse google.protobuf.Any from JSON "+typeofJsonValue(json)+".");if(typeof json["@type"]!="string"||json["@type"]=="")return this.create();let typeName=this.typeUrlToName(json["@type"]);let type=options?.typeRegistry?.find(t=>t.typeName==typeName);if(!type)throw new globalThis.Error("Unable to parse google.protobuf.Any from JSON. The specified type "+typeName+" is not available in the type registry.");let value;if(typeName.startsWith("google.protobuf.")&&json.hasOwnProperty("value"))value=type.fromJson(json["value"],options);else{let copy=Object.assign({},json);delete copy["@type"];value=type.fromJson(copy,options)}if(target===undefined)target=this.create();target.typeUrl=json["@type"];target.value=type.toBinary(value);return target}typeNameToUrl(name){if(!name.length)throw new Error("invalid type name: "+name);return"type.googleapis.com/"+name}typeUrlToName(url){if(!url.length)throw new Error("invalid type url: "+url);let slash=url.lastIndexOf("/");let name=slash>0?url.substring(slash+1):url;if(!name.length)throw new Error("invalid type url: "+url);return name}create(value){const message={typeUrl:"",value:new Uint8Array(0)};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.typeUrl=reader.string();break;case 2:message.value=reader.bytes();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.typeUrl!=="")writer.tag(1,WireType.LengthDelimited).string(message.typeUrl);if(message.value.length)writer.tag(2,WireType.LengthDelimited).bytes(message.value);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const Any = new Any$Type();
+									class Any$Type extends MessageType{constructor(){super("google.protobuf.Any",[{no:1,name:"type_url",kind:"scalar",T:9},{no:2,name:"value",kind:"scalar",T:12}]);}pack(message,type){return {typeUrl:this.typeNameToUrl(type.typeName),value:type.toBinary(message),}}unpack(any,type,options){if(!this.contains(any,type))throw new Error("Cannot unpack google.protobuf.Any with typeUrl '"+any.typeUrl+"' as "+type.typeName+".");return type.fromBinary(any.value,options)}contains(any,type){if(!any.typeUrl.length)return false;let wants=typeof type=="string"?type:type.typeName;let has=this.typeUrlToName(any.typeUrl);return wants===has}internalJsonWrite(any,options){if(any.typeUrl==="")return {};let typeName=this.typeUrlToName(any.typeUrl);let opt=jsonWriteOptions(options);let type=opt.typeRegistry?.find(t=>t.typeName===typeName);if(!type)throw new globalThis.Error("Unable to convert google.protobuf.Any with typeUrl '"+any.typeUrl+"' to JSON. The specified type "+typeName+" is not available in the type registry.");let value=type.fromBinary(any.value,{readUnknownField:false});let json=type.internalJsonWrite(value,opt);if(typeName.startsWith("google.protobuf.")||!isJsonObject(json))json={value:json};json["@type"]=any.typeUrl;return json}internalJsonRead(json,options,target){if(!isJsonObject(json))throw new globalThis.Error("Unable to parse google.protobuf.Any from JSON "+typeofJsonValue(json)+".");if(typeof json["@type"]!="string"||json["@type"]=="")return this.create();let typeName=this.typeUrlToName(json["@type"]);let type=options?.typeRegistry?.find(t=>t.typeName==typeName);if(!type)throw new globalThis.Error("Unable to parse google.protobuf.Any from JSON. The specified type "+typeName+" is not available in the type registry.");let value;if(typeName.startsWith("google.protobuf.")&&json.hasOwnProperty("value"))value=type.fromJson(json["value"],options);else {let copy=Object.assign({},json);delete copy["@type"];value=type.fromJson(copy,options);}if(target===undefined)target=this.create();target.typeUrl=json["@type"];target.value=type.toBinary(value);return target}typeNameToUrl(name){if(!name.length)throw new Error("invalid type name: "+name);return "type.googleapis.com/"+name}typeUrlToName(url){if(!url.length)throw new Error("invalid type url: "+url);let slash=url.lastIndexOf("/");let name=slash>0?url.substring(slash+1):url;if(!name.length)throw new Error("invalid type url: "+url);return name}create(value){const message={typeUrl:"",value:new Uint8Array(0)};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.typeUrl=reader.string();break;case 2:message.value=reader.bytes();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.typeUrl!=="")writer.tag(1,WireType.LengthDelimited).string(message.typeUrl);if(message.value.length)writer.tag(2,WireType.LengthDelimited).bytes(message.value);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const Any = new Any$Type();
 									// CM 广告
-									class CM$Type extends MessageType{constructor(){super("CM",[{no:1,name:"source_content",kind:"message",T:()=>Any}])}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.sourceContent=Any.internalBinaryRead(reader,reader.uint32(),options,message.sourceContent);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.sourceContent)Any.internalBinaryWrite(message.sourceContent,writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const CM=new CM$Type();
+									class CM$Type extends MessageType{constructor(){super("CM",[{no:1,name:"source_content",kind:"message",T:()=>Any}]);}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.sourceContent=Any.internalBinaryRead(reader,reader.uint32(),options,message.sourceContent);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.sourceContent)Any.internalBinaryWrite(message.sourceContent,writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const CM=new CM$Type();
 									/******************  initialization finish  ******************/
 									switch (PATHs?.[0]) {
 										case "bilibili.app.playurl.v1.PlayURL": // 投稿视频
@@ -416,28 +11082,25 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 												case "PlayView": // 播放地址
 													/******************  initialization start  *******************/
 													// protobuf/bilibili/app/playurl/playurl.proto
-													class PlayViewReply$Type extends MessageType{constructor(){super("PlayViewReply",[{no:5,name:"play_arc",kind:"message",T:()=>PlayArcConf}])}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 5:message.playArc=PlayArcConf.internalBinaryRead(reader,reader.uint32(),options,message.playArc);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.playArc)PlayArcConf.internalBinaryWrite(message.playArc,writer.tag(5,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const PlayViewReply=new PlayViewReply$Type();class PlayArcConf$Type extends MessageType{constructor(){super("PlayArcConf",[{no:1,name:"background_play_conf",kind:"message",T:()=>ArcConf}])}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.backgroundPlayConf=ArcConf.internalBinaryRead(reader,reader.uint32(),options,message.backgroundPlayConf);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.backgroundPlayConf)ArcConf.internalBinaryWrite(message.backgroundPlayConf,writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const PlayArcConf=new PlayArcConf$Type();class ArcConf$Type extends MessageType{constructor(){super("ArcConf",[{no:1,name:"is_support",kind:"scalar",T:8},{no:2,name:"disabled",kind:"scalar",T:8},{no:3,name:"extra_content",kind:"message",T:()=>ExtraContent}])}create(value){const message={isSupport:false,disabled:false};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.isSupport=reader.bool();break;case 2:message.disabled=reader.bool();break;case 3:message.extraContent=ExtraContent.internalBinaryRead(reader,reader.uint32(),options,message.extraContent);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.isSupport!==false)writer.tag(1,WireType.Varint).bool(message.isSupport);if(message.disabled!==false)writer.tag(2,WireType.Varint).bool(message.disabled);if(message.extraContent)ExtraContent.internalBinaryWrite(message.extraContent,writer.tag(3,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const ArcConf=new ArcConf$Type();class ExtraContent$Type extends MessageType{constructor(){super("ExtraContent",[{no:1,name:"disabled_reason",kind:"scalar",T:9},{no:2,name:"disabled_code",kind:"scalar",T:3,L:0}])}create(value){const message={disabledReason:"",disabledCode:0n};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.disabledReason=reader.string();break;case 2:message.disabledCode=reader.int64().toBigInt();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.disabledReason!=="")writer.tag(1,WireType.LengthDelimited).string(message.disabledReason);if(message.disabledCode!==0n)writer.tag(2,WireType.Varint).int64(message.disabledCode);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const ExtraContent=new ExtraContent$Type();
+													class PlayViewReply$Type extends MessageType{constructor(){super("PlayViewReply",[{no:5,name:"play_arc",kind:"message",T:()=>PlayArcConf}]);}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 5:message.playArc=PlayArcConf.internalBinaryRead(reader,reader.uint32(),options,message.playArc);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.playArc)PlayArcConf.internalBinaryWrite(message.playArc,writer.tag(5,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const PlayViewReply=new PlayViewReply$Type();class PlayArcConf$Type extends MessageType{constructor(){super("PlayArcConf",[{no:1,name:"background_play_conf",kind:"message",T:()=>ArcConf}]);}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.backgroundPlayConf=ArcConf.internalBinaryRead(reader,reader.uint32(),options,message.backgroundPlayConf);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.backgroundPlayConf)ArcConf.internalBinaryWrite(message.backgroundPlayConf,writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const PlayArcConf=new PlayArcConf$Type();class ArcConf$Type extends MessageType{constructor(){super("ArcConf",[{no:1,name:"is_support",kind:"scalar",T:8},{no:2,name:"disabled",kind:"scalar",T:8},{no:3,name:"extra_content",kind:"message",T:()=>ExtraContent}]);}create(value){const message={isSupport:false,disabled:false};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.isSupport=reader.bool();break;case 2:message.disabled=reader.bool();break;case 3:message.extraContent=ExtraContent.internalBinaryRead(reader,reader.uint32(),options,message.extraContent);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.isSupport!==false)writer.tag(1,WireType.Varint).bool(message.isSupport);if(message.disabled!==false)writer.tag(2,WireType.Varint).bool(message.disabled);if(message.extraContent)ExtraContent.internalBinaryWrite(message.extraContent,writer.tag(3,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const ArcConf=new ArcConf$Type();class ExtraContent$Type extends MessageType{constructor(){super("ExtraContent",[{no:1,name:"disabled_reason",kind:"scalar",T:9},{no:2,name:"disabled_code",kind:"scalar",T:3,L:0}]);}create(value){const message={disabledReason:"",disabledCode:0n};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.disabledReason=reader.string();break;case 2:message.disabledCode=reader.int64().toBigInt();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.disabledReason!=="")writer.tag(1,WireType.LengthDelimited).string(message.disabledReason);if(message.disabledCode!==0n)writer.tag(2,WireType.Varint).int64(message.disabledCode);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const ExtraContent=new ExtraContent$Type();
 													/******************  initialization finish  ******************/
 													let data = PlayViewReply.fromBinary(body);
 													const oldBackgroundConf = data.playArc?.backgroundPlayConf;
 													if (oldBackgroundConf && (!oldBackgroundConf.isSupport || oldBackgroundConf.disabled)) {
-														$.log(`🎉 ${$.name}`, "后台播放限制去除");
+														$.log(`🎉 后台播放限制去除`);
 														data.playArc.backgroundPlayConf.isSupport = true;
 														data.playArc.backgroundPlayConf.disabled = false;
 														data.playArc.backgroundPlayConf.extraContent = null;
 													} else {
-														$.log(`🚧 ${$.name}`, "无后台播放限制");
+														$.log(`🚧 无后台播放限制`);
 													}
 													body = PlayViewReply.toBinary(data);
 													break;
-												case "PlayConf": // 播放配置
-													break;
-											};
-											break;
+											}											break;
 										case "bilibili.app.dynamic.v2.Dynamic": // 动态
 											/******************  initialization start  *******************/
 											// protobuf/bilibili/app/dynamic/dynamic.proto
-											var DynamicType;(function(DynamicType){DynamicType[DynamicType["dyn_none"]=0]="dyn_none";DynamicType[DynamicType["ad"]=15]="ad"})(DynamicType||(DynamicType={}));class DynAllReply$Type extends MessageType{constructor(){super("DynAllReply",[{no:1,name:"dynamic_list",kind:"message",T:()=>DynamicList},{no:2,name:"up_list",kind:"message",T:()=>CardVideoUpList},{no:3,name:"topic_list",kind:"message",T:()=>TopicList}])}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.dynamicList=DynamicList.internalBinaryRead(reader,reader.uint32(),options,message.dynamicList);break;case 2:message.upList=CardVideoUpList.internalBinaryRead(reader,reader.uint32(),options,message.upList);break;case 3:message.topicList=TopicList.internalBinaryRead(reader,reader.uint32(),options,message.topicList);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.dynamicList)DynamicList.internalBinaryWrite(message.dynamicList,writer.tag(1,WireType.LengthDelimited).fork(),options).join();if(message.upList)CardVideoUpList.internalBinaryWrite(message.upList,writer.tag(2,WireType.LengthDelimited).fork(),options).join();if(message.topicList)TopicList.internalBinaryWrite(message.topicList,writer.tag(3,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DynAllReply=new DynAllReply$Type();class DynVideoReply$Type extends MessageType{constructor(){super("DynVideoReply",[{no:2,name:"video_up_list",kind:"message",T:()=>CardVideoUpList}])}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 2:message.videoUpList=CardVideoUpList.internalBinaryRead(reader,reader.uint32(),options,message.videoUpList);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.videoUpList)CardVideoUpList.internalBinaryWrite(message.videoUpList,writer.tag(2,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DynVideoReply=new DynVideoReply$Type();class DynamicList$Type extends MessageType{constructor(){super("DynamicList",[{no:1,name:"list",kind:"message",repeat:1,T:()=>DynamicItem}])}create(value){const message={list:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.list.push(DynamicItem.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.list.length;i++)DynamicItem.internalBinaryWrite(message.list[i],writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DynamicList=new DynamicList$Type();class CardVideoUpList$Type extends MessageType{constructor(){super("CardVideoUpList",[{no:1,name:"title",kind:"scalar",T:9}])}create(value){const message={title:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.title=reader.string();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.title!=="")writer.tag(1,WireType.LengthDelimited).string(message.title);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const CardVideoUpList=new CardVideoUpList$Type();class TopicList$Type extends MessageType{constructor(){super("TopicList",[{no:1,name:"title",kind:"scalar",T:9}])}create(value){const message={title:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.title=reader.string();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.title!=="")writer.tag(1,WireType.LengthDelimited).string(message.title);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const TopicList=new TopicList$Type();class DynamicItem$Type extends MessageType{constructor(){super("DynamicItem",[{no:1,name:"card_type",kind:"enum",T:()=>["DynamicType",DynamicType]}])}create(value){const message={cardType:0};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.cardType=reader.int32();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.cardType!==0)writer.tag(1,WireType.Varint).int32(message.cardType);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DynamicItem=new DynamicItem$Type();
+											var DynamicType;(function(DynamicType){DynamicType[DynamicType["dyn_none"]=0]="dyn_none";DynamicType[DynamicType["ad"]=15]="ad";})(DynamicType||(DynamicType={}));class DynAllReply$Type extends MessageType{constructor(){super("DynAllReply",[{no:1,name:"dynamic_list",kind:"message",T:()=>DynamicList},{no:2,name:"up_list",kind:"message",T:()=>CardVideoUpList},{no:3,name:"topic_list",kind:"message",T:()=>TopicList}]);}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.dynamicList=DynamicList.internalBinaryRead(reader,reader.uint32(),options,message.dynamicList);break;case 2:message.upList=CardVideoUpList.internalBinaryRead(reader,reader.uint32(),options,message.upList);break;case 3:message.topicList=TopicList.internalBinaryRead(reader,reader.uint32(),options,message.topicList);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.dynamicList)DynamicList.internalBinaryWrite(message.dynamicList,writer.tag(1,WireType.LengthDelimited).fork(),options).join();if(message.upList)CardVideoUpList.internalBinaryWrite(message.upList,writer.tag(2,WireType.LengthDelimited).fork(),options).join();if(message.topicList)TopicList.internalBinaryWrite(message.topicList,writer.tag(3,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DynAllReply=new DynAllReply$Type();class DynVideoReply$Type extends MessageType{constructor(){super("DynVideoReply",[{no:2,name:"video_up_list",kind:"message",T:()=>CardVideoUpList}]);}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 2:message.videoUpList=CardVideoUpList.internalBinaryRead(reader,reader.uint32(),options,message.videoUpList);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.videoUpList)CardVideoUpList.internalBinaryWrite(message.videoUpList,writer.tag(2,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DynVideoReply=new DynVideoReply$Type();class DynamicList$Type extends MessageType{constructor(){super("DynamicList",[{no:1,name:"list",kind:"message",repeat:1,T:()=>DynamicItem}]);}create(value){const message={list:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.list.push(DynamicItem.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.list.length;i++)DynamicItem.internalBinaryWrite(message.list[i],writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DynamicList=new DynamicList$Type();class CardVideoUpList$Type extends MessageType{constructor(){super("CardVideoUpList",[{no:1,name:"title",kind:"scalar",T:9}]);}create(value){const message={title:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.title=reader.string();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.title!=="")writer.tag(1,WireType.LengthDelimited).string(message.title);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const CardVideoUpList=new CardVideoUpList$Type();class TopicList$Type extends MessageType{constructor(){super("TopicList",[{no:1,name:"title",kind:"scalar",T:9}]);}create(value){const message={title:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.title=reader.string();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.title!=="")writer.tag(1,WireType.LengthDelimited).string(message.title);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const TopicList=new TopicList$Type();class DynamicItem$Type extends MessageType{constructor(){super("DynamicItem",[{no:1,name:"card_type",kind:"enum",T:()=>["DynamicType",DynamicType]}]);}create(value){const message={cardType:0};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.cardType=reader.int32();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.cardType!==0)writer.tag(1,WireType.Varint).int32(message.cardType);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DynamicItem=new DynamicItem$Type();
 											/******************  initialization finish  ******************/
 											switch (PATHs?.[1]) {
 												case "DynAll": // 动态综合页
@@ -447,11 +11110,11 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 														default:
 															if (data.topicList) {
 																data.topicList = null;
-																$.log(`🎉 ${$.name}`, "动态综合页热门话题去除");
+																$.log(`🎉 动态综合页热门话题去除`);
 															}
 															break;
 														case false:
-															$.log(`🚧 ${$.name}`, "用户设置动态综合页热门话题不去除");
+															$.log(`🚧 用户设置动态综合页热门话题不去除`);
 															break;
 													}
 													switch (Settings?.Detail?.Most_visited) {
@@ -459,11 +11122,11 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 														default:
 															if (data.upList) {
 																data.upList = null;
-																$.log(`🎉 ${$.name}`, "动态综合页最常访问去除");
+																$.log(`🎉 动态综合页最常访问去除`);
 															}
 															break;
 														case false:
-															$.log(`🚧 ${$.name}`, "用户设置动态综合页最常访问不去除");
+															$.log(`🚧 用户设置动态综合页最常访问不去除`);
 															break;
 													}
 													switch (Settings?.Detail?.Dynamic_adcard) {
@@ -475,14 +11138,14 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 																		if (item.cardType !== 15) {
 																			return true;
 																		}
-																		$.log(`🎉 ${$.name}`, "动态综合页广告动态去除");
+																		$.log(`🎉 动态综合页广告动态去除`);
 																		return false;
 																	}
 																);
 															}
 															break;
 														case false:
-															$.log(`🚧 ${$.name}`, "用户设置动态综合页广告动态不去除");
+															$.log(`🚧 用户设置动态综合页广告动态不去除`);
 															break;
 													}
 													body = DynAllReply.toBinary(data);
@@ -494,11 +11157,11 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 														default:
 															if (data.videoUpList) {
 																data.videoUpList = null;
-																$.log(`🎉 ${$.name}`, "动态视频页最常访问去除");
+																$.log(`🎉 动态视频页最常访问去除`);
 															}
 															break;
 														case false:
-															$.log(`🚧 ${$.name}`, "用户设置动态视频页最常访问不去除");
+															$.log(`🚧 用户设置动态视频页最常访问不去除`);
 															break;
 													}
 													body = DynVideoReply.toBinary(data);
@@ -510,7 +11173,7 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 												case "View": // 视频播放页
 													/******************  initialization start  *******************/
 													// protobuf/bilibili/app/view/view.proto
-													class ViewReply$Type extends MessageType{constructor(){super("ViewReply",[{no:6,name:"t_icon",kind:"map",K:9,V:{kind:"message",T:()=>TIcon}},{no:10,name:"relates",kind:"message",repeat:1,T:()=>Relate},{no:30,name:"cms",kind:"message",repeat:1,T:()=>CM},{no:31,name:"cm_config",kind:"message",T:()=>CMConfig},{no:41,name:"cm_ipad",kind:"message",T:()=>CmIpad}])}create(value){const message={tIcon:{},relates:[],cms:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 6:this.binaryReadMap6(message.tIcon,reader,options);break;case 10:message.relates.push(Relate.internalBinaryRead(reader,reader.uint32(),options));break;case 30:message.cms.push(CM.internalBinaryRead(reader,reader.uint32(),options));break;case 31:message.cmConfig=CMConfig.internalBinaryRead(reader,reader.uint32(),options,message.cmConfig);break;case 41:message.cmIpad=CmIpad.internalBinaryRead(reader,reader.uint32(),options,message.cmIpad);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}binaryReadMap6(map,reader,options){let len=reader.uint32(),end=reader.pos+len,key,val;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:key=reader.string();break;case 2:val=TIcon.internalBinaryRead(reader,reader.uint32(),options);break;default:throw new globalThis.Error("unknown map entry field for field ViewReply.t_icon");}}map[key??""]=val??TIcon.create()}internalBinaryWrite(message,writer,options){for(let k of Object.keys(message.tIcon)){writer.tag(6,WireType.LengthDelimited).fork().tag(1,WireType.LengthDelimited).string(k);writer.tag(2,WireType.LengthDelimited).fork();TIcon.internalBinaryWrite(message.tIcon[k],writer,options);writer.join().join()}for(let i=0;i<message.relates.length;i++)Relate.internalBinaryWrite(message.relates[i],writer.tag(10,WireType.LengthDelimited).fork(),options).join();for(let i=0;i<message.cms.length;i++)CM.internalBinaryWrite(message.cms[i],writer.tag(30,WireType.LengthDelimited).fork(),options).join();if(message.cmConfig)CMConfig.internalBinaryWrite(message.cmConfig,writer.tag(31,WireType.LengthDelimited).fork(),options).join();if(message.cmIpad)CmIpad.internalBinaryWrite(message.cmIpad,writer.tag(41,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const ViewReply=new ViewReply$Type();class CMConfig$Type extends MessageType{constructor(){super("CMConfig",[{no:1,name:"ads_control",kind:"message",T:()=>Any}])}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.adsControl=Any.internalBinaryRead(reader,reader.uint32(),options,message.adsControl);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.adsControl)Any.internalBinaryWrite(message.adsControl,writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const CMConfig=new CMConfig$Type();class CmIpad$Type extends MessageType{constructor(){super("CmIpad",[{no:5,name:"aid",kind:"scalar",T:3,L:0}])}create(value){const message={aid:0n};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 5:message.aid=reader.int64().toBigInt();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.aid!==0n)writer.tag(5,WireType.Varint).int64(message.aid);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const CmIpad=new CmIpad$Type();class TIcon$Type extends MessageType{constructor(){super("TIcon",[{no:1,name:"icon",kind:"scalar",T:9}])}create(value){const message={icon:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.icon=reader.string();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.icon!=="")writer.tag(1,WireType.LengthDelimited).string(message.icon);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const TIcon=new TIcon$Type();class Relate$Type extends MessageType{constructor(){super("Relate",[{no:28,name:"cm",kind:"message",T:()=>CM}])}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 28:message.cm=CM.internalBinaryRead(reader,reader.uint32(),options,message.cm);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.cm)CM.internalBinaryWrite(message.cm,writer.tag(28,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const Relate=new Relate$Type();
+													class ViewReply$Type extends MessageType{constructor(){super("ViewReply",[{no:6,name:"t_icon",kind:"map",K:9,V:{kind:"message",T:()=>TIcon}},{no:10,name:"relates",kind:"message",repeat:1,T:()=>Relate},{no:30,name:"cms",kind:"message",repeat:1,T:()=>CM},{no:31,name:"cm_config",kind:"message",T:()=>CMConfig},{no:41,name:"cm_ipad",kind:"message",T:()=>CmIpad}]);}create(value){const message={tIcon:{},relates:[],cms:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 6:this.binaryReadMap6(message.tIcon,reader,options);break;case 10:message.relates.push(Relate.internalBinaryRead(reader,reader.uint32(),options));break;case 30:message.cms.push(CM.internalBinaryRead(reader,reader.uint32(),options));break;case 31:message.cmConfig=CMConfig.internalBinaryRead(reader,reader.uint32(),options,message.cmConfig);break;case 41:message.cmIpad=CmIpad.internalBinaryRead(reader,reader.uint32(),options,message.cmIpad);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}binaryReadMap6(map,reader,options){let len=reader.uint32(),end=reader.pos+len,key,val;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:key=reader.string();break;case 2:val=TIcon.internalBinaryRead(reader,reader.uint32(),options);break;default:throw new globalThis.Error("unknown map entry field for field ViewReply.t_icon");}}map[key??""]=val??TIcon.create();}internalBinaryWrite(message,writer,options){for(let k of Object.keys(message.tIcon)){writer.tag(6,WireType.LengthDelimited).fork().tag(1,WireType.LengthDelimited).string(k);writer.tag(2,WireType.LengthDelimited).fork();TIcon.internalBinaryWrite(message.tIcon[k],writer,options);writer.join().join();}for(let i=0;i<message.relates.length;i++)Relate.internalBinaryWrite(message.relates[i],writer.tag(10,WireType.LengthDelimited).fork(),options).join();for(let i=0;i<message.cms.length;i++)CM.internalBinaryWrite(message.cms[i],writer.tag(30,WireType.LengthDelimited).fork(),options).join();if(message.cmConfig)CMConfig.internalBinaryWrite(message.cmConfig,writer.tag(31,WireType.LengthDelimited).fork(),options).join();if(message.cmIpad)CmIpad.internalBinaryWrite(message.cmIpad,writer.tag(41,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const ViewReply=new ViewReply$Type();class CMConfig$Type extends MessageType{constructor(){super("CMConfig",[{no:1,name:"ads_control",kind:"message",T:()=>Any}]);}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.adsControl=Any.internalBinaryRead(reader,reader.uint32(),options,message.adsControl);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.adsControl)Any.internalBinaryWrite(message.adsControl,writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const CMConfig=new CMConfig$Type();class CmIpad$Type extends MessageType{constructor(){super("CmIpad",[{no:5,name:"aid",kind:"scalar",T:3,L:0}]);}create(value){const message={aid:0n};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 5:message.aid=reader.int64().toBigInt();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.aid!==0n)writer.tag(5,WireType.Varint).int64(message.aid);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const CmIpad=new CmIpad$Type();class TIcon$Type extends MessageType{constructor(){super("TIcon",[{no:1,name:"icon",kind:"scalar",T:9}]);}create(value){const message={icon:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.icon=reader.string();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.icon!=="")writer.tag(1,WireType.LengthDelimited).string(message.icon);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const TIcon=new TIcon$Type();class Relate$Type extends MessageType{constructor(){super("Relate",[{no:28,name:"cm",kind:"message",T:()=>CM}]);}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 28:message.cm=CM.internalBinaryRead(reader,reader.uint32(),options,message.cm);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.cm)CM.internalBinaryWrite(message.cm,writer.tag(28,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const Relate=new Relate$Type();
 													/******************  initialization finish  ******************/
 													switch (Settings?.Detail?.view) {
 														case true:
@@ -518,12 +11181,12 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 															let data = ViewReply.fromBinary(body);
 															if (data.cms?.length) {
 																data.cms = [];
-																$.log(`🎉 ${$.name}`, "播放页广告卡片去除");
+																$.log(`🎉 播放页广告卡片去除`);
 															}
 															if (data.relates?.length) {
 																data.relates = data.relates.filter((item) => {
 																	if (item.cm) {
-																		$.log(`🎉 ${$.name}`, "播放页关联推荐广告去除");
+																		$.log(`🎉 播放页关联推荐广告去除`);
 																		return false;
 																	}
 																	return true;
@@ -532,7 +11195,7 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 															if (data.cmConfig || data.cmIpad) {
 																delete data.cmConfig;
 																delete data.cmIpad;
-																$.log(`🎉 ${$.name}`, "播放页定制tab去除");
+																$.log(`🎉 播放页定制tab去除`);
 															}
 															for (const i in data.tIcon) {
 																if (data.tIcon[i] === null) {
@@ -544,21 +11207,20 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 															body = ViewReply.toBinary(data);
 															break;
 														case false:
-															$.log(`🚧 ${$.name}`, "用户设置播放页广告不去除");
+															$.log(`🚧 用户设置播放页广告不去除`);
 															break;
-													};
-													break;
+													}													break;
 												case "TFInfo":
 													/******************  initialization start  *******************/
 													// protobuf/bilibili/app/view/view.proto
-													class TFInfoReply$Type extends MessageType{constructor(){super("TFInfoReply",[{no:1,name:"tipsId",kind:"scalar",T:3,L:0},{no:2,name:"tfToast",kind:"message",T:()=>TFToast},{no:3,name:"tfPanelCustomized",kind:"message",T:()=>TFPanelCustomized}])}create(value){const message={tipsId:0n};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.tipsId=reader.int64().toBigInt();break;case 2:message.tfToast=TFToast.internalBinaryRead(reader,reader.uint32(),options,message.tfToast);break;case 3:message.tfPanelCustomized=TFPanelCustomized.internalBinaryRead(reader,reader.uint32(),options,message.tfPanelCustomized);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.tipsId!==0n)writer.tag(1,WireType.Varint).int64(message.tipsId);if(message.tfToast)TFToast.internalBinaryWrite(message.tfToast,writer.tag(2,WireType.LengthDelimited).fork(),options).join();if(message.tfPanelCustomized)TFPanelCustomized.internalBinaryWrite(message.tfPanelCustomized,writer.tag(3,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const TFInfoReply=new TFInfoReply$Type();class TFToast$Type extends MessageType{constructor(){super("TFToast",[{no:1,name:"btnText",kind:"scalar",T:9}])}create(value){const message={btnText:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.btnText=reader.string();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.btnText!=="")writer.tag(1,WireType.LengthDelimited).string(message.btnText);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const TFToast=new TFToast$Type();class TFPanelCustomized$Type extends MessageType{constructor(){super("TFPanelCustomized",[{no:2,name:"rightBtnText",kind:"scalar",T:9}])}create(value){const message={rightBtnText:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 2:message.rightBtnText=reader.string();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.rightBtnText!=="")writer.tag(2,WireType.LengthDelimited).string(message.rightBtnText);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const TFPanelCustomized=new TFPanelCustomized$Type();
+													class TFInfoReply$Type extends MessageType{constructor(){super("TFInfoReply",[{no:1,name:"tipsId",kind:"scalar",T:3,L:0},{no:2,name:"tfToast",kind:"message",T:()=>TFToast},{no:3,name:"tfPanelCustomized",kind:"message",T:()=>TFPanelCustomized}]);}create(value){const message={tipsId:0n};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.tipsId=reader.int64().toBigInt();break;case 2:message.tfToast=TFToast.internalBinaryRead(reader,reader.uint32(),options,message.tfToast);break;case 3:message.tfPanelCustomized=TFPanelCustomized.internalBinaryRead(reader,reader.uint32(),options,message.tfPanelCustomized);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.tipsId!==0n)writer.tag(1,WireType.Varint).int64(message.tipsId);if(message.tfToast)TFToast.internalBinaryWrite(message.tfToast,writer.tag(2,WireType.LengthDelimited).fork(),options).join();if(message.tfPanelCustomized)TFPanelCustomized.internalBinaryWrite(message.tfPanelCustomized,writer.tag(3,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const TFInfoReply=new TFInfoReply$Type();class TFToast$Type extends MessageType{constructor(){super("TFToast",[{no:1,name:"btnText",kind:"scalar",T:9}]);}create(value){const message={btnText:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.btnText=reader.string();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.btnText!=="")writer.tag(1,WireType.LengthDelimited).string(message.btnText);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const TFToast=new TFToast$Type();class TFPanelCustomized$Type extends MessageType{constructor(){super("TFPanelCustomized",[{no:2,name:"rightBtnText",kind:"scalar",T:9}]);}create(value){const message={rightBtnText:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 2:message.rightBtnText=reader.string();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.rightBtnText!=="")writer.tag(2,WireType.LengthDelimited).string(message.rightBtnText);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const TFPanelCustomized=new TFPanelCustomized$Type();
 													/******************  initialization finish  ******************/
 													let data = TFInfoReply.fromBinary(body);
 													$.log(data.tipsId);
 													if (data?.tipsId) {
 														delete data.tfToast;
 														delete data.tfPanelCustomized;
-														$.log(`🎉 ${$.name}`, "播放页办卡免流广告去除");
+														$.log(`🎉 播放页办卡免流广告去除`);
 													}
 													body = TFInfoReply.toBinary(data);
 													break;
@@ -569,7 +11231,7 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 												case "View": // 视频播放页
 													/******************  initialization start  *******************/
 													// protobuf/bilibili/app/viewunite/viewunite.proto
-													class ViewReply$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.ViewReply",[{no:5,name:"tab",kind:"message",T:()=>Tab},{no:7,name:"cm",kind:"message",T:()=>CM}])}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 5:message.tab=Tab.internalBinaryRead(reader,reader.uint32(),options,message.tab);break;case 7:message.cm=CM.internalBinaryRead(reader,reader.uint32(),options,message.cm);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.tab)Tab.internalBinaryWrite(message.tab,writer.tag(5,WireType.LengthDelimited).fork(),options).join();if(message.cm)CM.internalBinaryWrite(message.cm,writer.tag(7,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const ViewReply=new ViewReply$Type();class Tab$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.Tab",[{no:1,name:"tab_module",kind:"message",repeat:1,T:()=>TabModule}])}create(value){const message={tabModule:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.tabModule.push(TabModule.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.tabModule.length;i++)TabModule.internalBinaryWrite(message.tabModule[i],writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const Tab=new Tab$Type();class TabModule$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.TabModule",[{no:2,name:"introduction",kind:"message",oneof:"tab",T:()=>IntroductionTab}])}create(value){const message={tab:{oneofKind:undefined}};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 2:message.tab={oneofKind:"introduction",introduction:IntroductionTab.internalBinaryRead(reader,reader.uint32(),options,message.tab.introduction)};break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.tab.oneofKind==="introduction")IntroductionTab.internalBinaryWrite(message.tab.introduction,writer.tag(2,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const TabModule=new TabModule$Type();class IntroductionTab$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.IntroductionTab",[{no:2,name:"modules",kind:"message",repeat:1,T:()=>Module}])}create(value){const message={modules:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 2:message.modules.push(Module.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.modules.length;i++)Module.internalBinaryWrite(message.modules[i],writer.tag(2,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const IntroductionTab=new IntroductionTab$Type();class Module$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.Module",[{no:1,name:"type",kind:"scalar",T:5},{no:22,name:"relates",kind:"message",oneof:"data",T:()=>Relates}])}create(value){const message={type:0,data:{oneofKind:undefined}};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.type=reader.int32();break;case 22:message.data={oneofKind:"relates",relates:Relates.internalBinaryRead(reader,reader.uint32(),options,message.data.relates)};break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.type!==0)writer.tag(1,WireType.Varint).int32(message.type);if(message.data.oneofKind==="relates")Relates.internalBinaryWrite(message.data.relates,writer.tag(22,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const Module=new Module$Type();class Relates$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.Relates",[{no:1,name:"cards",kind:"message",repeat:1,T:()=>RelateCard}])}create(value){const message={cards:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.cards.push(RelateCard.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.cards.length;i++)RelateCard.internalBinaryWrite(message.cards[i],writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const Relates=new Relates$Type();class RelateCard$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.RelateCard",[{no:1,name:"relate_card_type",kind:"scalar",T:5}])}create(value){const message={relateCardType:0};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.relateCardType=reader.int32();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.relateCardType!==0)writer.tag(1,WireType.Varint).int32(message.relateCardType);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const RelateCard=new RelateCard$Type();class CM$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.CM",[{no:3,name:"source_content",kind:"message",repeat:1,T:()=>Any}])}create(value){const message={sourceContent:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 3:message.sourceContent.push(Any.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.sourceContent.length;i++)Any.internalBinaryWrite(message.sourceContent[i],writer.tag(3,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const CM=new CM$Type();
+													class ViewReply$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.ViewReply",[{no:5,name:"tab",kind:"message",T:()=>Tab},{no:7,name:"cm",kind:"message",T:()=>CM}]);}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 5:message.tab=Tab.internalBinaryRead(reader,reader.uint32(),options,message.tab);break;case 7:message.cm=CM.internalBinaryRead(reader,reader.uint32(),options,message.cm);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.tab)Tab.internalBinaryWrite(message.tab,writer.tag(5,WireType.LengthDelimited).fork(),options).join();if(message.cm)CM.internalBinaryWrite(message.cm,writer.tag(7,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const ViewReply=new ViewReply$Type();class Tab$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.Tab",[{no:1,name:"tab_module",kind:"message",repeat:1,T:()=>TabModule}]);}create(value){const message={tabModule:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.tabModule.push(TabModule.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.tabModule.length;i++)TabModule.internalBinaryWrite(message.tabModule[i],writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const Tab=new Tab$Type();class TabModule$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.TabModule",[{no:2,name:"introduction",kind:"message",oneof:"tab",T:()=>IntroductionTab}]);}create(value){const message={tab:{oneofKind:undefined}};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 2:message.tab={oneofKind:"introduction",introduction:IntroductionTab.internalBinaryRead(reader,reader.uint32(),options,message.tab.introduction)};break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.tab.oneofKind==="introduction")IntroductionTab.internalBinaryWrite(message.tab.introduction,writer.tag(2,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const TabModule=new TabModule$Type();class IntroductionTab$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.IntroductionTab",[{no:2,name:"modules",kind:"message",repeat:1,T:()=>Module}]);}create(value){const message={modules:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 2:message.modules.push(Module.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.modules.length;i++)Module.internalBinaryWrite(message.modules[i],writer.tag(2,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const IntroductionTab=new IntroductionTab$Type();class Module$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.Module",[{no:1,name:"type",kind:"scalar",T:5},{no:22,name:"relates",kind:"message",oneof:"data",T:()=>Relates}]);}create(value){const message={type:0,data:{oneofKind:undefined}};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.type=reader.int32();break;case 22:message.data={oneofKind:"relates",relates:Relates.internalBinaryRead(reader,reader.uint32(),options,message.data.relates)};break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.type!==0)writer.tag(1,WireType.Varint).int32(message.type);if(message.data.oneofKind==="relates")Relates.internalBinaryWrite(message.data.relates,writer.tag(22,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const Module=new Module$Type();class Relates$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.Relates",[{no:1,name:"cards",kind:"message",repeat:1,T:()=>RelateCard}]);}create(value){const message={cards:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.cards.push(RelateCard.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.cards.length;i++)RelateCard.internalBinaryWrite(message.cards[i],writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const Relates=new Relates$Type();class RelateCard$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.RelateCard",[{no:1,name:"relate_card_type",kind:"scalar",T:5}]);}create(value){const message={relateCardType:0};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.relateCardType=reader.int32();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.relateCardType!==0)writer.tag(1,WireType.Varint).int32(message.relateCardType);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const RelateCard=new RelateCard$Type();class CM$Type extends MessageType{constructor(){super("bilibili.app.viewunite.v1.CM",[{no:3,name:"source_content",kind:"message",repeat:1,T:()=>Any}]);}create(value){const message={sourceContent:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 3:message.sourceContent.push(Any.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.sourceContent.length;i++)Any.internalBinaryWrite(message.sourceContent[i],writer.tag(3,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const CM=new CM$Type();
 													/******************  initialization finish  ******************/
 													switch (Settings?.Detail?.view) {
 														case true:
@@ -577,12 +11239,12 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 															let data = ViewReply.fromBinary(body);
 															if (data.cm?.sourceContent?.length) {
 																data.cm.sourceContent = [];
-																$.log(`🎉 ${$.name}`, "up主推荐广告去除");
+																$.log(`🎉 up主推荐广告去除`);
 															}
 															data.tab.tabModule[0].tab.introduction.modules = data.tab.tabModule[0].tab.introduction.modules.map((i) => {
 																if (i.type === 28) {
 																	i.data.relates.cards = i.data.relates.cards.filter((j) => j.relateCardType !== 5 && j.relateCardType !== 4);
-																	$.log(`🎉 ${$.name}`, "视频详情下方推荐卡广告去除");
+																	$.log(`🎉 视频详情下方推荐卡广告去除`);
 																}
 																return i;
 															}
@@ -590,10 +11252,9 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 															body = ViewReply.toBinary(data);
 															break;
 														case false:
-															$.log(`🚧 ${$.name}`, "用户设置up主推荐广告不去除");
+															$.log(`🚧 用户设置up主推荐广告不去除`);
 															break;
-													};
-													break;
+													}													break;
 											}
 											break;
 										case "bilibili.app.interface.v1.Teenagers": // 青少年模式
@@ -601,26 +11262,25 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 												case "ModeStatus": // 青少年模式
 													/******************  initialization start  *******************/
 													// protobuf/bilibili/app/interface/teenagers.proto
-													class ModeStatus$Type extends MessageType{constructor(){super("ModeStatus",[{no:1,name:"modes",kind:"message",repeat:1,T:()=>Mode}])}create(value){const message={modes:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.modes.push(Mode.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.modes.length;i++)Mode.internalBinaryWrite(message.modes[i],writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const ModeStatus=new ModeStatus$Type();class Mode$Type extends MessageType{constructor(){super("Mode",[{no:2,name:"name",kind:"scalar",T:9},{no:5,name:"f5",kind:"message",T:()=>F5}])}create(value){const message={name:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 2:message.name=reader.string();break;case 5:message.f5=F5.internalBinaryRead(reader,reader.uint32(),options,message.f5);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.name!=="")writer.tag(2,WireType.LengthDelimited).string(message.name);if(message.f5)F5.internalBinaryWrite(message.f5,writer.tag(5,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const Mode=new Mode$Type();class F5$Type extends MessageType{constructor(){super("F5",[{no:1,name:"f1",kind:"scalar",T:5}])}create(value){const message={f1:0};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.f1=reader.int32();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.f1!==0)writer.tag(1,WireType.Varint).int32(message.f1);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const F5=new F5$Type();
+													class ModeStatus$Type extends MessageType{constructor(){super("ModeStatus",[{no:1,name:"modes",kind:"message",repeat:1,T:()=>Mode}]);}create(value){const message={modes:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.modes.push(Mode.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.modes.length;i++)Mode.internalBinaryWrite(message.modes[i],writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const ModeStatus=new ModeStatus$Type();class Mode$Type extends MessageType{constructor(){super("Mode",[{no:2,name:"name",kind:"scalar",T:9},{no:5,name:"f5",kind:"message",T:()=>F5}]);}create(value){const message={name:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 2:message.name=reader.string();break;case 5:message.f5=F5.internalBinaryRead(reader,reader.uint32(),options,message.f5);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.name!=="")writer.tag(2,WireType.LengthDelimited).string(message.name);if(message.f5)F5.internalBinaryWrite(message.f5,writer.tag(5,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const Mode=new Mode$Type();class F5$Type extends MessageType{constructor(){super("F5",[{no:1,name:"f1",kind:"scalar",T:5}]);}create(value){const message={f1:0};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.f1=reader.int32();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.f1!==0)writer.tag(1,WireType.Varint).int32(message.f1);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const F5=new F5$Type();
 													data = ModeStatus.fromBinary(body);
 													/******************  initialization finish  ******************/
 													data.modes = data.modes.map(mode => {
 														if (mode?.name === "teenagers") {
 															if (mode?.f5?.f1) {
 																mode.f5.f1 = 0;
-																$.log(`🎉 ${$.name}`, "青少年模式弹窗去除");
+																$.log(`🎉 青少年模式弹窗去除`);
 															}
 														}
 														return mode;
 													});
 													body = ModeStatus.toBinary(data);
 													break;
-											};
-											break;
+											}											break;
 										case "bilibili.community.service.dm.v1.DM": //弹幕
 										/******************  initialization start  *******************/
 										// protobuf/bilibili/community/service/dm/dm.proto
-											class CommandDm$Type extends MessageType{constructor(){super("CommandDm",[{no:1,name:"id",kind:"scalar",T:3,L:0}])}create(value){const message={id:0n};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.id=reader.int64().toBigInt();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.id!==0n)writer.tag(1,WireType.Varint).int64(message.id);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const CommandDm=new CommandDm$Type();class DmView$Type extends MessageType{constructor(){super("DmView",[{no:1,name:"commandDms",kind:"message",repeat:1,T:()=>CommandDm}])}create(value){const message={commandDms:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.commandDms.push(CommandDm.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.commandDms.length;i++)CommandDm.internalBinaryWrite(message.commandDms[i],writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DmView=new DmView$Type();class DmViewReply$Type extends MessageType{constructor(){super("DmViewReply",[{no:22,name:"dmView",kind:"message",T:()=>DmView}])}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 22:message.dmView=DmView.internalBinaryRead(reader,reader.uint32(),options,message.dmView);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.dmView)DmView.internalBinaryWrite(message.dmView,writer.tag(22,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DmViewReply=new DmViewReply$Type();class DmSegMobileReply$Type extends MessageType{constructor(){super("DmSegMobileReply",[{no:1,name:"elems",kind:"message",repeat:1,T:()=>DanmakuElem}])}create(value){const message={elems:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.elems.push(DanmakuElem.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.elems.length;i++)DanmakuElem.internalBinaryWrite(message.elems[i],writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DmSegMobileReply=new DmSegMobileReply$Type();class DanmakuElem$Type extends MessageType{constructor(){super("DanmakuElem",[{no:24,name:"colorful",kind:"scalar",T:5}])}create(value){const message={colorful:0};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 24:message.colorful=reader.int32();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.colorful!==0)writer.tag(24,WireType.Varint).int32(message.colorful);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DanmakuElem=new DanmakuElem$Type();
+											class CommandDm$Type extends MessageType{constructor(){super("CommandDm",[{no:1,name:"id",kind:"scalar",T:3,L:0}]);}create(value){const message={id:0n};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.id=reader.int64().toBigInt();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.id!==0n)writer.tag(1,WireType.Varint).int64(message.id);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const CommandDm=new CommandDm$Type();class DmView$Type extends MessageType{constructor(){super("DmView",[{no:1,name:"commandDms",kind:"message",repeat:1,T:()=>CommandDm}]);}create(value){const message={commandDms:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.commandDms.push(CommandDm.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.commandDms.length;i++)CommandDm.internalBinaryWrite(message.commandDms[i],writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DmView=new DmView$Type();class DmViewReply$Type extends MessageType{constructor(){super("DmViewReply",[{no:22,name:"dmView",kind:"message",T:()=>DmView}]);}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 22:message.dmView=DmView.internalBinaryRead(reader,reader.uint32(),options,message.dmView);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.dmView)DmView.internalBinaryWrite(message.dmView,writer.tag(22,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DmViewReply=new DmViewReply$Type();class DmSegMobileReply$Type extends MessageType{constructor(){super("DmSegMobileReply",[{no:1,name:"elems",kind:"message",repeat:1,T:()=>DanmakuElem}]);}create(value){const message={elems:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.elems.push(DanmakuElem.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.elems.length;i++)DanmakuElem.internalBinaryWrite(message.elems[i],writer.tag(1,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DmSegMobileReply=new DmSegMobileReply$Type();class DanmakuElem$Type extends MessageType{constructor(){super("DanmakuElem",[{no:24,name:"colorful",kind:"scalar",T:5}]);}create(value){const message={colorful:0};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 24:message.colorful=reader.int32();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.colorful!==0)writer.tag(24,WireType.Varint).int32(message.colorful);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const DanmakuElem=new DanmakuElem$Type();
 											/******************  initialization finish  ******************/
 											switch (PATHs?.[1]) {
 												case "DmView": // 弹幕配置
@@ -629,13 +11289,13 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 															let data = DmViewReply.fromBinary(body);
 															if (data.dmView?.commandDms?.length) {
 																data.dmView.commandDms.length = 0;
-																$.log(`🎉 ${$.name}`, "交互式弹幕去除");
+																$.log(`🎉 交互式弹幕去除`);
 															}
 															body = DmViewReply.toBinary(data);
 															break;
 														case false:
 														default:
-															$.log(`🎉 ${$.name}`, "用户设置交互式弹幕不去除");
+															$.log(`🎉 用户设置交互式弹幕不去除`);
 															break;
 													}
 													break;
@@ -649,12 +11309,12 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 																}
 																return ele;
 															});
-															$.log(`🎉 ${$.name}`, "会员弹幕已替换为普通弹幕");
+															$.log(`🎉 会员弹幕已替换为普通弹幕`);
 															body = DmSegMobileReply.toBinary(data);
 															break;
 														case false:
 														default:
-															$.log(`🎉 ${$.name}`, "用户设置会员弹幕不修改");
+															$.log(`🎉 用户设置会员弹幕不修改`);
 															break;
 													}
 													break;
@@ -665,7 +11325,7 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 												case "MainList":
 													/******************  initialization start  *******************/
 													// protobuf/bilibili/main/community/reply/reply.proto
-													class MainListReply$Type extends MessageType{constructor(){super("MainListReply",[{no:11,name:"cm",kind:"message",T:()=>CM}])}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 11:message.cm=CM.internalBinaryRead(reader,reader.uint32(),options,message.cm);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.cm)CM.internalBinaryWrite(message.cm,writer.tag(11,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const MainListReply=new MainListReply$Type();
+													class MainListReply$Type extends MessageType{constructor(){super("MainListReply",[{no:11,name:"cm",kind:"message",T:()=>CM}]);}create(value){const message={};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 11:message.cm=CM.internalBinaryRead(reader,reader.uint32(),options,message.cm);break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.cm)CM.internalBinaryWrite(message.cm,writer.tag(11,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const MainListReply=new MainListReply$Type();
 													/******************  initialization finish  ******************/
 													switch (Settings?.Detail?.MainList) {
 														case true:
@@ -673,188 +11333,56 @@ $.log(`⚠ ${$.name}`, `FORMAT: ${FORMAT}`, "");
 															let data = MainListReply.fromBinary(body);
 															delete data.cm;
 															body = MainListReply.toBinary(data);
-															$.log(`🎉 ${$.name}`, "评论列表广告去除");
+															$.log(`🎉 评论列表广告去除`);
 															break;
 														case false:
-															$.log(`🎉 ${$.name}`, "用户设置评论列表广告不去除");
+															$.log(`🎉 用户设置评论列表广告不去除`);
 															break;
-													};
-													break;
-											};
-											break;
+													}													break;
+											}											break;
 										case "bilibili.pgc.gateway.player.v2.PlayURL": // 番剧
 											/******************  initialization start  *******************/
 											/******************  initialization finish  *******************/
 											switch (PATHs?.[1]) {
-												case "PlayView": // 播放地址
-													/******************  initialization start  *******************/
-													/******************  initialization finish  *******************/
-													break;
-												case "PlayConf": // 播放配置
-													break;
-											};
-											break;
+																							}											break;
 										case "bilibili.app.nativeact.v1.NativeAct": // 活动-节目、动画、韩综（港澳台）
 											switch (PATHs?.[1]) {
-												case "Index": // 首页
-													break;
-											};
-											break;
+																							}											break;
 										case "bilibili.app.interface.v1.Search": // 搜索框
 											switch (PATHs?.[1]) {
-												case "Suggest3": // 搜索建议
-													break;
-											};
-											break;
+																							}											break;
 										case "bilibili.polymer.app.search.v1.Search": // 搜索结果
 											/******************  initialization start  *******************/
 											/******************  initialization finish  *******************/
 											switch (PATHs?.[1]) {
 												case "SearchAll": { // 全部结果（综合）
 													/******************  initialization start  *******************/
-													class Item$Type extends MessageType{constructor(){super("bilibili.polymer.app.search.v1.Item",[{no:11,name:"game",kind:"message",oneof:"cardItem",T:()=>SearchGameCard},{no:25,name:"cm",kind:"message",oneof:"cardItem",T:()=>SearchAdCard}])}create(value){const message={cardItem:{oneofKind:undefined}};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 11:message.cardItem={oneofKind:"game",game:SearchGameCard.internalBinaryRead(reader,reader.uint32(),options,message.cardItem.game)};break;case 25:message.cardItem={oneofKind:"cm",cm:SearchAdCard.internalBinaryRead(reader,reader.uint32(),options,message.cardItem.cm)};break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.cardItem.oneofKind==="game")SearchGameCard.internalBinaryWrite(message.cardItem.game,writer.tag(11,WireType.LengthDelimited).fork(),options).join();if(message.cardItem.oneofKind==="cm")SearchAdCard.internalBinaryWrite(message.cardItem.cm,writer.tag(25,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const Item=new Item$Type();class SearchAdCard$Type extends MessageType{constructor(){super("bilibili.polymer.app.search.v1.SearchAdCard",[{no:1,name:"json_str",kind:"scalar",T:9}])}create(value){const message={jsonStr:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.jsonStr=reader.string();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.jsonStr!=="")writer.tag(1,WireType.LengthDelimited).string(message.jsonStr);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const SearchAdCard=new SearchAdCard$Type();class SearchGameCard$Type extends MessageType{constructor(){super("bilibili.polymer.app.search.v1.SearchGameCard",[{no:1,name:"title",kind:"scalar",T:9}])}create(value){const message={title:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.title=reader.string();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){if(message.title!=="")writer.tag(1,WireType.LengthDelimited).string(message.title);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const SearchGameCard=new SearchGameCard$Type();class SearchAllResponse$Type extends MessageType{constructor(){super("bilibili.polymer.app.search.v1.SearchAllResponse",[{no:4,name:"item",kind:"message",repeat:1,T:()=>Item}])}create(value){const message={item:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 4:message.item.push(Item.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d)}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.item.length;i++)Item.internalBinaryWrite(message.item[i],writer.tag(4,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const SearchAllResponse=new SearchAllResponse$Type();
+													class Item$Type extends MessageType{constructor(){super("bilibili.polymer.app.search.v1.Item",[{no:11,name:"game",kind:"message",oneof:"cardItem",T:()=>SearchGameCard},{no:25,name:"cm",kind:"message",oneof:"cardItem",T:()=>SearchAdCard}]);}create(value){const message={cardItem:{oneofKind:undefined}};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 11:message.cardItem={oneofKind:"game",game:SearchGameCard.internalBinaryRead(reader,reader.uint32(),options,message.cardItem.game)};break;case 25:message.cardItem={oneofKind:"cm",cm:SearchAdCard.internalBinaryRead(reader,reader.uint32(),options,message.cardItem.cm)};break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.cardItem.oneofKind==="game")SearchGameCard.internalBinaryWrite(message.cardItem.game,writer.tag(11,WireType.LengthDelimited).fork(),options).join();if(message.cardItem.oneofKind==="cm")SearchAdCard.internalBinaryWrite(message.cardItem.cm,writer.tag(25,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const Item=new Item$Type();class SearchAdCard$Type extends MessageType{constructor(){super("bilibili.polymer.app.search.v1.SearchAdCard",[{no:1,name:"json_str",kind:"scalar",T:9}]);}create(value){const message={jsonStr:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.jsonStr=reader.string();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.jsonStr!=="")writer.tag(1,WireType.LengthDelimited).string(message.jsonStr);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const SearchAdCard=new SearchAdCard$Type();class SearchGameCard$Type extends MessageType{constructor(){super("bilibili.polymer.app.search.v1.SearchGameCard",[{no:1,name:"title",kind:"scalar",T:9}]);}create(value){const message={title:""};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 1:message.title=reader.string();break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){if(message.title!=="")writer.tag(1,WireType.LengthDelimited).string(message.title);let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const SearchGameCard=new SearchGameCard$Type();class SearchAllResponse$Type extends MessageType{constructor(){super("bilibili.polymer.app.search.v1.SearchAllResponse",[{no:4,name:"item",kind:"message",repeat:1,T:()=>Item}]);}create(value){const message={item:[]};globalThis.Object.defineProperty(message,MESSAGE_TYPE,{enumerable:false,value:this});if(value!==undefined)reflectionMergePartial(this,message,value);return message}internalBinaryRead(reader,length,options,target){let message=target??this.create(),end=reader.pos+length;while(reader.pos<end){let[fieldNo,wireType]=reader.tag();switch(fieldNo){case 4:message.item.push(Item.internalBinaryRead(reader,reader.uint32(),options));break;default:let u=options.readUnknownField;if(u==="throw")throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);let d=reader.skip(wireType);if(u!==false)(u===true?UnknownFieldHandler.onRead:u)(this.typeName,message,fieldNo,wireType,d);}}return message}internalBinaryWrite(message,writer,options){for(let i=0;i<message.item.length;i++)Item.internalBinaryWrite(message.item[i],writer.tag(4,WireType.LengthDelimited).fork(),options).join();let u=options.writeUnknownFields;if(u!==false)(u==true?UnknownFieldHandler.onWrite:u)(this.typeName,message,writer);return writer}}const SearchAllResponse=new SearchAllResponse$Type();
 													/******************  initialization finish  *******************/
 													switch (Settings?.Detail?.search) {
 														case true:
 														default:
 															let data = SearchAllResponse.fromBinary(body);
 															data.item = data.item.filter((i) => !(i.cardItem?.oneofKind === "cm" || i.cardItem?.oneofKind === "game"));
-															$.log(`🎉 ${$.name}`, "搜索页广告去除");
+															$.log(`🎉 搜索页广告去除`);
 															body = SearchAllResponse.toBinary(data);
 															break;
 														case false:
-															$.log(`🚧 ${$.name}`, "用户设置搜索页广告不去除");
+															$.log(`🚧 用户设置搜索页广告不去除`);
 															break;
 													}
 													break;
-												};
-												case "SearchByType": { // 分类结果（番剧、用户、影视、专栏）
-													break;
-												};
-											};
-											break;
-									};
-									break;
-							};
-							// protobuf部分处理完后，重新计算并添加B站gRPC校验头
-							rawBody = newRawBody({ header, body }); // gzip压缩有问题，别用
+												}											}											break;
+									}									break;
+							}							// protobuf部分处理完后，重新计算并添加B站gRPC校验头
+							rawBody = addgRPCHeader({ header, body }); // gzip压缩有问题，别用
 							break;
-					};
-					// 写入二进制数据
-					if ($.isQuanX()) $response.bodyBytes = rawBody
-					else $response.body = rawBody;
+					}					// 写入二进制数据
+					$request.body = rawBody;
 					break;
-			};
-			break;
+			}			break;
 		case false:
 			break;
-	};
-})()
+	}})()
 	.catch((e) => $.logErr(e))
-	.finally(() => {
-		switch ($response) {
-			default: { // 有回复数据，返回回复数据
-				//const FORMAT = ($response?.headers?.["Content-Type"] ?? $response?.headers?.["content-type"])?.split(";")?.[0];
-				$.log(`🎉 ${$.name}, finally`, `$response`, `FORMAT: ${FORMAT}`, "");
-				//$.log(`🚧 ${$.name}, finally`, `$response: ${JSON.stringify($response)}`, "");
-				if ($response?.headers?.["Content-Encoding"]) $response.headers["Content-Encoding"] = "identity";
-				if ($response?.headers?.["content-encoding"]) $response.headers["content-encoding"] = "identity";
-				if ($.isQuanX()) {
-					switch (FORMAT) {
-						case undefined: // 视为无body
-							// 返回普通数据
-							$.done({ status: $response.status, headers: $response.headers });
-							break;
-						default:
-							// 返回普通数据
-							$.done({ status: $response.status, headers: $response.headers, body: $response.body });
-							break;
-						case "application/protobuf":
-						case "application/x-protobuf":
-						case "application/vnd.google.protobuf":
-						case "application/grpc":
-						case "application/grpc+proto":
-						case "applecation/octet-stream":
-							// 返回二进制数据
-							//$.log(`${$response.bodyBytes.byteLength}---${$response.bodyBytes.buffer.byteLength}`);
-							$.done({ status: $response.status, headers: $response.headers, bodyBytes: $response.bodyBytes.buffer.slice($response.bodyBytes.byteOffset, $response.bodyBytes.byteLength + $response.bodyBytes.byteOffset) });
-							break;
-					};
-				} else $.done($response);
-				break;
-			};
-			case undefined: { // 无回复数据
-				break;
-			};
-		};
-	})
-
-/***************** Function *****************/
-/**
- * Set Environment Variables
- * @author VirgilClyne
- * @param {String} name - Persistent Store Key
- * @param {Array} platforms - Platform Names
- * @param {Object} database - Default DataBase
- * @return {Object} { Settings, Caches, Configs }
- */
-function setENV(name, platforms, database) {
-	$.log(`☑️ ${$.name}, Set Environment Variables`, "");
-	let { Settings, Caches, Configs } = getENV(name, platforms, database);
-	/***************** Settings *****************/
-	$.log(`✅ ${$.name}, Set Environment Variables`, `Settings: ${typeof Settings}`, `Settings内容: ${JSON.stringify(Settings)}`, "");
-	/***************** Caches *****************/
-	//$.log(`✅ ${$.name}, Set Environment Variables`, `Caches: ${typeof Caches}`, `Caches内容: ${JSON.stringify(Caches)}`, "");
-	/***************** Configs *****************/
-	return { Settings, Caches, Configs };
-};
-
-/**
- * Create New Raw Body
- * @author app2smile
- * @param {ArrayBuffer} header - unGzip Header
- * @param {ArrayBuffer} body - unGzip Body
- * @param {String} type - encoding type
- * @return {ArrayBuffer} new raw Body with Checksum Header
- */
-function newRawBody({ header, body }, encoding = undefined) {
-	//$.log(`⚠ ${$.name}, Create New Raw Body`, "");
-	// Header: 1位：是否校验数据 （0或者1） + 4位:校验值（数据长度）
-	const flag = (encoding == "gzip") ? 1 : (encoding == "identity") ? 0 : (encoding == undefined) ? 0 : header?.[0] ?? 0; // encoding flag
-	const checksum = Checksum(body.length); // 校验值为未压缩情况下的数据长度, 不是压缩后的长度
-	if (encoding == "gzip") body = pako.gzip(body); // gzip压缩（有问题，别压）
-	let rawBody = new Uint8Array(header.length + body.length);
-	rawBody.set([flag], 0) // 0位：Encoding类型，当为1的时候, app会校验1-4位的校验值是否正确
-	rawBody.set(checksum, 1) // 1-4位： 校验值(4位)
-	rawBody.set(body, 5); // 5-end位：protobuf数据
-	//$.log(`🎉 ${$.name}, Create New Raw Body`, "");
-	return rawBody;
-
-	// 计算校验和 (B站为数据本体字节数)
-	function Checksum(num) {
-		let arr = new ArrayBuffer(4); // an Int32 takes 4 bytes
-		let view = new DataView(arr);
-		// 首位填充计算过的新数据长度
-		view.setUint32(0, num, false); // byteOffset = 0; litteEndian = false
-		return new Uint8Array(arr);
-	};
-};
-
-/***************** Env *****************/
-// prettier-ignore
-// https://github.com/chavyleung/scripts/blob/master/Env.min.js
-function Env(t,e){class s{constructor(t){this.env=t}send(t,e="GET"){t="string"==typeof t?{url:t}:t;let s=this.get;return"POST"===e&&(s=this.post),new Promise((e,a)=>{s.call(this,t,(t,s,r)=>{t?a(t):e(s)})})}get(t){return this.send.call(this.env,t)}post(t){return this.send.call(this.env,t,"POST")}}return new class{constructor(t,e){this.name=t,this.http=new s(this),this.data=null,this.dataFile="box.dat",this.logs=[],this.isMute=!1,this.isNeedRewrite=!1,this.logSeparator="\n",this.encoding="utf-8",this.startTime=(new Date).getTime(),Object.assign(this,e),this.log("",`\ud83d\udd14${this.name}, \u5f00\u59cb!`)}getEnv(){return"undefined"!=typeof $environment&&$environment["surge-version"]?"Surge":"undefined"!=typeof $environment&&$environment["stash-version"]?"Stash":"undefined"!=typeof module&&module.exports?"Node.js":"undefined"!=typeof $task?"Quantumult X":"undefined"!=typeof $loon?"Loon":"undefined"!=typeof $rocket?"Shadowrocket":void 0}isNode(){return"Node.js"===this.getEnv()}isQuanX(){return"Quantumult X"===this.getEnv()}isSurge(){return"Surge"===this.getEnv()}isLoon(){return"Loon"===this.getEnv()}isShadowrocket(){return"Shadowrocket"===this.getEnv()}isStash(){return"Stash"===this.getEnv()}toObj(t,e=null){try{return JSON.parse(t)}catch{return e}}toStr(t,e=null){try{return JSON.stringify(t)}catch{return e}}getjson(t,e){let s=e;const a=this.getdata(t);if(a)try{s=JSON.parse(this.getdata(t))}catch{}return s}setjson(t,e){try{return this.setdata(JSON.stringify(t),e)}catch{return!1}}getScript(t){return new Promise(e=>{this.get({url:t},(t,s,a)=>e(a))})}runScript(t,e){return new Promise(s=>{let a=this.getdata("@chavy_boxjs_userCfgs.httpapi");a=a?a.replace(/\n/g,"").trim():a;let r=this.getdata("@chavy_boxjs_userCfgs.httpapi_timeout");r=r?1*r:20,r=e&&e.timeout?e.timeout:r;const[i,o]=a.split("@"),n={url:`http://${o}/v1/scripting/evaluate`,body:{script_text:t,mock_type:"cron",timeout:r},headers:{"X-Key":i,Accept:"*/*"},timeout:r};this.post(n,(t,e,a)=>s(a))}).catch(t=>this.logErr(t))}loaddata(){if(!this.isNode())return{};{this.fs=this.fs?this.fs:require("fs"),this.path=this.path?this.path:require("path");const t=this.path.resolve(this.dataFile),e=this.path.resolve(process.cwd(),this.dataFile),s=this.fs.existsSync(t),a=!s&&this.fs.existsSync(e);if(!s&&!a)return{};{const a=s?t:e;try{return JSON.parse(this.fs.readFileSync(a))}catch(t){return{}}}}}writedata(){if(this.isNode()){this.fs=this.fs?this.fs:require("fs"),this.path=this.path?this.path:require("path");const t=this.path.resolve(this.dataFile),e=this.path.resolve(process.cwd(),this.dataFile),s=this.fs.existsSync(t),a=!s&&this.fs.existsSync(e),r=JSON.stringify(this.data);s?this.fs.writeFileSync(t,r):a?this.fs.writeFileSync(e,r):this.fs.writeFileSync(t,r)}}lodash_get(t,e,s){const a=e.replace(/\[(\d+)\]/g,".$1").split(".");let r=t;for(const t of a)if(r=Object(r)[t],void 0===r)return s;return r}lodash_set(t,e,s){return Object(t)!==t?t:(Array.isArray(e)||(e=e.toString().match(/[^.[\]]+/g)||[]),e.slice(0,-1).reduce((t,s,a)=>Object(t[s])===t[s]?t[s]:t[s]=Math.abs(e[a+1])>>0==+e[a+1]?[]:{},t)[e[e.length-1]]=s,t)}getdata(t){let e=this.getval(t);if(/^@/.test(t)){const[,s,a]=/^@(.*?)\.(.*?)$/.exec(t),r=s?this.getval(s):"";if(r)try{const t=JSON.parse(r);e=t?this.lodash_get(t,a,""):e}catch(t){e=""}}return e}setdata(t,e){let s=!1;if(/^@/.test(e)){const[,a,r]=/^@(.*?)\.(.*?)$/.exec(e),i=this.getval(a),o=a?"null"===i?null:i||"{}":"{}";try{const e=JSON.parse(o);this.lodash_set(e,r,t),s=this.setval(JSON.stringify(e),a)}catch(e){const i={};this.lodash_set(i,r,t),s=this.setval(JSON.stringify(i),a)}}else s=this.setval(t,e);return s}getval(t){switch(this.getEnv()){case"Surge":case"Loon":case"Stash":case"Shadowrocket":return $persistentStore.read(t);case"Quantumult X":return $prefs.valueForKey(t);case"Node.js":return this.data=this.loaddata(),this.data[t];default:return this.data&&this.data[t]||null}}setval(t,e){switch(this.getEnv()){case"Surge":case"Loon":case"Stash":case"Shadowrocket":return $persistentStore.write(t,e);case"Quantumult X":return $prefs.setValueForKey(t,e);case"Node.js":return this.data=this.loaddata(),this.data[e]=t,this.writedata(),!0;default:return this.data&&this.data[e]||null}}initGotEnv(t){this.got=this.got?this.got:require("got"),this.cktough=this.cktough?this.cktough:require("tough-cookie"),this.ckjar=this.ckjar?this.ckjar:new this.cktough.CookieJar,t&&(t.headers=t.headers?t.headers:{},void 0===t.headers.Cookie&&void 0===t.cookieJar&&(t.cookieJar=this.ckjar))}get(t,e=(()=>{})){switch(t.headers&&(delete t.headers["Content-Type"],delete t.headers["Content-Length"],delete t.headers["content-type"],delete t.headers["content-length"]),this.getEnv()){case"Surge":case"Loon":case"Stash":case"Shadowrocket":default:this.isSurge()&&this.isNeedRewrite&&(t.headers=t.headers||{},Object.assign(t.headers,{"X-Surge-Skip-Scripting":!1})),$httpClient.get(t,(t,s,a)=>{!t&&s&&(s.body=a,s.statusCode=s.status?s.status:s.statusCode,s.status=s.statusCode),e(t,s,a)});break;case"Quantumult X":this.isNeedRewrite&&(t.opts=t.opts||{},Object.assign(t.opts,{hints:!1})),$task.fetch(t).then(t=>{const{statusCode:s,statusCode:a,headers:r,body:i,bodyBytes:o}=t;e(null,{status:s,statusCode:a,headers:r,body:i,bodyBytes:o},i,o)},t=>e(t&&t.error||"UndefinedError"));break;case"Node.js":let s=require("iconv-lite");this.initGotEnv(t),this.got(t).on("redirect",(t,e)=>{try{if(t.headers["set-cookie"]){const s=t.headers["set-cookie"].map(this.cktough.Cookie.parse).toString();s&&this.ckjar.setCookieSync(s,null),e.cookieJar=this.ckjar}}catch(t){this.logErr(t)}}).then(t=>{const{statusCode:a,statusCode:r,headers:i,rawBody:o}=t,n=s.decode(o,this.encoding);e(null,{status:a,statusCode:r,headers:i,rawBody:o,body:n},n)},t=>{const{message:a,response:r}=t;e(a,r,r&&s.decode(r.rawBody,this.encoding))})}}post(t,e=(()=>{})){const s=t.method?t.method.toLocaleLowerCase():"post";switch(t.body&&t.headers&&!t.headers["Content-Type"]&&!t.headers["content-type"]&&(t.headers["content-type"]="application/x-www-form-urlencoded"),t.headers&&(delete t.headers["Content-Length"],delete t.headers["content-length"]),this.getEnv()){case"Surge":case"Loon":case"Stash":case"Shadowrocket":default:this.isSurge()&&this.isNeedRewrite&&(t.headers=t.headers||{},Object.assign(t.headers,{"X-Surge-Skip-Scripting":!1})),$httpClient[s](t,(t,s,a)=>{!t&&s&&(s.body=a,s.statusCode=s.status?s.status:s.statusCode,s.status=s.statusCode),e(t,s,a)});break;case"Quantumult X":t.method=s,this.isNeedRewrite&&(t.opts=t.opts||{},Object.assign(t.opts,{hints:!1})),$task.fetch(t).then(t=>{const{statusCode:s,statusCode:a,headers:r,body:i,bodyBytes:o}=t;e(null,{status:s,statusCode:a,headers:r,body:i,bodyBytes:o},i,o)},t=>e(t&&t.error||"UndefinedError"));break;case"Node.js":let a=require("iconv-lite");this.initGotEnv(t);const{url:r,...i}=t;this.got[s](r,i).then(t=>{const{statusCode:s,statusCode:r,headers:i,rawBody:o}=t,n=a.decode(o,this.encoding);e(null,{status:s,statusCode:r,headers:i,rawBody:o,body:n},n)},t=>{const{message:s,response:r}=t;e(s,r,r&&a.decode(r.rawBody,this.encoding))})}}time(t,e=null){const s=e?new Date(e):new Date;let a={"M+":s.getMonth()+1,"d+":s.getDate(),"H+":s.getHours(),"m+":s.getMinutes(),"s+":s.getSeconds(),"q+":Math.floor((s.getMonth()+3)/3),S:s.getMilliseconds()};/(y+)/.test(t)&&(t=t.replace(RegExp.$1,(s.getFullYear()+"").substr(4-RegExp.$1.length)));for(let e in a)new RegExp("("+e+")").test(t)&&(t=t.replace(RegExp.$1,1==RegExp.$1.length?a[e]:("00"+a[e]).substr((""+a[e]).length)));return t}queryStr(t){let e="";for(const s in t){let a=t[s];null!=a&&""!==a&&("object"==typeof a&&(a=JSON.stringify(a)),e+=`${s}=${a}&`)}return e=e.substring(0,e.length-1),e}msg(e=t,s="",a="",r){const i=t=>{switch(typeof t){case void 0:return t;case"string":switch(this.getEnv()){case"Surge":case"Stash":default:return{url:t};case"Loon":case"Shadowrocket":return t;case"Quantumult X":return{"open-url":t};case"Node.js":return}case"object":switch(this.getEnv()){case"Surge":case"Stash":case"Shadowrocket":default:{let e=t.url||t.openUrl||t["open-url"];return{url:e}}case"Loon":{let e=t.openUrl||t.url||t["open-url"],s=t.mediaUrl||t["media-url"];return{openUrl:e,mediaUrl:s}}case"Quantumult X":{let e=t["open-url"]||t.url||t.openUrl,s=t["media-url"]||t.mediaUrl,a=t["update-pasteboard"]||t.updatePasteboard;return{"open-url":e,"media-url":s,"update-pasteboard":a}}case"Node.js":return}default:return}};if(!this.isMute)switch(this.getEnv()){case"Surge":case"Loon":case"Stash":case"Shadowrocket":default:$notification.post(e,s,a,i(r));break;case"Quantumult X":$notify(e,s,a,i(r));break;case"Node.js":}if(!this.isMuteLog){let t=["","==============\ud83d\udce3\u7cfb\u7edf\u901a\u77e5\ud83d\udce3=============="];t.push(e),s&&t.push(s),a&&t.push(a),console.log(t.join("\n")),this.logs=this.logs.concat(t)}}log(...t){t.length>0&&(this.logs=[...this.logs,...t]),console.log(t.join(this.logSeparator))}logErr(t,e){switch(this.getEnv()){case"Surge":case"Loon":case"Stash":case"Shadowrocket":case"Quantumult X":default:this.log("",`\u2757\ufe0f${this.name}, \u9519\u8bef!`,t);break;case"Node.js":this.log("",`\u2757\ufe0f${this.name}, \u9519\u8bef!`,t.stack)}}wait(t){return new Promise(e=>setTimeout(e,t))}done(t={}){const e=(new Date).getTime(),s=(e-this.startTime)/1e3;switch(this.log("",`\ud83d\udd14${this.name}, \u7ed3\u675f! \ud83d\udd5b ${s} \u79d2`),this.log(),this.getEnv()){case"Surge":case"Loon":case"Stash":case"Shadowrocket":case"Quantumult X":default:$done(t);break;case"Node.js":process.exit(1)}}}(t,e)}
-
-/**
- * Get Environment Variables
- * @link https://github.com/VirgilClyne/GetSomeFries/blob/main/function/getENV/getENV.min.js
- * @author VirgilClyne
- * @param {String} key - Persistent Store Key
- * @param {Array} names - Platform Names
- * @param {Object} database - Default Database
- * @return {Object} { Settings, Caches, Configs }
- */
-function getENV(key,names,database){let BoxJs=$.getjson(key,database),Argument={};if("undefined"!=typeof $argument&&Boolean($argument)){let arg=Object.fromEntries($argument.split("&").map((item=>item.split("=").map((i=>i.replace(/\"/g,""))))));for(let item in arg)setPath(Argument,item,arg[item])}const Store={Settings:database?.Default?.Settings||{},Configs:database?.Default?.Configs||{},Caches:{}};Array.isArray(names)||(names=[names]);for(let name of names)Store.Settings={...Store.Settings,...database?.[name]?.Settings,...Argument,...BoxJs?.[name]?.Settings},Store.Configs={...Store.Configs,...database?.[name]?.Configs},BoxJs?.[name]?.Caches&&"string"==typeof BoxJs?.[name]?.Caches&&(BoxJs[name].Caches=JSON.parse(BoxJs?.[name]?.Caches)),Store.Caches={...Store.Caches,...BoxJs?.[name]?.Caches};return function traverseObject(o,c){for(var t in o){var n=o[t];o[t]="object"==typeof n&&null!==n?traverseObject(n,c):c(t,n)}return o}(Store.Settings,((key,value)=>("true"===value||"false"===value?value=JSON.parse(value):"string"==typeof value&&(value=value.includes(",")?value.split(",").map((item=>string2number(item))):string2number(value)),value))),Store;function setPath(object,path,value){path.split(".").reduce(((o,p,i)=>o[p]=path.split(".").length===++i?value:o[p]||{}),object)}function string2number(string){return string&&!isNaN(string)&&(string=parseInt(string,10)),string}}
-
-// https://github.com/VirgilClyne/GetSomeFries/blob/main/function/URI/URIs.embedded.min.js
-function URIs(t){return new class{constructor(t=[]){this.name="URI v1.2.6",this.opts=t,this.json={scheme:"",host:"",path:"",query:{}}}parse(t){let s=t.match(/(?:(?<scheme>.+):\/\/(?<host>[^/]+))?\/?(?<path>[^?]+)?\??(?<query>[^?]+)?/)?.groups??null;if(s?.path?s.paths=s.path.split("/"):s.path="",s?.paths){const t=s.paths[s.paths.length-1];if(t?.includes(".")){const e=t.split(".");s.format=e[e.length-1]}}return s?.query&&(s.query=Object.fromEntries(s.query.split("&").map((t=>t.split("="))))),s}stringify(t=this.json){let s="";return t?.scheme&&t?.host&&(s+=t.scheme+"://"+t.host),t?.path&&(s+=t?.host?"/"+t.path:t.path),t?.query&&(s+="?"+Object.entries(t.query).map((t=>t.join("="))).join("&")),s}}(t)}
+	.finally(() => $.done($response));
