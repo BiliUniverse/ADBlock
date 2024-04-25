@@ -4,11 +4,8 @@ import ENV from "./ENV/ENV.mjs";
 
 import Database from "./database/BiliBili.mjs";
 import setENV from "./function/setENV.mjs";
-import pako from "./pako/dist/pako.esm.mjs";
-import addgRPCHeader from "./function/addgRPCHeader.mjs";
 
 import MD5 from '../node_modules/crypto-js/md5.js';
-import { WireType, UnknownFieldHandler, reflectionMergePartial, MESSAGE_TYPE, MessageType, BinaryReader, isJsonObject, typeofJsonValue, jsonWriteOptions } from "../node_modules/@protobuf-ts/runtime/build/es2015/index.js";
 
 const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.3.1(1004) request.beta");
 
@@ -85,90 +82,8 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 						case "application/grpc+proto":
 						case "applecation/octet-stream":
 							//$.log(`🚧 $request.body: ${JSON.stringify($request.body)}`, "");
-							let rawBody = $.isQuanX() ? new Uint8Array($request.bodyBytes ?? []) : $request.body ?? new Uint8Array();
+							//let rawBody = $.isQuanX() ? new Uint8Array($request.bodyBytes ?? []) : $request.body ?? new Uint8Array();
 							//$.log(`🚧 isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`, "");
-							switch (FORMAT) {
-								case "application/protobuf":
-								case "application/x-protobuf":
-								case "application/vnd.google.protobuf":
-									break;
-								case "application/grpc":
-								case "application/grpc+proto":
-									// 先拆分B站gRPC校验头和protobuf数据体
-									let header = rawBody.slice(0, 5);
-									body = rawBody.slice(5);
-									// 处理request压缩protobuf数据体
-									switch (header?.[0]) {
-										case 0: // unGzip
-											break;
-										case 1: // Gzip
-											body = pako.ungzip(body);
-											header[0] = 0; // unGzip
-											break;
-									};
-									// 解析链接并处理protobuf数据
-									switch (HOST) {
-										case "grpc.biliapi.net": // HTTP/2
-										case "app.bilibili.com": // HTTP/1.1
-											/******************  initialization start  *******************/
-											var CodeType;!function(CodeType){CodeType[CodeType.NOCODE=0]="NOCODE",CodeType[CodeType.CODE264=1]="CODE264",CodeType[CodeType.CODE265=2]="CODE265",CodeType[CodeType.CODEAV1=3]="CODEAV1"}(CodeType||(CodeType={}));
-											/******************  initialization finish  *******************/
-											switch (PATHs?.[0]) {
-												case "bilibili.app.playerunite.v1.Player":
-													switch (PATHs?.[1]) {
-														case "PlayViewUnite": { // 播放地址
-															break;
-														};
-													};
-													break;
-												case "bilibili.app.playurl.v1.PlayURL": // 普通视频
-													switch (PATHs?.[1]) {
-														case "PlayView": // 播放地址
-															break;
-														case "PlayConf": // 播放配置
-															break;
-													};
-													break;
-												case "bilibili.pgc.gateway.player.v2.PlayURL": // 番剧
-													switch (PATHs?.[1]) {
-														case "PlayView": { // 播放地址
-															break;
-														};
-														case "PlayConf": // 播放配置
-															break;
-													};
-													break;
-												case "bilibili.app.nativeact.v1.NativeAct": // 活动-节目、动画、韩综（港澳台）
-													switch (PATHs?.[1]) {
-														case "Index": // 首页
-															break;
-													};
-													break;
-												case "bilibili.app.interface.v1.Search": // 搜索框
-													switch (PATHs?.[1]) {
-														case "Suggest3": // 搜索建议
-															break;
-													};
-													break;
-												case "bilibili.polymer.app.search.v1.Search": // 搜索结果
-													switch (PATHs?.[1]) {
-														case "SearchAll": { // 全部结果（综合）
-															break;
-														};
-														case "SearchByType": { // 分类结果（番剧、用户、影视、专栏）
-															break;
-														};
-													};
-													break;
-											};
-											break;
-									};
-									// protobuf部分处理完后，重新计算并添加B站gRPC校验头
-									rawBody = addgRPCHeader({ header, body }); // gzip压缩有问题，别用
-									break;
-							};
-							// 写入二进制数据
-							$request.body = rawBody;
 							break;
 					};
 					//break; // 不中断，继续处理URL
