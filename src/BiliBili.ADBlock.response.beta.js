@@ -10,7 +10,7 @@ import addgRPCHeader from "./function/addgRPCHeader.mjs";
 import { WireType, UnknownFieldHandler, reflectionMergePartial, MESSAGE_TYPE, MessageType, BinaryReader, isJsonObject, typeofJsonValue, jsonWriteOptions } from "../node_modules/@protobuf-ts/runtime/build/es2015/index.js";
 // import { Any } from "./protobuf/google/protobuf/any.js";
 
-const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.6.2(1004) response.beta");
+const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.6.2(1006) response.beta");
 
 /***************** Processing *****************/
 // 解构URL
@@ -80,12 +80,12 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 									switch (Settings?.Detail?.splash) {
 										case true:
 										default:
+											$.log(`🎉 开屏页广告去除`);
 											const item = ["account", "event_list", "preload", "show"];
 											if (body.data) {
 												item.forEach((i) => {
 													delete body.data[i];
 												});
-												$.log(`🎉 开屏页广告去除`);
 											}
 											break;
 										case false:
@@ -234,12 +234,12 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 											if (body.data?.items) {
 												// vertical_live 直播内容
 												// vertical_pgc 大会员专享
+												$.log(`🎉 首页短视频流广告去除`);
 												body.data.items = body.data.items.filter((i) => !(
 														i.hasOwnProperty("ad_info") ||
 														["vertical_ad_av", "vertical_pgc"].includes(i.card_goto)
 													)
 												);
-												$.log(`🎉 首页短视频流广告去除`);
 											}
 											break;
 										case false:
@@ -251,8 +251,8 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 									switch (Settings?.Detail?.Hot_search) {
 										case true:
 										default:
-											body.data = body.data.filter((i) => !(i.type === "trending"));
 											$.log(`🎉 搜索页热搜内容去除`);
+											body.data = body.data.filter((i) => !(i.type === "trending"));
 											break;
 										case false:
 											$.log(`🚧 用户设置搜索页热搜内容不去除`);
@@ -270,6 +270,7 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 										case true:
 										default:
 											if (body.result?.modules) {
+												$.log(`🎉 观影页广告去除`);
 												body.result.modules.forEach((i) => {
 													if (i.style.startsWith("banner")) {
 														i.items = i.items.filter((j) => j.link.includes("play"));
@@ -281,7 +282,6 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 														i.items = [];
 													}
 												});
-												$.log(`🎉 观影页广告去除`);
 											}
 											break;
 										case false:
@@ -295,8 +295,8 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 									switch (Settings?.Detail?.feed) {
 										case true:
 										default:
-											body.data.item = body.data.item.filter((i) => !(i.goto === "ad"));
 											$.log(`🎉 首页广告内容去除`);
+											body.data.item = body.data.item.filter((i) => !(i.goto === "ad"));
 											break;
 										case false:
 											$.log(`🚧 用户设置首页广告不去除`);
@@ -311,10 +311,8 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 									switch (Settings?.Detail?.xlive) {
 										case true:
 										default:
-											if (body.data?.activity_banner_info) {
-												body.data.activity_banner_info = null;
-												$.log(`🎉 直播banner广告去除`);
-											}
+											$.log(`🎉 直播banner广告去除`);
+											delete body.data?.activity_banner_info;
 											if (body.data?.shopping_info) {
 												body.data.shopping_info = {
 													is_show: 0
@@ -322,8 +320,7 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 												$.log(`🎉 直播购物广告去除`);
 											}
 											if (body.data?.new_tab_info?.outer_list?.length > 0) {
-												body.data.new_tab_info.outer_list =
-													body.data.new_tab_info.outer_list.filter((i) => i.biz_id !== 33);
+												body.data.new_tab_info.outer_list = body.data.new_tab_info.outer_list.filter((i) => i.biz_id !== 33);
 											}
 											break;
 										case false:
@@ -409,10 +406,8 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 													switch (Settings?.Detail?.Hot_topics) {
 														case true:
 														default:
-															if (data.topicList) {
-																data.topicList = null;
-																$.log(`🎉 动态综合页热门话题去除`);
-															}
+															$.log(`🎉 动态综合页热门话题去除`);
+															delete data.topicList;
 															break;
 														case false:
 															$.log(`🚧 用户设置动态综合页热门话题不去除`);
@@ -421,11 +416,8 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 													switch (Settings?.Detail?.Most_visited) {
 														case true:
 														default:
-															if (data.upList) {
-																//data.upList = null;
-																delete data.upList;
-																$.log(`🎉 动态综合页最常访问去除`);
-															}
+															$.log(`🎉 动态综合页最常访问去除`);
+															delete data.upList;
 															break;
 														case false:
 															$.log(`🚧 用户设置动态综合页最常访问不去除`);
@@ -437,11 +429,10 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 															if (data.dynamicList?.list?.length) {
 																data.dynamicList.list = data.dynamicList.list.filter(
 																	(item) => {
-																		if (item.cardType !== 15) {
-																			return true;
-																		}
-																		$.log(`🎉 动态综合页广告动态去除`);
-																		return false;
+																		if (item.cardType === 15) {
+																			$.log(`🎉 动态综合页广告动态去除`);
+																			return false;
+																		} else return true;
 																	}
 																);
 															}
@@ -457,11 +448,8 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 													switch (Settings?.Detail?.Most_visited) {
 														case true:
 														default:
-															if (data.videoUpList) {
-																//data.videoUpList = null;
-																delete data.videoUpList;
-																$.log(`🎉 动态视频页最常访问去除`);
-															}
+															$.log(`🎉 动态视频页最常访问去除`);
+															delete data.videoUpList;
 															break;
 														case false:
 															$.log(`🚧 用户设置动态视频页最常访问不去除`);
@@ -483,8 +471,8 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 														default:
 															let data = ViewReply.fromBinary(body);
 															if (data.cms?.length) {
-																data.cms = [];
 																$.log(`🎉 播放页广告卡片去除`);
+																data.cms = [];
 															}
 															if (data.relates?.length) {
 																data.relates = data.relates.filter((item) => {
@@ -496,9 +484,9 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 																});
 															}
 															if (data.cmConfig || data.cmIpad) {
+																$.log(`🎉 播放页定制tab去除`);
 																delete data.cmConfig;
 																delete data.cmIpad;
-																$.log(`🎉 播放页定制tab去除`);
 															}
 															for (const i in data.tIcon) {
 																if (data.tIcon[i] === null) {
@@ -522,9 +510,9 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 													let data = TFInfoReply.fromBinary(body);
 													$.log(data.tipsId);
 													if (data?.tipsId) {
+														$.log(`🎉 播放页办卡免流广告去除`);
 														delete data.tfToast;
 														delete data.tfPanelCustomized;
-														$.log(`🎉 播放页办卡免流广告去除`);
 													}
 													body = TFInfoReply.toBinary(data);
 													break;
@@ -542,13 +530,13 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 														default:
 															let data = ViewReply.fromBinary(body);
 															if (data.cm?.sourceContent?.length) {
-																data.cm.sourceContent = [];
 																$.log(`🎉 up主推荐广告去除`);
+																data.cm.sourceContent = [];
 															}
 															data.tab.tabModule[0].tab.introduction.modules = data.tab.tabModule[0].tab.introduction.modules.map((i) => {
 																if (i.type === 28) {
-																	i.data.relates.cards = i.data.relates.cards.filter((j) => j.relateCardType !== 5 && j.relateCardType !== 4);
 																	$.log(`🎉 视频详情下方推荐卡广告去除`);
+																	i.data.relates.cards = i.data.relates.cards.filter((j) => j.relateCardType !== 5 && j.relateCardType !== 4);
 																}
 																return i;
 															}
@@ -594,9 +582,9 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 														case true:
 															let data = DmViewReply.fromBinary(body);
 															if (data.dmView?.commandDms?.length) {
-																data.dmView.commandDms.length = 0;
 																$.log(`🎉 交互式弹幕去除`);
-															}
+																data.dmView.commandDms.length = 0;
+															};
 															body = DmViewReply.toBinary(data);
 															break;
 														case false:
@@ -637,9 +625,9 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 														case true:
 														default:
 															let data = MainListReply.fromBinary(body);
+															$.log(`🎉 评论列表广告去除`);
 															delete data.cm;
 															body = MainListReply.toBinary(data);
-															$.log(`🎉 评论列表广告去除`);
 															break;
 														case false:
 															$.log(`🎉 用户设置评论列表广告不去除`);
@@ -684,8 +672,8 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 														case true:
 														default:
 															let data = SearchAllResponse.fromBinary(body);
-															data.item = data.item.filter((i) => !(i.cardItem?.oneofKind === "cm" || i.cardItem?.oneofKind === "game"));
 															$.log(`🎉 搜索页广告去除`);
+															data.item = data.item.filter((i) => !(i.cardItem?.oneofKind === "cm" || i.cardItem?.oneofKind === "game"));
 															body = SearchAllResponse.toBinary(data);
 															break;
 														case false:
