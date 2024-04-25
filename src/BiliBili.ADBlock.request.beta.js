@@ -10,7 +10,7 @@ import addgRPCHeader from "./function/addgRPCHeader.mjs";
 import MD5 from '../node_modules/crypto-js/md5.js';
 import { WireType, UnknownFieldHandler, reflectionMergePartial, MESSAGE_TYPE, MessageType, BinaryReader, isJsonObject, typeofJsonValue, jsonWriteOptions } from "../node_modules/@protobuf-ts/runtime/build/es2015/index.js";
 
-const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.3.0(4) request.beta");
+const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.3.1(1004) request.beta");
 
 // 构造回复数据
 let $response = undefined;
@@ -175,7 +175,6 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 				case "GET":
 				case "HEAD":
 				case "OPTIONS":
-				case undefined: // QX牛逼，script-echo-response不返回method
 				default:
 					// 主机判断
 					switch (HOST) {
@@ -238,37 +237,12 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 						case "api.bilibili.com":
 						case "api.biliapi.net":
 							switch (PATH) {
-								case "/pgc/player/api/playurl": // 番剧-播放地址-api
-								case "/pgc/player/web/playurl": // 番剧-播放地址-web
-								case "/pgc/player/web/v2/playurl": // 番剧-播放地址-web-v2
-								case "/pgc/player/web/playurl/html5": // 番剧-播放地址-web-HTML5
-									break;
 								case "/pgc/page/bangumi": // 追番页
 								case "/pgc/page/cinema/tab": // 观影页
 									break;
 								case "/x/player/wbi/playurl": // UGC-用户生产内容-播放地址
 									break;
-								case "/x/space/acc/info": // 用户空间-账号信息-pc
-								case "/x/space/wbi/acc/info": // 用户空间-账号信息-wbi
-									switch (url.searchParams.get("vmid") || url.searchParams.get("mid")) {
-										case "11783021": // 哔哩哔哩番剧出差
-										case "1988098633": // b站_戲劇咖
-										case "2042149112": // b站_綜藝咖
-											break;
-										default:
-											break;
-									};
-									break;
-								case "/pgc/view/v2/app/season": // 番剧页面-内容-app
-								case "/pgc/view/web/season": // 番剧-内容-web
-								case "/pgc/view/pc/season": // 番剧-内容-pc
-									break;
-								case "/x/web-interface/search": // 搜索-全部结果-web（综合）
-								case "/x/web-interface/search/all/v2": // 搜索-全部结果-web（综合）
-								case "/x/web-interface/search/type": // 搜索-分类结果-web（番剧、用户、影视、专栏）
-									break;
-								case "/x/web-interface/wbi/search/all/v2": // 搜索-全部结果-wbi（综合）
-								case "/x/web-interface/wbi/search/type": // 搜索-分类结果-wbi（番剧、用户、影视、专栏）
+								case "/x/web-interface/wbi/index/top/feed/rcmd": // web首页
 									break;
 							};
 							break;

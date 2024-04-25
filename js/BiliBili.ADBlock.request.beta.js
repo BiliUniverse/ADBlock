@@ -9085,7 +9085,7 @@ var RepeatType;
     RepeatType[RepeatType["UNPACKED"] = 2] = "UNPACKED";
 })(RepeatType || (RepeatType = {}));
 
-const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.3.0(4) request.beta");
+const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.3.1(1004) request.beta");
 
 // 构造回复数据
 let $response = undefined;
@@ -9217,7 +9217,6 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 				case "GET":
 				case "HEAD":
 				case "OPTIONS":
-				case undefined: // QX牛逼，script-echo-response不返回method
 				default:
 					// 主机判断
 					switch (HOST) {
@@ -9262,24 +9261,6 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 											$.log(`🚧 用户设置推荐页广告不去除`);
 											break;
 									}									break;
-							}							break;
-						case "api.bilibili.com":
-						case "api.biliapi.net":
-							switch (PATH) {
-								case "/pgc/player/api/playurl": // 番剧-播放地址-api
-								case "/pgc/player/web/playurl": // 番剧-播放地址-web
-								case "/pgc/player/web/v2/playurl": // 番剧-播放地址-web-v2
-								case "/pgc/player/web/playurl/html5": // 番剧-播放地址-web-HTML5
-									break;
-								case "/pgc/page/bangumi": // 追番页
-								case "/pgc/page/cinema/tab": // 观影页
-									break;
-								case "/x/player/wbi/playurl": // UGC-用户生产内容-播放地址
-									break;
-								case "/x/space/acc/info": // 用户空间-账号信息-pc
-								case "/x/space/wbi/acc/info": // 用户空间-账号信息-wbi
-									switch (url.searchParams.get("vmid") || url.searchParams.get("mid")) {
-																			}									break;
 							}							break;
 					}					break;
 				case "CONNECT":

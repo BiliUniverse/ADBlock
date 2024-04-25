@@ -10,7 +10,7 @@ import addgRPCHeader from "./function/addgRPCHeader.mjs";
 import { WireType, UnknownFieldHandler, reflectionMergePartial, MESSAGE_TYPE, MessageType, BinaryReader, isJsonObject, typeofJsonValue, jsonWriteOptions } from "../node_modules/@protobuf-ts/runtime/build/es2015/index.js";
 // import { Any } from "./protobuf/google/protobuf/any.js";
 
-const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.6.0(1) response.beta");
+const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.6.1(1002) response.beta");
 
 /***************** Processing *****************/
 // 解构URL
@@ -264,10 +264,6 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 						case "api.bilibili.com":
 						case "api.biliapi.net":
 							switch (PATH) {
-								case "/pgc/player/api/playurl": // 番剧-播放地址-api
-								case "/pgc/player/web/playurl": // 番剧-播放地址-web
-								case "/pgc/player/web/playurl/html5": // 番剧-播放地址-web-HTML5
-									break;
 								case "/pgc/page/bangumi": // 追番页
 								case "/pgc/page/cinema/tab": // 观影页
 									switch (Settings?.Detail?.cinema) {
@@ -306,22 +302,6 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 											$.log(`🚧 用户设置首页广告不去除`);
 											break;
 									};
-									break;
-								case "/x/space/acc/info": // 用户空间-账号信息-pc
-								case "/x/space/wbi/acc/info": // 用户空间-账号信息-wbi
-									switch (url.searchParams.get("vmid") || url.searchParams.get("mid")) {
-										case "11783021": // 哔哩哔哩番剧出差
-										case "1988098633": // b站_戲劇咖
-										case "2042149112": // b站_綜藝咖
-											break;
-										default:
-											break;
-									};
-									break;
-								case "/pgc/view/v2/app/season": // 番剧页面-内容-app
-									break;
-								case "/pgc/view/web/season": // 番剧-内容-web
-								case "/pgc/view/pc/season": // 番剧-内容-pc
 									break;
 							};
 							break;

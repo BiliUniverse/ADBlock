@@ -10715,7 +10715,7 @@ class MessageType {
 
 // import { Any } from "./protobuf/google/protobuf/any.js";
 
-const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.6.0(1) response.beta");
+const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.6.1(1002) response.beta");
 
 /***************** Processing *****************/
 // 解构URL
@@ -10965,10 +10965,6 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 						case "api.bilibili.com":
 						case "api.biliapi.net":
 							switch (PATH) {
-								case "/pgc/player/api/playurl": // 番剧-播放地址-api
-								case "/pgc/player/web/playurl": // 番剧-播放地址-web
-								case "/pgc/player/web/playurl/html5": // 番剧-播放地址-web-HTML5
-									break;
 								case "/pgc/page/bangumi": // 追番页
 								case "/pgc/page/cinema/tab": // 观影页
 									switch (Settings?.Detail?.cinema) {
@@ -11006,10 +11002,6 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 											$.log(`🚧 用户设置首页广告不去除`);
 											break;
 									}									break;
-								case "/x/space/acc/info": // 用户空间-账号信息-pc
-								case "/x/space/wbi/acc/info": // 用户空间-账号信息-wbi
-									switch (url.searchParams.get("vmid") || url.searchParams.get("mid")) {
-																			}									break;
 							}							break;
 						case "api.live.bilibili.com":
 							switch (PATH) {
