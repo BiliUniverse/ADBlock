@@ -7,7 +7,7 @@ import setENV from "./function/setENV.mjs";
 
 import MD5 from '../node_modules/crypto-js/md5.js';
 
-const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.3.1(1004) request.beta");
+const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.3.1(1005) request.beta");
 
 // 构造回复数据
 let $response = undefined;
@@ -123,8 +123,8 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 																$.log(`🎉 读取hash缓存成功`);
 															};
 															const string = url.search.substring(1) + "c2ed53a74eeefe3cf99fbd01d8c9c375";
-															const newMD5 = MD5(string).toString();
-															url.searchParams.set("sign", newMD5);
+															const sign = MD5(string).toString();
+															url.searchParams.set("sign", sign);
 														};
 													};
 													break;
