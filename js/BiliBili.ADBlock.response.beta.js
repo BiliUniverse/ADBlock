@@ -10715,7 +10715,7 @@ class MessageType {
 
 // import { Any } from "./protobuf/google/protobuf/any.js";
 
-const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.6.1(1002) response.beta");
+const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.6.2(1004) response.beta");
 
 /***************** Processing *****************/
 // 解构URL
@@ -11113,7 +11113,8 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 														case true:
 														default:
 															if (data.upList) {
-																data.upList = null;
+																//data.upList = null;
+																delete data.upList;
 																$.log(`🎉 动态综合页最常访问去除`);
 															}
 															break;
@@ -11148,7 +11149,8 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 														case true:
 														default:
 															if (data.videoUpList) {
-																data.videoUpList = null;
+																//data.videoUpList = null;
+																delete data.videoUpList;
 																$.log(`🎉 动态视频页最常访问去除`);
 															}
 															break;
@@ -11370,7 +11372,7 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 							rawBody = addgRPCHeader({ header, body }); // gzip压缩有问题，别用
 							break;
 					}					// 写入二进制数据
-					$request.body = rawBody;
+					$response.body = rawBody;
 					break;
 			}			break;
 		case false:
