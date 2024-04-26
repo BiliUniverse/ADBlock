@@ -10,7 +10,7 @@ import addgRPCHeader from "./function/addgRPCHeader.mjs";
 import { WireType, UnknownFieldHandler, reflectionMergePartial, MESSAGE_TYPE, MessageType, BinaryReader, isJsonObject, typeofJsonValue, jsonWriteOptions } from "../node_modules/@protobuf-ts/runtime/build/es2015/index.js";
 // import { Any } from "./protobuf/google/protobuf/any.js";
 
-const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.6.2(1006) response");
+const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.6.3(1007) response");
 
 /***************** Processing *****************/
 // 解构URL
@@ -182,7 +182,7 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 													}
 													await $.fetch(myRequest).then(response => {
 														try {
-															const body = $.toObj(response.body)
+															const body = JSON.parse(response.body || "{}");
 															if (body?.code === 0 && body?.message === "0") {
 																body.data.items = body.data.items.map(item => {
 																	const { card_type: cardType, card_goto: cardGoto, goto: Goto } = item;
