@@ -1,41 +1,34 @@
-import _ from './ENV/Lodash.mjs'
-import $Storage from './ENV/$Storage.mjs'
-import ENV from "./ENV/ENV.mjs";
-
-import Database from "./database/BiliBili.mjs";
+import { $platform, Lodash as _, Storage, fetch, notification, log, logError, wait, done } from "@nsnanocat/util";
+import database from "./function/database.mjs";
 import setENV from "./function/setENV.mjs";
-
-import MD5 from '../node_modules/crypto-js/md5.js';
-
-const $ = new ENV("📺 BiliBili: 🛡️ ADBlock v0.3.1(1005) request.beta");
-
+import MD5 from 'crypto-js/md5.js';
 // 构造回复数据
 let $response = undefined;
-
 /***************** Processing *****************/
 // 解构URL
 const url = new URL($request.url);
-$.log(`⚠ url: ${url.toJSON()}`, "");
+log(`⚠ url: ${url.toJSON()}`, "");
 // 获取连接参数
 const METHOD = $request.method, HOST = url.hostname, PATH = url.pathname, PATHs = url.pathname.split("/").filter(Boolean);
-$.log(`⚠ METHOD: ${METHOD}, HOST: ${HOST}, PATH: ${PATH}` , "");
+log(`⚠ METHOD: ${METHOD}, HOST: ${HOST}, PATH: ${PATH}` , "");
 // 解析格式
 const FORMAT = ($request.headers?.["Content-Type"] ?? $request.headers?.["content-type"])?.split(";")?.[0];
-$.log(`⚠ FORMAT: ${FORMAT}`, "");
+log(`⚠ FORMAT: ${FORMAT}`, "");
 !(async () => {
 	// 读取设置
-	const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", Database);
-	$.log(`⚠ Settings.Switch: ${Settings?.Switch}`, "");
+	const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
+	log(`⚠ Settings.Switch: ${Settings?.Switch}`, "");
 	switch (Settings.Switch) {
 		case true:
-		default:
+		default: {
 			// 创建空数据
-			let body = { "code": 0, "message": "0", "data": {} };
+			const body = { "code": 0, "message": "0", "data": {} };
 			// 方法判断
 			switch (METHOD) {
 				case "POST":
 				case "PUT":
 				case "PATCH":
+				// biome-ignore lint/suspicious/noFallthroughSwitchClause: <explanation>
 				case "DELETE":
 					// 格式判断
 					switch (FORMAT) {
@@ -50,7 +43,7 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 						case "application/vnd.apple.mpegurl":
 						case "audio/mpegurl":
 							//body = M3U8.parse($request.body);
-							//$.log(`🚧 body: ${JSON.stringify(body)}`, "");
+							//log(`🚧 body: ${JSON.stringify(body)}`, "");
 							//$request.body = M3U8.stringify(body);
 							break;
 						case "text/xml":
@@ -60,19 +53,19 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 						case "application/plist":
 						case "application/x-plist":
 							//body = XML.parse($request.body);
-							//$.log(`🚧 body: ${JSON.stringify(body)}`, "");
+							//log(`🚧 body: ${JSON.stringify(body)}`, "");
 							//$request.body = XML.stringify(body);
 							break;
 						case "text/vtt":
 						case "application/vtt":
 							//body = VTT.parse($request.body);
-							//$.log(`🚧 body: ${JSON.stringify(body)}`, "");
+							//log(`🚧 body: ${JSON.stringify(body)}`, "");
 							//$request.body = VTT.stringify(body);
 							break;
 						case "text/json":
 						case "application/json":
 							//body = JSON.parse($request.body ?? "{}");
-							//$.log(`🚧 body: ${JSON.stringify(body)}`, "");
+							//log(`🚧 body: ${JSON.stringify(body)}`, "");
 							//$request.body = JSON.stringify(body);
 							break;
 						case "application/protobuf":
@@ -80,11 +73,12 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 						case "application/vnd.google.protobuf":
 						case "application/grpc":
 						case "application/grpc+proto":
-						case "applecation/octet-stream":
-							//$.log(`🚧 $request.body: ${JSON.stringify($request.body)}`, "");
-							//let rawBody = $.isQuanX() ? new Uint8Array($request.bodyBytes ?? []) : $request.body ?? new Uint8Array();
-							//$.log(`🚧 isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`, "");
+						case "applecation/octet-stream": {
+							//log(`🚧 $request.body: ${JSON.stringify($request.body)}`, "");
+							//let rawBody = $platform === "Quantumult X" ? new Uint8Array($request.bodyBytes ?? []) : ($request.body ?? new Uint8Array());
+							//log(`🚧 isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`, "");
 							break;
+						}
 					};
 					//break; // 不中断，继续处理URL
 				case "GET":
@@ -120,21 +114,21 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 															url.searchParams.set("pull", 0);
 															if (Caches.banner_hash) {
 																url.searchParams.set("banner_hash", Caches.banner_hash);
-																$.log(`🎉 读取hash缓存成功`);
+																log("🎉 读取hash缓存成功");
 															};
-															const string = url.search.substring(1) + "c2ed53a74eeefe3cf99fbd01d8c9c375";
+															const string = `${url.search.substring(1)}c2ed53a74eeefe3cf99fbd01d8c9c375`;
 															const sign = MD5(string).toString();
 															url.searchParams.set("sign", sign);
 														};
 													};
 													break;
 												case false:
-													$.log(`🚧 用户设置推荐页活动大图不去除`);
+													log("🚧 用户设置推荐页活动大图不去除");
 													break;
 											}
 											break;
 										case false:
-											$.log(`🚧 用户设置推荐页广告不去除`);
+											log("🚧 用户设置推荐页广告不去除");
 											break;
 									};
 									break;
@@ -174,30 +168,39 @@ $.log(`⚠ FORMAT: ${FORMAT}`, "");
 					break;
 			};
 			$request.url = url.toString();
-			$.log(`🚧 调试信息`, `$request.url: ${$request.url}`, "");
+			log("🚧 调试信息", `$request.url: ${$request.url}`, "");
 			break;
+		}
 		case false:
 			break;
 	};
 })()
-	.catch((e) => $.logErr(e))
-	.finally(() => {
-		switch ($response) {
-			default: // 有构造回复数据，返回构造的回复数据
-				//$.log(`🚧 finally`, `echo $response: ${JSON.stringify($response, null, 2)}`, "");
-				if ($response.headers?.["Content-Encoding"]) $response.headers["Content-Encoding"] = "identity";
-				if ($response.headers?.["content-encoding"]) $response.headers["content-encoding"] = "identity";
-				if ($.isQuanX()) {
+.catch(e => logError(e))
+.finally(() => {
+	switch (typeof $response) {
+		case "object": // 有构造回复数据，返回构造的回复数据
+			//log("🚧 finally", `echo $response: ${JSON.stringify($response, null, 2)}`, "");
+			if ($response.headers?.["Content-Encoding"]) $response.headers["Content-Encoding"] = "identity";
+			if ($response.headers?.["content-encoding"]) $response.headers["content-encoding"] = "identity";
+			switch ($platform) {
+				default:
+					done({ response: $response });
+					break;
+				case "Quantumult X":
 					if (!$response.status) $response.status = "HTTP/1.1 200 OK";
 					delete $response.headers?.["Content-Length"];
 					delete $response.headers?.["content-length"];
 					delete $response.headers?.["Transfer-Encoding"];
-					$.done($response);
-				} else $.done({ response: $response });
-				break;
-			case undefined: // 无构造回复数据，发送修改的请求数据
-				//$.log(`🚧 finally`, `$request: ${JSON.stringify($request, null, 2)}`, "");
-				$.done($request);
-				break;
-		};
-	})
+					done($response);
+					break;
+			}
+			break;
+		case "undefined": // 无构造回复数据，发送修改的请求数据
+			//log("🚧 finally", `$request: ${JSON.stringify($request, null, 2)}`, "");
+			done($request);
+			break;
+		default:
+			logError(`不合法的 $response 类型: ${typeof $response}`, "");
+			break;
+	}
+});

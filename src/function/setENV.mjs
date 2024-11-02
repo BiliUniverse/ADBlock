@@ -1,5 +1,4 @@
-import getStorage from '../ENV/getStorage.mjs'
-import _ from '../ENV/Lodash.mjs'
+import { Lodash as _, getStorage, log } from "@nsnanocat/util";
 
 /**
  * Set Environment Variables
@@ -10,13 +9,12 @@ import _ from '../ENV/Lodash.mjs'
  * @return {Object} { Settings, Caches, Configs }
  */
 export default function setENV(name, platforms, database) {
-	console.log(`☑️ Set Environment Variables`, "");
-	let { Settings, Caches, Configs } = getStorage(name, platforms, database);
+	log("☑️ Set Environment Variables", "");
+	const { Settings, Caches, Configs } = getStorage(name, platforms, database);
 	/***************** Settings *****************/
-	if (!Array.isArray(Settings?.Locales)) Settings.Locales = (Settings.Locales) ? [Settings.Locales] : []; // 只有一个选项时，无逗号分隔
-	console.log(`✅ Set Environment Variables, Settings: ${typeof Settings}, Settings内容: ${JSON.stringify(Settings)}`, "");
+	log(`✅ Set Environment Variables, Settings: ${typeof Settings}, Settings内容: ${JSON.stringify(Settings)}`, "");
 	/***************** Caches *****************/
-	//console.log(`✅ Set Environment Variables, Caches: ${typeof Caches}, Caches内容: ${JSON.stringify(Caches)}`, "");
+	//log(`✅ Set Environment Variables, Caches: ${typeof Caches}, Caches内容: ${JSON.stringify(Caches)}`, "");
 	/***************** Configs *****************/
 	return { Settings, Caches, Configs };
 };
