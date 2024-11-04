@@ -19,9 +19,12 @@ log(`⚠ PATHs: ${PATHs}`, "");
 // 解析格式
 const FORMAT = ($response.headers?.["Content-Type"] ?? $response.headers?.["content-type"])?.split(";")?.[0];
 log(`⚠ FORMAT: ${FORMAT}`, "");
-// 读取设置
-const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 !(async () => {
+	/**
+	 * 设置
+	 * @type {{Settings: import('./types').Settings}}
+	 */
+	const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 	// 创建空数据
 	let body = { code: 0, message: "0", data: {} };
 	// 格式判断
@@ -70,7 +73,7 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 						case "/x/v2/splash/list": // 开屏页
 						case "/x/v2/splash/brand/list": // 开屏页
 						case "/x/v2/splash/event/list2": // 开屏页
-							switch (Settings?.Detail?.splash) {
+							switch (Settings?.Splash) {
 								case true:
 								default: {
 									log("🎉 开屏页广告去除");
@@ -88,7 +91,7 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 							}
 							break;
 						case "/x/v2/feed/index": // 推荐页
-							switch (Settings?.Detail?.feed) {
+							switch (Settings?.Feed?.AD) {
 								case true:
 								default: {
 									if (body.data.items?.length) {
@@ -98,14 +101,14 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 												const { card_type: cardType, card_goto: cardGoto, goto: Goto } = item;
 												if (cardType && cardGoto) {
 													if (["banner_v8", "banner_ipad_v8"].includes(cardType) && cardGoto === "banner") {
-														switch (Settings?.Detail?.activity) {
+														switch (Settings?.Feed?.Activity) {
 															case true:
-															default:
 																Caches.banner_hash = item.hash;
 																Storage.setItem("@BiliBili.ADBlock.Caches", Caches); // 获取banner_hash,无此字段会有活动页且此字段无法伪造.
 																log("🎉 推荐页活动大图去除");
 																return undefined;
 															case false:
+															default:
 																if (item.banner_item) {
 																	item.banner_item = item.banner_item.filter(i => {
 																		if (i.type === "ad") {
@@ -126,11 +129,11 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 															await fixPosition().then(result => (item = result)); //小广告补位
 														}
 													} else if (cardGoto === "live" && cardType === "small_cover_v9") {
-														let blockUpLiveList = Settings?.Detail?.blockUpLiveList;
-														if (typeof blockUpLiveList === "number") {
-															blockUpLiveList = blockUpLiveList.toString();
+														let BlockUpLiveList = Settings?.Feed?.BlockUpLiveList;
+														if (typeof BlockUpLiveList === "number") {
+															BlockUpLiveList = BlockUpLiveList.toString();
 														}
-														if (blockUpLiveList?.includes(item?.args?.up_id?.toString())) {
+														if (BlockUpLiveList?.includes(item?.args?.up_id?.toString())) {
 															log(`🎉 屏蔽Up主<${item?.args?.up_name}>直播推广`);
 															await fixPosition().then(result => (item = result)); //小广告补位
 														}
@@ -148,13 +151,13 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 														log("🎉 大视频广告去除");
 														return undefined; //大广告直接去除
 													} else if (Goto === "vertical_av") {
-														switch (Settings?.Detail?.vertical) {
+														switch (Settings?.Feed?.Vertical) {
 															case true:
-															default:
 																log("🎉 竖屏视频去除");
 																await fixPosition().then(result => (item = result)); //小视频补位
 																break;
 															case false:
+															default:
 																log("🚧 用户设置推荐页竖屏视频不去除");
 																break;
 														}
@@ -230,7 +233,7 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 							}
 							break;
 						case "/x/v2/feed/index/story": // 首页短视频流
-							switch (Settings?.Detail?.story) {
+							switch (Settings?.Feed?.Story) {
 								case true:
 								default:
 									if (body.data?.items) {
@@ -246,7 +249,7 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 							}
 							break;
 						case "/x/v2/search/square": // 搜索页
-							switch (Settings?.Detail?.Hot_search) {
+							switch (Settings?.Search?.HotSearch) {
 								case true:
 								default:
 									log("🎉 搜索页热搜内容去除");
@@ -264,7 +267,7 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 					switch (url.pathname) {
 						case "/pgc/page/bangumi": // 追番页
 						case "/pgc/page/cinema/tab": // 观影页
-							switch (Settings?.Detail?.cinema) {
+							switch (Settings?.PGC?.AD) {
 								case true:
 								default:
 									if (body.result?.modules) {
@@ -290,7 +293,7 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 						case "/x/player/wbi/playurl": // UGC-用户生产内容-播放地址
 							break;
 						case "/x/web-interface/wbi/index/top/feed/rcmd": // web首页
-							switch (Settings?.Detail?.feed) {
+							switch (Settings?.Feed?.AD) {
 								case true:
 								default:
 									log("🎉 首页广告内容去除");
@@ -306,7 +309,7 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 				case "api.live.bilibili.com":
 					switch (url.pathname) {
 						case "/xlive/app-room/v1/index/getInfoByRoom": // 直播
-							switch (Settings?.Detail?.xlive) {
+							switch (Settings?.Xlive?.AD) {
 								case true:
 								default:
 									log("🎉 直播banner广告去除");
@@ -380,7 +383,7 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 									switch (PATHs?.[1]) {
 										case "DynAll": // 动态综合页
 											body = DynAllReply.fromBinary(rawBody);
-											switch (Settings?.Detail?.Hot_topics) {
+											switch (Settings?.Dynamic?.HotTopics) {
 												case true:
 												default:
 													log("🎉 动态综合页热门话题去除");
@@ -390,17 +393,17 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 													log("🚧 用户设置动态综合页热门话题不去除");
 													break;
 											}
-											switch (Settings?.Detail?.Most_visited) {
+											switch (Settings?.Dynamic?.MostVisited) {
 												case true:
-												default:
 													log("🎉 动态综合页最常访问去除");
 													body.upList = undefined;
 													break;
 												case false:
+												default:
 													log("🚧 用户设置动态综合页最常访问不去除");
 													break;
 											}
-											switch (Settings?.Detail?.Dynamic_adcard) {
+											switch (Settings?.Dynamic?.AdCard) {
 												case true:
 												default:
 													if (body.dynamicList?.list?.length) {
@@ -420,13 +423,13 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 											break;
 										case "DynVideo": // 动态视频页
 											body = DynVideoReply.fromBinary(rawBody);
-											switch (Settings?.Detail?.Most_visited) {
+											switch (Settings?.Dynamic?.MostVisited) {
 												case true:
-												default:
 													log("🎉 动态视频页最常访问去除");
 													body.videoUpList = undefined;
 													break;
 												case false:
+												default:
 													log("🚧 用户设置动态视频页最常访问不去除");
 													break;
 											}
@@ -437,7 +440,7 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 								case "bilibili.app.view.v1.View": // 视频
 									switch (PATHs?.[1]) {
 										case "View": // 视频播放页
-											switch (Settings?.Detail?.view) {
+											switch (Settings?.View?.AD) {
 												case true:
 												default:
 													body = ViewReply.fromBinary(rawBody);
@@ -575,7 +578,7 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 								case "bilibili.app.viewunite.v1.View": // 视频(内测)
 									switch (PATHs?.[1]) {
 										case "View": // 视频播放页
-											switch (Settings?.Detail?.view) {
+											switch (Settings?.View?.AD) {
 												case true:
 												default:
 													body = ViewUniteReply.fromBinary(rawBody);
@@ -631,27 +634,25 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 								case "bilibili.community.service.dm.v1.DM": //弹幕
 									switch (PATHs?.[1]) {
 										case "DmView": // 弹幕配置
-											switch (Settings?.Detail?.commandDms) {
+											body = DmViewReply.fromBinary(rawBody);
+											switch (Settings?.DM?.Command) {
 												case true:
-													body = DmViewReply.fromBinary(rawBody);
-													if (body.dmView?.commandDms?.length) {
-														log("🎉 交互式弹幕去除");
-														body.dmView.commandDms.length = 0;
-													}
-													if (body.activityMeta.length) {
-														log("🎉 雲視聽水印去除");
-														body.activityMeta = [];
-													}
-													rawBody = DmViewReply.toBinary(body);
+													log("🎉 交互式弹幕去除");
+													_.set(body, "dmView.commandDms", []);
 													break;
 												case false:
 												default:
 													log("🎉 用户设置交互式弹幕不去除");
 													break;
 											}
+											if (body.activityMeta.length) {
+												log("🎉 雲視聽水印去除");
+												body.activityMeta = [];
+											}
+											rawBody = DmViewReply.toBinary(body);
 											break;
 										case "DmSegMobile": // 弹幕列表
-											switch (Settings?.Detail?.colorfulDms) {
+											switch (Settings?.DM?.Colorful) {
 												case true:
 													body = DmSegMobileReply.fromBinary(rawBody);
 													body.elems = body.elems.map(ele => {
@@ -674,7 +675,7 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 								case "bilibili.main.community.reply.v1.Reply": //评论区
 									switch (PATHs?.[1]) {
 										case "MainList":
-											switch (Settings?.Detail?.MainList) {
+											switch (Settings?.Reply?.AD) {
 												case true:
 												default:
 													body = MainListReply.fromBinary(rawBody);
@@ -713,7 +714,7 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 									switch (PATHs?.[1]) {
 										case "SearchAll": {
 											// 全部结果（综合）
-											switch (Settings?.Detail?.search) {
+											switch (Settings?.Search?.AD) {
 												case true:
 												default:
 													body = SearchAllResponse.fromBinary(rawBody);

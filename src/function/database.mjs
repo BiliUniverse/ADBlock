@@ -1,26 +1,39 @@
 export default {
-	"Default": {
-        "Settings": {
-            "Switch": true
-        }
-    },
-	"ADBlock": {
-        "Settings": {
-            "Switch": true,
-            "Detail": {
-                "splash": true,
-                "feed": true,
-                "activity": false,
-                "story": true,
-                "cinema": true,
-                "view": true,
-                "search": true,
-                "xlive": true,
-                "Hot_search": true,
-                "Hot_topics": true,
-                "Most_visited": true,
-                "Dynamic_adcard": true
-            }
-        }
-    },
+	ADBlock: {
+		Settings: {
+			Splash: true,
+			Feed: {
+				AD: true,
+				Activity: false,
+				Vertical: false,
+				BlockUpLiveList: "",
+				Story: true,
+			},
+			Search: {
+				AD: true,
+				HotSearch: true,
+			},
+			PGC: {
+				AD: true,
+			},
+			Xlive: {
+				AD: true,
+			},
+			Dynamic: {
+				HotTopics: true,
+				MostVisited: false,
+				AdCard: true,
+			},
+			View: {
+				AD: true,
+			},
+			DM: {
+				Command: false,
+				Colorful: false,
+			},
+			Reply: {
+				AD: true,
+			},
+		},
+	},
 };

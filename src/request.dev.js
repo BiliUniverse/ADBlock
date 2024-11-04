@@ -15,9 +15,12 @@ log(`⚠ PATHs: ${PATHs}` , "");
 // 解析格式
 const FORMAT = ($request.headers?.["Content-Type"] ?? $request.headers?.["content-type"])?.split(";")?.[0];
 log(`⚠ FORMAT: ${FORMAT}`, "");
-// 读取设置
-const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 !(async () => {
+	/**
+	 * 设置
+	 * @type {{Settings: import('./types').Settings}}
+	 */
+	const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 	// 创建空数据
 	const body = { code: 0, message: "0", data: {} };
 	// 方法判断
@@ -98,10 +101,10 @@ const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 						case "/x/v2/splash/event/list2": // 开屏页
 							break;
 						case "/x/v2/feed/index": // 推荐页
-							switch (Settings?.Detail?.feed) {
+							switch (Settings?.Feed?.AD) {
 								case true:
 								default:
-									switch (Settings?.Detail?.activity) {
+									switch (Settings?.Feed?.Activity) {
 										case true:
 										default:
 											if (url.searchParams.has("banner_hash")) {
