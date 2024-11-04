@@ -587,6 +587,10 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 														log("🎉 up主推荐广告去除");
 														body.cm.sourceContent = [];
 													}
+													if (data.cm?.content5?.content1?.content2?.content9) {
+														$.log("🎉 视频下方广告去除");
+														delete data.cm.content5.content1.content2.content9;
+													}
 													body.tab.tabModule[0].tab.introduction.modules = body.tab.tabModule[0].tab.introduction.modules.map(i => {
 														if (i.type === 28) {
 															log("🎉 视频详情下方推荐卡广告去除");
