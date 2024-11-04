@@ -1,12 +1,18 @@
-name: "📺 BiliBili: 🛡️ ADBlock"
-desc: "哔哩哔哩：去广告"
-openUrl: "http://boxjs.com/#/app/BiliBili.ADBlock"
-author: "ClydeTime"
-references: "VirgilClyne、app2smile、RuCu6、Maasea"
-homepage: "https://adblock.biliuniverse.io"
-manual: "https://manual.biliuniverse.io"
-icon: "https://github.com/BiliUniverse/ADBlock/raw/main/database/icon_rounded.png"
-category: "📺 BiliUniverse"
+name: "{{@package 'displayName'}}"
+desc: |-
+  {{#each (split (@package 'description') "\n")}}
+  {{{this}}}
+  {{/each}}
+openUrl: "{{@package 'openUrl'}}"
+author: |-
+  {{#each (@package 'contributors')}}
+  {{this}}
+  {{/each}}
+homepage: "{{@package 'homepage'}}"
+icon: "{{@package 'icon'}}"
+category: "{{@package 'organizationName'}}"
+date: "{{now "yyyy-MM-dd HH:mm:ss"}}"
+version: "{{@package 'version'}}"
 
 http:
   mitm:
@@ -20,7 +26,7 @@ http:
     - "grpc.biliapi.net"
   url-rewrite:
     # 去除搜索中的默认关键词
-    - ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$ - reject
+    - ^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$ - reject
     # 去除搜索中的大家都在搜
     - ^https?:\/\/api\.vc\.bilibili\.com\/search_svr\/v\d\/Search\/recommend_words - reject-dict
     # 去除动态中的话题
@@ -35,80 +41,80 @@ http:
     - ^https?:\/\/api\.live\.bilibili\.com\/xlive\/e-commerce-interface\/v1\/ecommerce-user\/get_shopping_info\? - reject-dict
   script:
     - match: ^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/feed\/index\?
-      name: BiliBili.ADBlock.request.json
+      name: 📺 BiliBili.ADBlock.request.json
       type: request
       require-body: false
       argument:
     - match: ^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/(splash\/(brand\/list|event\/list2|list|show)|feed\/index(\/story)?|search\/square)
-      name: BiliBili.ADBlock.response.json
+      name: 📺 BiliBili.ADBlock.response.json
       type: response
       require-body: true
       argument:
     - match: ^https?:\/\/api\.bilibili\.com\/x\/web-interface\/wbi\/index\/top\/feed\/rcmd\?
-      name: BiliBili.ADBlock.response.json
+      name: 📺 BiliBili.ADBlock.response.json
       type: response
       require-body: true
       argument:
     - match: ^https?:\/\/api\.bili(bili\.com|api\.net)\/pgc\/page\/(bangumi|cinema\/tab\?)
-      name: BiliBili.ADBlock.response.json
+      name: 📺 BiliBili.ADBlock.response.json
       type: response
       require-body: true
       argument:
     - match: ^https?:\/\/api\.live\.bilibili\.com\/xlive\/app-room\/v1\/index\/getInfoByRoom
-      name: BiliBili.ADBlock.response.json
+      name: 📺 BiliBili.ADBlock.response.json
       type: response
       require-body: true
       argument:
-    - match: ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.(view|viewunite)\.v1\.View\/(View|TFInfo)$
-      name: BiliBili.ADBlock.response.grpc
-      type: response
-      require-body: true
-      binary-mode: true
-      argument:
-    - match: ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.dynamic\.v2\.Dynamic\/Dyn(All|Video)$
-      name: BiliBili.ADBlock.response.grpc
+    - match: ^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.(view|viewunite)\.v1\.View\/(View|TFInfo|RelatesFeed)$
+      name: 📺 BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
       binary-mode: true
       argument:
-    - match: ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.playurl\.v1\.PlayURL\/PlayView$
-      name: BiliBili.ADBlock.response.grpc
+    - match: ^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.dynamic\.v2\.Dynamic\/Dyn(All|Video)$
+      name: 📺 BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
       binary-mode: true
       argument:
-    - match: ^https?:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.polymer\.app\.search\.v1\.Search\/SearchAll$
-      name: BiliBili.ADBlock.response.grpc
+    - match: ^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.playurl\.v1\.PlayURL\/PlayView$
+      name: 📺 BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
       binary-mode: true
       argument:
-    - match: ^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.community\.service\.dm\.v1\.DM\/(DmView|DmSegMobile)
-      name: BiliBili.ADBlock.response.grpc
+    - match: ^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.polymer\.app\.search\.v1\.Search\/SearchAll$
+      name: 📺 BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
       binary-mode: true
       argument:
-    - match: ^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.app\.interface\.v1\.Teenagers\/ModeStatus
-      name: BiliBili.ADBlock.response.grpc
+    - match: ^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.community\.service\.dm\.v1\.DM\/(DmView|DmSegMobile)
+      name: 📺 BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
       binary-mode: true
       argument:
-    - match: ^https:\/\/(grpc\.biliapi\.net|app\.bilibili\.com)\/bilibili\.main\.community\.reply\.v1\.Reply\/MainList
-      name: BiliBili.ADBlock.response.grpc
+    - match: ^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.interface\.v1\.Teenagers\/ModeStatus
+      name: 📺 BiliBili.ADBlock.response.grpc
+      type: response
+      require-body: true
+      binary-mode: true
+      argument:
+    - match: ^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.main\.community\.reply\.v1\.Reply\/MainList
+      name: 📺 BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
       binary-mode: true
       argument:
 
 script-providers:
-  BiliBili.ADBlock.request.json:
-    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/main/js/BiliBili.ADBlock.request.js
+  📺 BiliBili.ADBlock.request.json:
+    url: https://github.com/BiliUniverse/ADBlock/releases/download/v{{@package 'version'}}/request.bundle.js
     interval: 86400
-  BiliBili.ADBlock.response.json:
-    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/main/js/BiliBili.ADBlock.response.js
+  📺 BiliBili.ADBlock.response.json:
+    url: https://github.com/BiliUniverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js
     interval: 86400
-  BiliBili.ADBlock.response.grpc:
-    url: https://raw.githubusercontent.com/BiliUniverse/ADBlock/main/js/BiliBili.ADBlock.response.js
+  📺 BiliBili.ADBlock.response.grpc:
+    url: https://github.com/BiliUniverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js
     interval: 86400
