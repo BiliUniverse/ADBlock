@@ -32,7 +32,7 @@ export default defineConfig({
 		},
 		boxjsSettings: {
 			path: "./template/boxjs.settings.json",
-			scope: "@BiliBili.Global.Settings",
+			scope: "@BiliBili.ADBlock.Settings",
 		},
 	},
 	args: [
