@@ -1,7 +1,4 @@
-### 🆕 New Features
-  * 推薦列表廣告卡去除 by @Yswag
-  * 视频下方广告去除 by @applepi-icpc
-
-### 🔄 Other Changes
-  * `打包器`由 `rollup` 更改为 `rspack`
-  * `util` 由 `submodule` 更改为 `package`
+### 🛠️ Bug Fixes
+  * 修复 `DmViewReply` 解析错误
+  * 修复 `ViewUniteReply` 对象错误
+  * 修复 `TFInfoReply` 解析错误

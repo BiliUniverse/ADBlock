@@ -9,6 +9,7 @@ import { ModeStatusReply } from "./protobuf/bilibili/app/interface/teenagers.js"
 import { DmViewReply, DmSegMobileReply } from "./protobuf/bilibili/community/service/dm/v1/dm.js";
 import { MainListReply } from "./protobuf/bilibili/main/community/reply/v1/reply.js";
 import { SearchAllResponse } from "./protobuf/bilibili/polymer/app/search/v1/search.js";
+import { WireType, UnknownFieldHandler, reflectionMergePartial, MESSAGE_TYPE, MessageType, BinaryReader, isJsonObject, typeofJsonValue, jsonWriteOptions } from "@protobuf-ts/runtime";
 /***************** Processing *****************/
 // 解构URL
 const url = new URL($request.url);
@@ -587,9 +588,9 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 														log("🎉 up主推荐广告去除");
 														body.cm.sourceContent = [];
 													}
-													if (data.cm?.content5?.content1?.content2?.content9) {
+													if (body.cm?.content5?.content1?.content2?.content9) {
 														$.log("🎉 视频下方广告去除");
-														delete data.cm.content5.content1.content2.content9;
+														delete body.cm.content5.content1.content2.content9;
 													}
 													body.tab.tabModule[0].tab.introduction.modules = body.tab.tabModule[0].tab.introduction.modules.map(i => {
 														if (i.type === 28) {
