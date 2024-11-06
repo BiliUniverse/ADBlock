@@ -589,7 +589,7 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 														body.cm.sourceContent = [];
 													}
 													if (body.cm?.content5?.content1?.content2?.content9) {
-														$.log("🎉 视频下方广告去除");
+														log("🎉 视频下方广告去除");
 														delete body.cm.content5.content1.content2.content9;
 													}
 													body.tab.tabModule[0].tab.introduction.modules = body.tab.tabModule[0].tab.introduction.modules.map(i => {
