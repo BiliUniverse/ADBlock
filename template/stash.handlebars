@@ -70,6 +70,7 @@ http:
       type: response
       require-body: true
       binary-mode: true
+      max-size: 262144
       argument:
     - match: ^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.dynamic\.v2\.Dynamic\/Dyn(All|Video)$
       name: 📺 BiliBili.ADBlock.response.grpc
