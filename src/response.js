@@ -583,7 +583,6 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 												case true:
 												default:
 													body = ViewUniteReply.fromBinary(rawBody);
-													log("ViewUniteReply", JSON.stringify(body, null, 2), "");
 													if (body.cm?.sourceContent?.length) {
 														log("🎉 up主推荐广告去除");
 														body.cm.sourceContent = [];
