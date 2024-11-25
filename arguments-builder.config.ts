@@ -21,10 +21,6 @@ export default defineConfig({
 				path: "./dist/BiliBili.ADBlock.snippet",
 				template: "./template/quantumultx.handlebars",
 			},
-			{
-				path: "./dist/BiliBili.ADBlock.srmodule",
-				template: "./template/shadowrocket.handlebars",
-			},
 		],
 		dts: {
 			isExported: true,

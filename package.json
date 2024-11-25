@@ -1,6 +1,6 @@
 {
 	"name": "@biliuniverse/adblock",
-	"version": "0.6.7",
+	"version": "0.6.9",
 	"organizationName": "🪐 BiliUniverse",
 	"displayName": "📺 BiliBili: 🛡️ ADBlock",
 	"description": "哔哩哔哩：去广告\n自定义去除APP内界面元素",
@@ -8,8 +8,17 @@
 	"openUrl": "http://boxjs.com/#/app/BiliBili.ADBlock",
 	"icon": "https://github.com/BiliUniverse/ADBlock/raw/main/src/assets/icon_rounded.png",
 	"keywords": [],
-	"contributors": ["ClydeTime[https://github.com/ClydeTime]", "VirgilClyne[https://github.com/VirgilClyne]", "app2smile[https://github.com/app2smile]", "RuCu6[https://github.com/RuCu6]", "Maasea[https://github.com/Maasea]"],
-	"system": ["iOS", "iPadOS", "macOS", "tvOS"],
+	"contributors": [
+		"ClydeTime[https://github.com/ClydeTime]",
+		"VirgilClyne[https://github.com/VirgilClyne]",
+		"app2smile[https://github.com/app2smile]",
+		"RuCu6[https://github.com/RuCu6]",
+		"Maasea[https://github.com/Maasea]"
+	],
+	"system": [
+		"iOS",
+		"iPadOS"
+	],
 	"systemVersion": 15,
 	"license": "Apache-2.0",
 	"type": "module",
@@ -27,10 +36,11 @@
 		"build:args": "arguments-builder build",
 		"dts": "arguments-builder dts"
 	},
-	"browserslist": ["iOS >= 15"],
+	"browserslist": [
+		"iOS >= 15"
+	],
 	"devDependencies": {
-		"@iringo/arguments-builder": "^1.8.2",
-		"@nsnanocat/util": "^1.3.6",
+		"@iringo/arguments-builder": "^1.8.5",
 		"@protobuf-ts/plugin": "^2.9.3",
 		"@rspack/cli": "^1.0.14",
 		"@rspack/core": "^1.0.14",
@@ -39,8 +49,9 @@
 		"typescript": "^5.5.4"
 	},
 	"dependencies": {
-		"@protobuf-ts/runtime-rpc": "^2.9.3",
+		"@nsnanocat/util": "^1.5.1",
 		"@protobuf-ts/runtime": "^2.9.3",
+		"@protobuf-ts/runtime-rpc": "^2.9.3",
 		"crypto-js": "^4.2.0"
 	}
 }

@@ -1,4 +1,4 @@
-import { $platform, Lodash as _, Storage, gRPC, fetch, notification, log, logError, wait, done } from "@nsnanocat/util";
+import { $app, Lodash as _, Storage, gRPC, fetch, notification, log, logError, wait, done } from "@nsnanocat/util";
 import database from "./function/database.mjs";
 import setENV from "./function/setENV.mjs";
 import { PlayViewReply } from "./protobuf/bilibili/pgc/gateway/player/v2/playurl.js";
@@ -342,7 +342,7 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 		case "application/grpc+proto":
 		case "applecation/octet-stream": {
 			//log(`🚧 $response.body: ${JSON.stringify($response.body)}`, "");
-			let rawBody = $platform === "Quantumult X" ? new Uint8Array($response.bodyBytes ?? []) : ($response.body ?? new Uint8Array());
+			let rawBody = $app === "Quantumult X" ? new Uint8Array($response.bodyBytes ?? []) : ($response.body ?? new Uint8Array());
 			//log(`🚧 isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`, "");
 			switch (FORMAT) {
 				case "application/protobuf":
