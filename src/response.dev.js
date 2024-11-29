@@ -1,4 +1,4 @@
-import { $app, Lodash as _, Storage, gRPC, fetch, notification, log, logError, wait, done } from "@nsnanocat/util";
+import { $app, Console, done, fetch, gRPC, Lodash as _, notification, Storage, wait } from "@nsnanocat/util";
 import database from "./function/database.mjs";
 import setENV from "./function/setENV.mjs";
 import { PlayViewReply } from "./protobuf/bilibili/pgc/gateway/player/v2/playurl.js";
@@ -13,13 +13,13 @@ import { WireType, UnknownFieldHandler, reflectionMergePartial, MESSAGE_TYPE, Me
 /***************** Processing *****************/
 // 解构URL
 const url = new URL($request.url);
-log(`⚠ url: ${url.toJSON()}`, "");
+Console.info(`url: ${url.toJSON()}`);
 // 获取连接参数
 const PATHs = url.pathname.split("/").filter(Boolean);
-log(`⚠ PATHs: ${PATHs}`, "");
+Console.info(`PATHs: ${PATHs}`);
 // 解析格式
 const FORMAT = ($response.headers?.["Content-Type"] ?? $response.headers?.["content-type"])?.split(";")?.[0];
-log(`⚠ FORMAT: ${FORMAT}`, "");
+Console.info(`FORMAT: ${FORMAT}`);
 !(async () => {
 	/**
 	 * 设置
@@ -41,7 +41,7 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 		case "application/vnd.apple.mpegurl":
 		case "audio/mpegurl":
 			//body = M3U8.parse($response.body);
-			//log(`🚧 body: ${JSON.stringify(body)}`, "");
+			//Console.debug(`body: ${JSON.stringify(body)}`);
 			//$response.body = M3U8.stringify(body);
 			break;
 		case "text/xml":
@@ -51,13 +51,13 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 		case "application/plist":
 		case "application/x-plist":
 			//body = XML.parse($response.body);
-			//log(`🚧 body: ${JSON.stringify(body)}`, "");
+			//Console.debug(`body: ${JSON.stringify(body)}`);
 			//$response.body = XML.stringify(body);
 			break;
 		case "text/vtt":
 		case "application/vtt":
 			//body = VTT.parse($response.body);
-			//log(`🚧 body: ${JSON.stringify(body)}`, "");
+			//Console.debug(`body: ${JSON.stringify(body)}`);
 			//$response.body = VTT.stringify(body);
 			break;
 		case "text/json":
@@ -77,7 +77,7 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 							switch (Settings?.Splash) {
 								case true:
 								default: {
-									log("🎉 开屏页广告去除");
+									Console.log("✅ 开屏页广告去除");
 									const item = ["account", "event_list", "preload", "show"];
 									if (body.data) {
 										item.forEach(i => {
@@ -87,7 +87,7 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 									break;
 								}
 								case false:
-									log("🚧 用户设置开屏页广告不去除");
+									Console.warn("用户设置开屏页广告不去除");
 									break;
 							}
 							break;
@@ -106,14 +106,14 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 															case true:
 																Caches.banner_hash = item.hash;
 																Storage.setItem("@BiliBili.ADBlock.Caches", Caches); // 获取banner_hash,无此字段会有活动页且此字段无法伪造.
-																log("🎉 推荐页活动大图去除");
+																Console.log("✅ 推荐页活动大图去除");
 																return undefined;
 															case false:
 															default:
 																if (item.banner_item) {
 																	item.banner_item = item.banner_item.filter(i => {
 																		if (i.type === "ad") {
-																			log("🎉 推荐页大图广告去除");
+																			Console.log("✅ 推荐页大图广告去除");
 																			return false;
 																		}
 																		return true;
@@ -123,7 +123,7 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 														}
 													} else if (["cm_v2", "cm_v1"].includes(cardType) && ["ad_web_s", "ad_av", "ad_web_gif"].includes(cardGoto)) {
 														// ad_player大视频广告 ad_web_gif大gif广告 ad_web_s普通小广告 ad_av创作推广广告 ad_inline_3d  上方大的视频3d广告 ad_inline_eggs 上方大的视频广告 ad_inline_live 华为问界
-														log(`🎉 ${cardGoto}广告去除`);
+														Console.log(`✅ ${cardGoto}广告去除`);
 														if (url.searchParams.get("device") !== "phone") {
 															return undefined; //pad直接去除
 														} else {
@@ -135,31 +135,31 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 															BlockUpLiveList = BlockUpLiveList.toString();
 														}
 														if (BlockUpLiveList?.includes(item?.args?.up_id?.toString())) {
-															log(`🎉 屏蔽Up主<${item?.args?.up_name}>直播推广`);
+															Console.log(`✅ 屏蔽Up主<${item?.args?.up_name}>直播推广`);
 															await fixPosition().then(result => (item = result)); //小广告补位
 														}
 													} else if (cardType === "cm_v2" && ["ad_player", "ad_inline_3d", "ad_inline_eggs", "ad_inline_live"].includes(cardGoto)) {
-														log(`🎉 ${cardGoto}广告去除`);
+														Console.log(`✅ ${cardGoto}广告去除`);
 														return undefined; //大广告直接去除
 													} else if (cardType === "small_cover_v10" && cardGoto === "game") {
-														log("🎉 游戏广告去除");
+														Console.log("✅ 游戏广告去除");
 														if (url.searchParams.get("device") !== "phone") {
 															return undefined; //pad直接去除
 														} else {
 															await fixPosition().then(result => (item = result)); //小广告补位
 														}
 													} else if (cardType === "cm_double_v9" && cardGoto === "ad_inline_av") {
-														log("🎉 大视频广告去除");
+														Console.log("✅ 大视频广告去除");
 														return undefined; //大广告直接去除
 													} else if (Goto === "vertical_av") {
 														switch (Settings?.Feed?.Vertical) {
 															case true:
-																log("🎉 竖屏视频去除");
+																Console.log("✅ 竖屏视频去除");
 																await fixPosition().then(result => (item = result)); //小视频补位
 																break;
 															case false:
 															default:
-																log("🚧 用户设置推荐页竖屏视频不去除");
+																Console.warn("用户设置推荐页竖屏视频不去除");
 																break;
 														}
 													}
@@ -170,11 +170,11 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 										body.data.items = body.data.items.filter(fix => fix !== undefined);
 									}
 									async function fixPosition() {
-										let itemsCache = Storage.getItem("@BiliBili.Index.Caches", "");
+										let itemsCache = Storage.getItem("@BiliBili.Index.Caches");
 										let singleItem = {};
 										if (itemsCache && itemsCache.length > 0) {
 											singleItem = itemsCache.pop();
-											log("🎉 推荐页空缺位填充成功");
+											Console.log("✅ 推荐页空缺位填充成功");
 										} else {
 											//重新获取填充位
 											const myRequest = {
@@ -209,18 +209,18 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 															})
 															.filter(fix => fix !== undefined);
 														Storage.setItem("@BiliBili.Index.Caches", body.data.items);
-														log("🎉 推荐页缓存数组补充成功");
+														Console.log("✅ 推荐页缓存数组补充成功");
 													} else {
-														log("🚧 访问推荐页尝试填补失败");
+														Console.warn("访问推荐页尝试填补失败");
 													}
 												} catch (e) {
-													logError(e, response);
+													Console.error(e, response);
 												}
 											});
-											itemsCache = Storage.getItem("@BiliBili.Index.Caches", "");
+											itemsCache = Storage.getItem("@BiliBili.Index.Caches");
 											if (itemsCache.length > 0) {
 												singleItem = itemsCache.pop();
-												log("🎉 推荐页空缺位填充成功");
+												Console.log("✅ 推荐页空缺位填充成功");
 											}
 										}
 										Storage.setItem("@BiliBili.Index.Caches", itemsCache);
@@ -229,7 +229,7 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 									break;
 								}
 								case false:
-									log("🚧 用户设置推荐页广告不去除");
+									Console.warn("用户设置推荐页广告不去除");
 									break;
 							}
 							break;
@@ -240,12 +240,12 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 									if (body.data?.items) {
 										// vertical_live 直播内容
 										// vertical_pgc 大会员专享
-										log("🎉 首页短视频流广告去除");
+										Console.log("✅ 首页短视频流广告去除");
 										body.data.items = body.data.items.filter(i => !(i.hasOwnProperty("ad_info") || ["vertical_ad_av", "vertical_pgc"].includes(i.card_goto)));
 									}
 									break;
 								case false:
-									log("🚧 用户设置首页短视频流广告不去除");
+									Console.warn("用户设置首页短视频流广告不去除");
 									break;
 							}
 							break;
@@ -253,11 +253,11 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 							switch (Settings?.Search?.HotSearch) {
 								case true:
 								default:
-									log("🎉 搜索页热搜内容去除");
+									Console.log("✅ 搜索页热搜内容去除");
 									body.data = body.data.filter(i => !(i.type === "trending"));
 									break;
 								case false:
-									log("🚧 用户设置搜索页热搜内容不去除");
+									Console.warn("用户设置搜索页热搜内容不去除");
 									break;
 							}
 							break;
@@ -272,7 +272,7 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 								case true:
 								default:
 									if (body.result?.modules) {
-										log("🎉 观影页广告去除");
+										Console.log("✅ 观影页广告去除");
 										body.result.modules.forEach(i => {
 											if (i.style.startsWith("banner")) {
 												i.items = i.items.filter(j => j.link.includes("play"));
@@ -287,7 +287,7 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 									}
 									break;
 								case false:
-									log("🚧 用户设置观影页广告不去除");
+									Console.warn("用户设置观影页广告不去除");
 									break;
 							}
 							break;
@@ -297,11 +297,11 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 							switch (Settings?.Feed?.AD) {
 								case true:
 								default:
-									log("🎉 首页广告内容去除");
+									Console.log("✅ 首页广告内容去除");
 									body.data.item = body.data.item.filter(i => !(i.goto === "ad"));
 									break;
 								case false:
-									log("🚧 用户设置首页广告不去除");
+									Console.warn("用户设置首页广告不去除");
 									break;
 							}
 							break;
@@ -313,20 +313,20 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 							switch (Settings?.Xlive?.AD) {
 								case true:
 								default:
-									log("🎉 直播banner广告去除");
+									Console.log("✅ 直播banner广告去除");
 									delete body.data?.activity_banner_info;
 									if (body.data?.shopping_info) {
 										body.data.shopping_info = {
 											is_show: 0,
 										};
-										log("🎉 直播购物广告去除");
+										Console.log("✅ 直播购物广告去除");
 									}
 									if (body.data?.new_tab_info?.outer_list?.length > 0) {
 										body.data.new_tab_info.outer_list = body.data.new_tab_info.outer_list.filter(i => i.biz_id !== 33);
 									}
 									break;
 								case false:
-									log("🚧 用户设置直播页广告不去除");
+									Console.warn("用户设置直播页广告不去除");
 									break;
 							}
 							break;
@@ -341,9 +341,9 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 		case "application/grpc":
 		case "application/grpc+proto":
 		case "applecation/octet-stream": {
-			//log(`🚧 $response.body: ${JSON.stringify($response.body)}`, "");
+			//Console.debug(`$response.body: ${JSON.stringify($response.body)}`);
 			let rawBody = $app === "Quantumult X" ? new Uint8Array($response.bodyBytes ?? []) : ($response.body ?? new Uint8Array());
-			//log(`🚧 isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`, "");
+			//Console.debug(`isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`);
 			switch (FORMAT) {
 				case "application/protobuf":
 				case "application/x-protobuf":
@@ -366,12 +366,12 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 											body = PlayViewReply.fromBinary(rawBody);
 											const oldBackgroundConf = body.playArc?.backgroundPlayConf;
 											if (oldBackgroundConf && (!oldBackgroundConf.isSupport || oldBackgroundConf.disabled)) {
-												log("🎉 后台播放限制去除");
+												Console.log("✅ 后台播放限制去除");
 												body.playArc.backgroundPlayConf.isSupport = true;
 												body.playArc.backgroundPlayConf.disabled = false;
 												body.playArc.backgroundPlayConf.extraContent = null;
 											} else {
-												log("🚧 无后台播放限制");
+												Console.warn("无后台播放限制");
 											}
 											rawBody = PlayViewReply.toBinary(body);
 											break;
@@ -387,21 +387,21 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 											switch (Settings?.Dynamic?.HotTopics) {
 												case true:
 												default:
-													log("🎉 动态综合页热门话题去除");
+													Console.log("✅ 动态综合页热门话题去除");
 													body.topicList = undefined;
 													break;
 												case false:
-													log("🚧 用户设置动态综合页热门话题不去除");
+													Console.warn("用户设置动态综合页热门话题不去除");
 													break;
 											}
 											switch (Settings?.Dynamic?.MostVisited) {
 												case true:
-													log("🎉 动态综合页最常访问去除");
+													Console.log("✅ 动态综合页最常访问去除");
 													body.upList = undefined;
 													break;
 												case false:
 												default:
-													log("🚧 用户设置动态综合页最常访问不去除");
+													Console.warn("用户设置动态综合页最常访问不去除");
 													break;
 											}
 											switch (Settings?.Dynamic?.AdCard) {
@@ -410,14 +410,14 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 													if (body.dynamicList?.list?.length) {
 														body.dynamicList.list = body.dynamicList.list.filter(item => {
 															if (item.cardType === 15) {
-																log("🎉 动态综合页广告动态去除");
+																Console.log("✅ 动态综合页广告动态去除");
 																return false;
 															} else return true;
 														});
 													}
 													break;
 												case false:
-													log("🚧 用户设置动态综合页广告动态不去除");
+													Console.warn("用户设置动态综合页广告动态不去除");
 													break;
 											}
 											rawBody = DynAllReply.toBinary(body);
@@ -426,12 +426,12 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 											body = DynVideoReply.fromBinary(rawBody);
 											switch (Settings?.Dynamic?.MostVisited) {
 												case true:
-													log("🎉 动态视频页最常访问去除");
+													Console.log("✅ 动态视频页最常访问去除");
 													body.videoUpList = undefined;
 													break;
 												case false:
 												default:
-													log("🚧 用户设置动态视频页最常访问不去除");
+													Console.warn("用户设置动态视频页最常访问不去除");
 													break;
 											}
 											rawBody = DynVideoReply.toBinary(body);
@@ -446,20 +446,20 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 												default:
 													body = ViewReply.fromBinary(rawBody);
 													if (body.cms?.length) {
-														log("🎉 播放页广告卡片去除");
+														Console.log("✅ 播放页广告卡片去除");
 														body.cms = [];
 													}
 													if (body.relates?.length) {
 														body.relates = body.relates.filter(item => {
 															if (item.cm) {
-																log("🎉 播放页关联推荐广告去除");
+																Console.log("✅ 播放页关联推荐广告去除");
 																return false;
 															}
 															return true;
 														});
 													}
 													if (body.cmConfig || body.cmIpad) {
-														log("🎉 播放页定制tab去除");
+														Console.log("✅ 播放页定制tab去除");
 														body.cmConfig = undefined;
 														body.cmIpad = undefined;
 													}
@@ -473,7 +473,7 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 													rawBody = ViewReply.toBinary(body);
 													break;
 												case false:
-													log("🚧 用户设置播放页广告不去除");
+													Console.warn("用户设置播放页广告不去除");
 													break;
 											}
 											break;
@@ -566,9 +566,9 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 											const TFToast = new TFToast$Type();
 											/******************  initialization finish  ******************/
 											body = TFInfoReply.fromBinary(rawBody);
-											log(body.tipsId);
+											Console.debug(`tipsId: ${body.tipsId}`);
 											if (body?.tipsId) {
-												log("🎉 播放页办卡免流广告去除");
+												Console.log("✅ 播放页办卡免流广告去除");
 												body.tfToast = undefined;
 												body.tfPanelCustomized = undefined;
 											}
@@ -583,18 +583,18 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 												case true:
 												default:
 													body = ViewUniteReply.fromBinary(rawBody);
-													log("ViewUniteReply", JSON.stringify(body, null, 2), "");
+													Console.debug(`ViewUniteReply: ${JSON.stringify(body, null, 2)}`);
 													if (body.cm?.sourceContent?.length) {
-														log("🎉 up主推荐广告去除");
+														Console.log("✅ up主推荐广告去除");
 														body.cm.sourceContent = [];
 													}
 													if (body.cm?.content5?.content1?.content2?.content9) {
-														log("🎉 视频下方广告去除");
+														Console.log("✅ 视频下方广告去除");
 														delete body.cm.content5.content1.content2.content9;
 													}
 													body.tab.tabModule[0].tab.introduction.modules = body.tab.tabModule[0].tab.introduction.modules.map(i => {
 														if (i.type === 28) {
-															log("🎉 视频详情下方推荐卡广告去除");
+															Console.log("✅ 视频详情下方推荐卡广告去除");
 															i.data.relates.cards = i.data.relates.cards.filter(j => j.relateCardType !== 5 && j.relateCardType !== 4);
 														}
 														return i;
@@ -602,7 +602,7 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 													rawBody = ViewUniteReply.toBinary(body);
 													break;
 												case false:
-													log("🚧 用户设置up主推荐广告不去除");
+													Console.warn("用户设置up主推荐广告不去除");
 													break;
 											}
 											break;
@@ -610,7 +610,7 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 											body = RelatesFeedReply.fromBinary(rawBody);
 											body.relates.cards = body.relates.cards.filter(item => {
 												if (item.relateCardType === 5 || item.relateCardType === 4) {
-													log("🎉 推薦列表廣告卡去除");
+													Console.log("✅ 推薦列表廣告卡去除");
 													return false;
 												}
 												return true;
@@ -627,7 +627,7 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 												if (mode?.name === "teenagers") {
 													if (mode?.f5?.f1) {
 														mode.f5.f1 = 0;
-														log("🎉 青少年模式弹窗去除");
+														Console.log("✅ 青少年模式弹窗去除");
 													}
 												}
 												return mode;
@@ -642,16 +642,16 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 											body = DmViewReply.fromBinary(rawBody);
 											switch (Settings?.DM?.Command) {
 												case true:
-													log("🎉 交互式弹幕去除");
+													Console.log("✅ 交互式弹幕去除");
 													_.set(body, "dmView.commandDms", []);
 													break;
 												case false:
 												default:
-													log("🎉 用户设置交互式弹幕不去除");
+													Console.warn("用户设置交互式弹幕不去除");
 													break;
 											}
 											if (body.activityMeta.length) {
-												log("🎉 雲視聽水印去除");
+												Console.log("✅ 雲視聽水印去除");
 												body.activityMeta = [];
 											}
 											rawBody = DmViewReply.toBinary(body);
@@ -666,12 +666,12 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 														}
 														return ele;
 													});
-													log("🎉 会员弹幕已替换为普通弹幕");
+													Console.log("✅ 会员弹幕已替换为普通弹幕");
 													rawBody = DmSegMobileReply.toBinary(body);
 													break;
 												case false:
 												default:
-													log("🎉 用户设置会员弹幕不修改");
+													Console.warn("用户设置会员弹幕不修改");
 													break;
 											}
 											break;
@@ -684,12 +684,12 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 												case true:
 												default:
 													body = MainListReply.fromBinary(rawBody);
-													log("🎉 评论列表广告去除");
+													Console.log("✅ 评论列表广告去除");
 													body.cm = undefined;
 													rawBody = MainListReply.toBinary(body);
 													break;
 												case false:
-													log("🎉 用户设置评论列表广告不去除");
+													Console.log("✅ 用户设置评论列表广告不去除");
 													break;
 											}
 											break;
@@ -723,12 +723,12 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 												case true:
 												default:
 													body = SearchAllResponse.fromBinary(rawBody);
-													log("🎉 搜索页广告去除");
+													Console.log("✅ 搜索页广告去除");
 													body.item = body.item.filter(i => !(i.cardItem?.oneofKind === "cm" || i.cardItem?.oneofKind === "game"));
 													rawBody = SearchAllResponse.toBinary(body);
 													break;
 												case false:
-													log("🚧 用户设置搜索页广告不去除");
+													Console.warn("用户设置搜索页广告不去除");
 													break;
 											}
 											break;
@@ -751,5 +751,5 @@ log(`⚠ FORMAT: ${FORMAT}`, "");
 		}
 	}
 })()
-	.catch(e => logError(e))
+	.catch(e => Console.error(e))
 	.finally(() => done($response));
