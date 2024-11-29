@@ -12,7 +12,7 @@ const url = new URL($request.url);
 Console.info(`url: ${url.toJSON()}`);
 // 获取连接参数
 const PATHs = url.pathname.split("/").filter(Boolean);
-Console.info(`PATHs: ${PATHs}` );
+Console.info(`PATHs: ${PATHs}`);
 // 解析格式
 const FORMAT = ($request.headers?.["Content-Type"] ?? $request.headers?.["content-type"])?.split(";")?.[0];
 Console.info(`FORMAT: ${FORMAT}`);
@@ -102,36 +102,28 @@ Console.info(`FORMAT: ${FORMAT}`);
 						case "/x/v2/splash/event/list2": // 开屏页
 							break;
 						case "/x/v2/feed/index": // 推荐页
-							switch (Settings?.Feed?.AD) {
+							switch (Settings?.Feed?.Activity) {
 								case true:
 								default:
-									switch (Settings?.Feed?.Activity) {
-										case true:
-										default:
-											if (url.searchParams.has("banner_hash")) {
-												// 无论如何此字段都为空，因为客户端无法收到（只要去了大图）
-												if (url.searchParams.get("login_event") !== "0") {
-													// 此字段可区分第一次请求和后续请求
-													url.searchParams.delete("sign");
-													url.searchParams.set("open_event");
-													url.searchParams.set("pull", 0);
-													if (Caches.banner_hash) {
-														url.searchParams.set("banner_hash", Caches.banner_hash);
-														Console.log("✅ 读取hash缓存成功");
-													}
-													const string = `${url.search.substring(1)}c2ed53a74eeefe3cf99fbd01d8c9c375`;
-													const sign = MD5(string).toString();
-													url.searchParams.set("sign", sign);
-												}
+									if (url.searchParams.has("banner_hash")) {
+										// 无论如何此字段都为空，因为客户端无法收到（只要去了大图）
+										if (url.searchParams.get("login_event") !== "0") {
+											// 此字段可区分第一次请求和后续请求
+											url.searchParams.delete("sign");
+											url.searchParams.set("open_event", "");
+											url.searchParams.set("pull", 0);
+											if (Caches.banner_hash) {
+												url.searchParams.set("banner_hash", Caches.banner_hash);
+												Console.log("✅ 读取hash缓存成功");
 											}
-											break;
-										case false:
-											Console.warn("用户设置推荐页活动大图不去除");
-											break;
+											const string = `${url.search.substring(1)}c2ed53a74eeefe3cf99fbd01d8c9c375`;
+											const sign = MD5(string).toString();
+											url.searchParams.set("sign", sign);
+										}
 									}
 									break;
 								case false:
-									Console.warn("用户设置推荐页广告不去除");
+									Console.warn("用户设置推荐页活动大图不去除");
 									break;
 							}
 							break;
