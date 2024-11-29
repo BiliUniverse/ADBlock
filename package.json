@@ -1,6 +1,5 @@
 {
 	"name": "@biliuniverse/adblock",
-	"version": "0.6.9",
 	"organizationName": "🪐 BiliUniverse",
 	"displayName": "📺 BiliBili: 🛡️ ADBlock",
 	"description": "哔哩哔哩：去广告\n自定义去除APP内界面元素",
@@ -49,7 +48,7 @@
 		"typescript": "^5.5.4"
 	},
 	"dependencies": {
-		"@nsnanocat/util": "^1.5.2",
+		"@nsnanocat/util": "^1.6.3",
 		"@protobuf-ts/runtime": "^2.9.3",
 		"@protobuf-ts/runtime-rpc": "^2.9.3",
 		"crypto-js": "^4.2.0"
