@@ -10,6 +10,7 @@ import { DmViewReply, DmSegMobileReply } from "./protobuf/bilibili/community/ser
 import { MainListReply } from "./protobuf/bilibili/main/community/reply/v1/reply.js";
 import { SearchAllResponse } from "./protobuf/bilibili/polymer/app/search/v1/search.js";
 import { WireType, UnknownFieldHandler, reflectionMergePartial, MESSAGE_TYPE, MessageType, BinaryReader, isJsonObject, typeofJsonValue, jsonWriteOptions } from "@protobuf-ts/runtime";
+Console.logLevel = "DEBUG";
 /***************** Processing *****************/
 // 解构URL
 const url = new URL($request.url);
@@ -477,7 +478,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 													break;
 											}
 											break;
-										case "TFInfo":
+										case "TFInfo": {
 											/******************  initialization start  *******************/
 											// protobuf/bilibili/app/view/view.proto
 											class TFInfoReply$Type extends MessageType {
@@ -574,6 +575,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 											}
 											rawBody = TFInfoReply.toBinary(body);
 											break;
+										}
 									}
 									break;
 								case "bilibili.app.viewunite.v1.View": // 视频(内测)
