@@ -1,4 +1,4 @@
-import { $app, Console, done, fetch, gRPC, Lodash as _, notification, Storage, wait } from "@nsnanocat/util";
+import { $app, Console, done, fetch, gRPC, Lodash as _, Storage } from "@nsnanocat/util";
 import database from "./function/database.mjs";
 import setENV from "./function/setENV.mjs";
 import { PlayViewReply } from "./protobuf/bilibili/pgc/gateway/player/v2/playurl.js";
@@ -10,7 +10,6 @@ import { DmViewReply, DmSegMobileReply } from "./protobuf/bilibili/community/ser
 import { MainListReply } from "./protobuf/bilibili/main/community/reply/v1/reply.js";
 import { SearchAllResponse } from "./protobuf/bilibili/polymer/app/search/v1/search.js";
 import { WireType, UnknownFieldHandler, reflectionMergePartial, MESSAGE_TYPE, MessageType, BinaryReader, isJsonObject, typeofJsonValue, jsonWriteOptions } from "@protobuf-ts/runtime";
-Console.debug = () => {};
 /***************** Processing *****************/
 // 解构URL
 const url = new URL($request.url);
@@ -478,7 +477,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 													break;
 											}
 											break;
-										case "TFInfo":
+										case "TFInfo": {
 											/******************  initialization start  *******************/
 											// protobuf/bilibili/app/view/view.proto
 											class TFInfoReply$Type extends MessageType {
@@ -575,6 +574,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 											}
 											rawBody = TFInfoReply.toBinary(body);
 											break;
+										}
 									}
 									break;
 								case "bilibili.app.viewunite.v1.View": // 视频(内测)
