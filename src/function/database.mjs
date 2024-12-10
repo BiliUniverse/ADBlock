@@ -36,4 +36,9 @@ export default {
 			},
 		},
 	},
+	Default: {
+		Settings: {
+			LogLevel: "WARN",
+		},
+	},
 };
