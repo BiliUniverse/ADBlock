@@ -15,12 +15,13 @@ Console.info(`PATHs: ${PATHs}`);
 // 解析格式
 const FORMAT = ($request.headers?.["Content-Type"] ?? $request.headers?.["content-type"])?.split(";")?.[0];
 Console.info(`FORMAT: ${FORMAT}`);
-!(async () => {
+(async () => {
 	/**
 	 * 设置
 	 * @type {{Settings: import('./types').Settings}}
 	 */
 	const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
+	Console.logLevel = Settings.LogLevel;
 	// 创建空数据
 	const body = { code: 0, message: "0", data: {} };
 	// 方法判断
