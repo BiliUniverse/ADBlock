@@ -602,6 +602,13 @@ Console.info(`FORMAT: ${FORMAT}`);
 														}
 														return i;
 													});
+													body.tab.tabModule[0].tab.introduction.modules = body.tab.tabModule[0].tab.introduction.modules.filter(i => {
+														if (i.type === 55) {
+															Console.log("✅ 视频详情下方up主分享好物去除");
+															return false;
+														}
+														return true;
+													});
 													rawBody = ViewUniteReply.toBinary(body);
 													break;
 												case false:
