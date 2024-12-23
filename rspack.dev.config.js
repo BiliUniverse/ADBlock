@@ -13,6 +13,7 @@ export default defineConfig({
 	},
 	optimization: {
 		minimize: true,
+		usedExports: true,
 	},
 	plugins: [
 		new NodePolyfillPlugin({
