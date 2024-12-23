@@ -595,13 +595,21 @@ Console.info(`FORMAT: ${FORMAT}`);
 														Console.log("✅ 视频下方广告去除");
 														delete body.cm.content5.content1.content2.content9;
 													}
-													body.tab.tabModule[0].tab.introduction.modules = body.tab.tabModule[0].tab.introduction.modules.map(i => {
-														if (i.type === 28) {
-															Console.log("✅ 视频详情下方推荐卡广告去除");
-															i.data.relates.cards = i.data.relates.cards.filter(j => j.relateCardType !== 5 && j.relateCardType !== 4);
-														}
-														return i;
-													});
+													body.tab.tabModule[0].tab.introduction.modules = body.tab.tabModule[0].tab.introduction.modules
+														.map(i => {
+															if (i.type === 28) {
+																Console.log("✅ 视频详情下方推荐卡广告去除");
+																i.data.relates.cards = i.data.relates.cards.filter(j => j.relateCardType !== 5 && j.relateCardType !== 4);
+															}
+															return i;
+														})
+														.filter(i => {
+															if (i.type === 55) {
+																Console.log("✅ 视频详情下方up主分享好物去除");
+																return false;
+															}
+															return true;
+														});
 													rawBody = ViewUniteReply.toBinary(body);
 													break;
 												case false:
