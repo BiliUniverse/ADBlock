@@ -4,13 +4,12 @@ import database from "./function/database.mjs";
 import setENV from "./function/setENV.mjs";
 import { PlayViewReply } from "./protobuf/bilibili/pgc/gateway/player/v2/playurl.js";
 import { DynAllReply, DynVideoReply } from "./protobuf/bilibili/app/dynamic/v2/dynamic.js";
-import { ViewReply, TFPanelCustomized } from "./protobuf/bilibili/app/view/v1/view.js";
+import { ViewReply, TFInfoReply } from "./protobuf/bilibili/app/view/v1/view.js";
 import { ViewReply as ViewUniteReply, RelatesFeedReply } from "./protobuf/bilibili/app/viewunite/v1/viewunite.js";
 import { ModeStatusReply } from "./protobuf/bilibili/app/interface/teenagers.js";
 import { DmViewReply, DmSegMobileReply } from "./protobuf/bilibili/community/service/dm/v1/dm.js";
 import { MainListReply } from "./protobuf/bilibili/main/community/reply/v1/reply.js";
 import { SearchAllResponse } from "./protobuf/bilibili/polymer/app/search/v1/search.js";
-import { WireType, UnknownFieldHandler, reflectionMergePartial, MESSAGE_TYPE, MessageType, BinaryReader, isJsonObject, typeofJsonValue, jsonWriteOptions } from "@protobuf-ts/runtime";
 /***************** Processing *****************/
 // 解构URL
 const url = new URL($request.url);
@@ -480,93 +479,6 @@ Console.info(`FORMAT: ${FORMAT}`);
 											}
 											break;
 										case "TFInfo": {
-											/******************  initialization start  *******************/
-											// protobuf/bilibili/app/view/view.proto
-											class TFInfoReply$Type extends MessageType {
-												constructor() {
-													super("TFInfoReply", [
-														{ no: 1, name: "tipsId", kind: "scalar", T: 3, L: 0 },
-														{ no: 2, name: "tfToast", kind: "message", T: () => TFToast },
-														{ no: 3, name: "tfPanelCustomized", kind: "message", T: () => TFPanelCustomized },
-													]);
-												}
-												create(value) {
-													const message = { tipsId: 0n };
-													globalThis.Object.defineProperty(message, MESSAGE_TYPE, { enumerable: false, value: this });
-													if (value !== undefined) reflectionMergePartial(this, message, value);
-													return message;
-												}
-												internalBinaryRead(reader, length, options, target) {
-													let message = target ?? this.create(),
-														end = reader.pos + length;
-													while (reader.pos < end) {
-														let [fieldNo, wireType] = reader.tag();
-														switch (fieldNo) {
-															case 1:
-																message.tipsId = reader.int64().toBigInt();
-																break;
-															case 2:
-																message.tfToast = TFToast.internalBinaryRead(reader, reader.uint32(), options, message.tfToast);
-																break;
-															case 3:
-																message.tfPanelCustomized = TFPanelCustomized.internalBinaryRead(reader, reader.uint32(), options, message.tfPanelCustomized);
-																break;
-															default:
-																let u = options.readUnknownField;
-																if (u === "throw") throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);
-																let d = reader.skip(wireType);
-																if (u !== false) (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-														}
-													}
-													return message;
-												}
-												internalBinaryWrite(message, writer, options) {
-													if (message.tipsId !== 0n) writer.tag(1, WireType.Varint).int64(message.tipsId);
-													if (message.tfToast) TFToast.internalBinaryWrite(message.tfToast, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
-													if (message.tfPanelCustomized) TFPanelCustomized.internalBinaryWrite(message.tfPanelCustomized, writer.tag(3, WireType.LengthDelimited).fork(), options).join();
-													let u = options.writeUnknownFields;
-													if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-													return writer;
-												}
-											}
-											const TFInfoReply = new TFInfoReply$Type();
-											class TFToast$Type extends MessageType {
-												constructor() {
-													super("TFToast", [{ no: 1, name: "btnText", kind: "scalar", T: 9 }]);
-												}
-												create(value) {
-													const message = { btnText: "" };
-													globalThis.Object.defineProperty(message, MESSAGE_TYPE, { enumerable: false, value: this });
-													if (value !== undefined) reflectionMergePartial(this, message, value);
-													return message;
-												}
-												internalBinaryRead(reader, length, options, target) {
-													let message = target ?? this.create(),
-														end = reader.pos + length;
-													while (reader.pos < end) {
-														let [fieldNo, wireType] = reader.tag();
-														switch (fieldNo) {
-															case 1:
-																message.btnText = reader.string();
-																break;
-															default:
-																let u = options.readUnknownField;
-																if (u === "throw") throw new globalThis.Error(`Unknown field ${fieldNo}(wire type ${wireType})for ${this.typeName}`);
-																let d = reader.skip(wireType);
-																if (u !== false) (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-														}
-													}
-													return message;
-												}
-												internalBinaryWrite(message, writer, options) {
-													if (message.btnText !== "") writer.tag(1, WireType.LengthDelimited).string(message.btnText);
-													let u = options.writeUnknownFields;
-													if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-													return writer;
-												}
-											}
-											const TFToast = new TFToast$Type();
-											/******************  initialization finish  ******************/
 											body = TFInfoReply.fromBinary(rawBody);
 											Console.debug(`tipsId: ${body.tipsId}`);
 											if (body?.tipsId) {
@@ -579,7 +491,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 										}
 									}
 									break;
-								case "bilibili.app.viewunite.v1.View": // 视频(内测)
+								case "bilibili.app.viewunite.v1.View": // 视频
 									switch (PATHs?.[1]) {
 										case "View": // 视频播放页
 											switch (Settings?.View?.AD) {
@@ -617,11 +529,11 @@ Console.info(`FORMAT: ${FORMAT}`);
 													break;
 											}
 											break;
-										case "RelatesFeed":
+										case "RelatesFeed": // 播放页下方推荐卡
 											body = RelatesFeedReply.fromBinary(rawBody);
-											body.relates.cards = body.relates.cards.filter(item => {
-												if (item.relateCardType === 5 || item.relateCardType === 4) {
-													Console.log("✅ 推薦列表廣告卡去除");
+											body.relates = body.relates.filter(item => {
+												if (item.relateCardType === 4 || item.relateCardType === 5) {
+													Console.log("✅ 推荐列表广告卡去除");
 													return false;
 												}
 												return true;
@@ -695,8 +607,18 @@ Console.info(`FORMAT: ${FORMAT}`);
 												case true:
 												default:
 													body = MainListReply.fromBinary(rawBody);
-													Console.log("✅ 评论列表广告去除");
-													body.cm = undefined;
+													body.topReplies = body.topReplies.filter(item => {
+														if (Object.keys(item.content.url).length) {
+															//排查广告的方法为是否放了带货链接，如跳转淘宝京东等，判断力度较轻，避免杀错。
+															Console.log("✅ 评论置顶带货广告去除");
+															return false;
+														}
+														return true;
+													});
+													if (Object.keys(body.cm).length) {
+														body.cm = undefined;
+														Console.log("✅ 评论列表广告去除");
+													}
 													rawBody = MainListReply.toBinary(body);
 													break;
 												case false:
