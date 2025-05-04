@@ -2,7 +2,7 @@ import { $app, Console, done, fetch, Lodash as _, Storage } from "@nsnanocat/uti
 import gRPC from "@nsnanocat/grpc";
 import database from "./function/database.mjs";
 import setENV from "./function/setENV.mjs";
-import { PlayViewReply } from "./protobuf/bilibili/pgc/gateway/player/v2/playurl.js";
+import { PlayViewReply } from "./protobuf/bilibili/app/playurl/v1/playurl.js";
 import { DynAllReply, DynVideoReply } from "./protobuf/bilibili/app/dynamic/v2/dynamic.js";
 import { ViewReply, TFInfoReply } from "./protobuf/bilibili/app/view/v1/view.js";
 import { ViewReply as ViewUniteReply, RelatesFeedReply } from "./protobuf/bilibili/app/viewunite/v1/viewunite.js";
@@ -607,9 +607,13 @@ Console.info(`FORMAT: ${FORMAT}`);
 												case true:
 												default:
 													body = MainListReply.fromBinary(rawBody);
+        											const pattern = /https:\/\/b23\.tv\/(cm|mall)/;
 													body.topReplies = body.topReplies.filter(item => {
-														if (Object.keys(item.content.url).length) {
-															//排查广告的方法为是否放了带货链接，如跳转淘宝京东等，判断力度较轻，避免杀错。
+														const urls = item.content?.url || {};
+            											const message = item.content?.message || '';
+														if (Object.keys(urls).some(url => pattern.test(url)) || pattern.test(message)) {
+															// 排查广告的方法为是否放了带货链接，如跳转淘宝京东等，判断力度较轻，避免杀错。
+															// cm: 第三方链接, mall: 第三方APP, 视频链接不会被过滤
 															Console.log("✅ 评论置顶带货广告去除");
 															return false;
 														}
