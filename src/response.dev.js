@@ -492,6 +492,15 @@ Console.info(`FORMAT: ${FORMAT}`);
 									}
 									break;
 								case "bilibili.app.viewunite.v1.View": // 视频
+									// 4: 游戏, 5: 广告, 11: 课程
+									// cmStock: 广告字段, uniqueId: 推广视频
+									const filterRelateCard = card => {
+										if ([4, 5, 11].includes(card.relateCardType) || card.cmStock || card.basicInfo?.uniqueId) {
+											Console.log("✅ 视频详情下方推荐列表广告去除");
+											return false;
+										}
+										return true;
+									};
 									switch (PATHs?.[1]) {
 										case "View": // 视频播放页
 											switch (Settings?.View?.AD) {
@@ -510,8 +519,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 													body.tab.tabModule[0].tab.introduction.modules = body.tab.tabModule[0].tab.introduction.modules
 														.map(i => {
 															if (i.type === 28) {
-																Console.log("✅ 视频详情下方推荐卡广告去除");
-																i.data.relates.cards = i.data.relates.cards.filter(j => j.relateCardType !== 5 && j.relateCardType !== 4);
+																i.data.relates.cards = i.data.relates.cards.filter(filterRelateCard);
 															}
 															return i;
 														})
@@ -531,13 +539,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 											break;
 										case "RelatesFeed": // 播放页下方推荐卡
 											body = RelatesFeedReply.fromBinary(rawBody);
-											body.relates = body.relates.filter(item => {
-												if (item.relateCardType === 4 || item.relateCardType === 5) {
-													Console.log("✅ 推荐列表广告卡去除");
-													return false;
-												}
-												return true;
-											});
+											body.relates = body.relates.filter(filterRelateCard);
 											rawBody = RelatesFeedReply.toBinary(body);
 											break;
 									}
