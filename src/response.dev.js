@@ -9,6 +9,7 @@ import { ViewReply as ViewUniteReply, RelatesFeedReply } from "./protobuf/bilibi
 import { ModeStatusReply } from "./protobuf/bilibili/app/interface/teenagers.js";
 import { DmViewReply, DmSegMobileReply } from "./protobuf/bilibili/community/service/dm/v1/dm.js";
 import { MainListReply } from "./protobuf/bilibili/main/community/reply/v1/reply.js";
+import { PlayViewReply as PGCPlayViewReply } from "./protobuf/bilibili/pgc/gateway/player/v2/playurl.js";
 import { SearchAllResponse } from "./protobuf/bilibili/polymer/app/search/v1/search.js";
 /***************** Processing *****************/
 // 解构URL
@@ -527,6 +528,9 @@ Console.info(`FORMAT: ${FORMAT}`);
 															if (i.type === 55) {
 																Console.log("✅ 视频详情下方up主分享好物去除");
 																return false;
+															} else if (i.type === 29) {
+																Console.log("✅ 番剧标题下方大会员横幅广告去除");
+																return false;
 															}
 															return true;
 														});
@@ -637,6 +641,16 @@ Console.info(`FORMAT: ${FORMAT}`);
 								case "bilibili.pgc.gateway.player.v2.PlayURL": // 番剧
 									switch (PATHs?.[1]) {
 										case "PlayView": // 播放地址
+											body = PGCPlayViewReply.fromBinary(rawBody);
+											if (body.viewInfo?.tryWatchPromptBar) {
+												body.viewInfo.tryWatchPromptBar = undefined;
+												Console.log("✅ 番剧播放器下方提示栏去除");
+											}
+											if (body.playExtConf?.castTips) {
+												body.playExtConf.castTips = { code: 0, message: '' };
+												Console.log("✅ 番剧播放器下方提示栏去除");
+											}
+											rawBody = PGCPlayViewReply.toBinary(body);
 											break;
 										case "PlayConf": // 播放配置
 											break;

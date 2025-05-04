@@ -21,12 +21,16 @@
 ^https?:\/\/api\.vc\.bilibili\.com\/topic_svr\/v1\/topic_svr data-type=text data="{}" header="application/json"
 # 去除动态中的最常访问
 ^https?:\/\/api\.vc\.bilibili\.com\/dynamic_svr\/v1\/dynamic_svr\/mix_uplist data-type=text data="{}" header="application/json"
-# 可能的一些推广(beta)
-^https?:\/\/api\.bili(bili\.com|api\.net)\/pgc\/season\/app\/related\/recommend\? data-type=text data="{}" header="application/json"
 # BiliBili漫画去广告
 ^https?:\/\/manga\.bilibili\.com\/twirp\/comic\.v\d\.Comic\/Flash data-type=text data="{}" header="application/json"
 ^https?:\/\/manga\.bilibili\.com\/twirp\/comic\.v\d\.Comic\/ListFlash data-type=text data="{}" header="application/json"
 ^https?:\/\/api\.live\.bilibili\.com\/xlive\/e-commerce-interface\/v1\/ecommerce-user\/get_shopping_info\? data-type=text data="{}" header="application/json"
+# 番剧页可能弹出的HTML广告
+^https:\/\/api\.bilibili\.com\/pgc\/activity\/deliver\/material\/receive\? header="content-type: application/json" data-type=text data="{"code":0,"data":{"closeType":"close_win","container":[],"showTime":""},"message":"success"}"
+
+[Body Rewrite]
+# Ipad端番剧推荐列表上方广告
+http-response-jq ^https:\/\/api\.bilibili\.com\/pgc\/view\/v2\/app\/season\? 'del(.data.payment)'
 
 [Script]
 📺 BiliBili.ADBlock.feed.index.request.json = type=http-request,pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/feed\/index\?, engine=webview, script-path=https://github.com/BiliUniverse/ADBlock/releases/download/v{{@package 'version'}}/request.bundle.js, argument={{{scriptParams}}}
@@ -41,6 +45,7 @@
 📺 BiliBili.ADBlock.dm.response.grpc = type=http-response, pattern=^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.community\.service\.dm\.v1\.DM\/(DmView|DmSegMobile), requires-body=1, binary-body-mode=1, engine=webview, script-path=https://github.com/BiliUniverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.interface.response.grpc = type=http-response, pattern=^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.interface\.v1\.Teenagers\/ModeStatus, requires-body=1, binary-body-mode=1, engine=webview, script-path=https://github.com/BiliUniverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.reply.response.grpc = type=http-response, pattern=^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.main\.community\.reply\.v1\.Reply\/MainList, requires-body=1, binary-body-mode=1, engine=webview, script-path=https://github.com/BiliUniverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
+📺 BiliBili.ADBlock.pgc.response.grpc = type=http-response, pattern=^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.pgc\.gateway\.player\.v2\.PlayURL\/PlayView$, requires-body=1, binary-body-mode=1, engine=webview, script-path=https://github.com/BiliUniverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
 
 [MITM]
 hostname = %APPEND% manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, api.bilibili.com, api.biliapi.net, grpc.biliapi.net
