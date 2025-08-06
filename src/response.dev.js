@@ -567,6 +567,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 												case true:
 													Console.log("✅ 交互式弹幕去除");
 													_.set(body, "dmView.commandDms", []);
+													body.commandDms = [];
 													break;
 												case false:
 												default:

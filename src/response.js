@@ -27,7 +27,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 	 */
 	const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 	Console.logLevel = Settings.LogLevel;
-	// 创建空数据
+		// 创建空数据
 	let body = { code: 0, message: "0", data: {} };
 	// 格式判断
 	switch (FORMAT) {
@@ -567,6 +567,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 												case true:
 													Console.log("✅ 交互式弹幕去除");
 													_.set(body, "dmView.commandDms", []);
+													body.commandDms = [];
 													break;
 												case false:
 												default:
