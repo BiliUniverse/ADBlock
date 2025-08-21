@@ -9,6 +9,7 @@ import { ViewReply as ViewUniteReply, RelatesFeedReply } from "./protobuf/bilibi
 import { ModeStatusReply } from "./protobuf/bilibili/app/interface/teenagers.js";
 import { DmViewReply, DmSegMobileReply } from "./protobuf/bilibili/community/service/dm/v1/dm.js";
 import { MainListReply } from "./protobuf/bilibili/main/community/reply/v1/reply.js";
+import { PlayViewReply as PGCPlayViewReply } from "./protobuf/bilibili/pgc/gateway/player/v2/playurl.js";
 import { SearchAllResponse } from "./protobuf/bilibili/polymer/app/search/v1/search.js";
 /***************** Processing *****************/
 // 解构URL
@@ -242,7 +243,8 @@ Console.info(`FORMAT: ${FORMAT}`);
 										// vertical_live 直播内容
 										// vertical_pgc 大会员专享
 										Console.log("✅ 首页短视频流广告去除");
-										body.data.items = body.data.items.filter(i => !(i.hasOwnProperty("ad_info") || ["vertical_ad_av", "vertical_pgc"].includes(i.card_goto)));
+										const filterSet = new Set(["vertical_ad_av", "vertical_ad_picture", "vertical_ad_live", "vertical_pgc"]);
+										body.data.items = body.data.items.filter(i => {!(i.hasOwnProperty("ad_info") || filterSet.has(i.card_goto))});
 									}
 									break;
 								case false:
@@ -508,13 +510,9 @@ Console.info(`FORMAT: ${FORMAT}`);
 												default:
 													body = ViewUniteReply.fromBinary(rawBody);
 													Console.debug(`ViewUniteReply: ${JSON.stringify(body, null, 2)}`);
-													if (body.cm?.sourceContent?.length) {
-														Console.log("✅ up主推荐广告去除");
-														body.cm.sourceContent = [];
-													}
-													if (body.cm?.content5?.content1?.content2?.content9) {
+													if (body.cm) {
 														Console.log("✅ 视频下方广告去除");
-														delete body.cm.content5.content1.content2.content9;
+														delete body.cm;
 													}
 													body.tab.tabModule[0].tab.introduction.modules = body.tab.tabModule[0].tab.introduction.modules
 														.map(i => {
@@ -526,6 +524,14 @@ Console.info(`FORMAT: ${FORMAT}`);
 														.filter(i => {
 															if (i.type === 55) {
 																Console.log("✅ 视频详情下方up主分享好物去除");
+																return false;
+															}
+															if (i.type === 29) {
+																Console.log("✅ 番剧标题下方大会员横幅广告去除");
+																return false;
+															}
+															if (i.type === 18) {
+																Console.log("✅ 番剧下方活动横幅去除");
 																return false;
 															}
 															return true;
@@ -625,6 +631,13 @@ Console.info(`FORMAT: ${FORMAT}`);
 														body.cm = undefined;
 														Console.log("✅ 评论列表广告去除");
 													}
+													body.subjectTopCards = body.subjectTopCards.filter(item => {
+														if (item.type === 3) {
+															Console.log("✅ 评论列表广告去除");
+															return false;
+														}
+														return true;
+													})
 													rawBody = MainListReply.toBinary(body);
 													break;
 												case false:
@@ -637,6 +650,16 @@ Console.info(`FORMAT: ${FORMAT}`);
 								case "bilibili.pgc.gateway.player.v2.PlayURL": // 番剧
 									switch (PATHs?.[1]) {
 										case "PlayView": // 播放地址
+											body = PGCPlayViewReply.fromBinary(rawBody);
+											if (body.viewInfo?.tryWatchPromptBar) {
+												body.viewInfo.tryWatchPromptBar = undefined;
+												Console.log("✅ 番剧播放器下方提示栏去除");
+											}
+											if (body.playExtConf?.castTips) {
+												body.playExtConf.castTips = { code: 0, message: '' };
+												Console.log("✅ 番剧播放器下方提示栏去除");
+											}
+											rawBody = PGCPlayViewReply.toBinary(body);
 											break;
 										case "PlayConf": // 播放配置
 											break;

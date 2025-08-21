@@ -33,8 +33,6 @@ http:
     - ^https?:\/\/api\.vc\.bilibili\.com\/topic_svr\/v1\/topic_svr - reject-dict
     # 去除动态中的最常访问
     - ^https?:\/\/api\.vc\.bilibili\.com\/dynamic_svr\/v1\/dynamic_svr\/mix_uplist - reject-dict
-    # 可能的一些推广(beta)
-    - ^https?:\/\/api\.bili(bili\.com|api\.net)\/pgc\/season\/app\/related\/recommend\? - reject-dict
     # BiliBili漫画去广告
     - ^https?:\/\/manga\.bilibili\.com\/twirp\/comic\.v\d\.Comic\/Flash - reject-dict
     - ^https?:\/\/manga\.bilibili\.com\/twirp\/comic\.v\d\.Comic\/ListFlash - reject-dict
@@ -103,6 +101,12 @@ http:
       binary-mode: true
       argument:
     - match: ^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.main\.community\.reply\.v1\.Reply\/MainList
+      name: 📺 BiliBili.ADBlock.response.grpc
+      type: response
+      require-body: true
+      binary-mode: true
+      argument:
+    - match: ^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.pgc\.gateway\.player\.v2\.PlayURL\/PlayView$
       name: 📺 BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
