@@ -1,8 +1,10 @@
 ### 🆕 New Features
-  * 去除up主带货置顶评论 by @ClydeTime
+  * 视频的推荐列表中删除课程和宣传视频 by @kokoryh
+  * 移除番剧广告，评论区广告，竖屏广告 by @kokoryh
 
 ### 🛠️ Bug Fixes
-  * 播放页推荐卡报错 by @ClydeTime
+  * 优化置顶评论过滤逻辑 by @kokoryh
+  * 修正 PlayViewReply 导入 by @kokoryh
+  * 修复 DmView 中 _.set 的路径 by @sxmkl
+  * 修复元素检查逻辑 by @sxmkl
 
-### 🔣 Dependencies
-  * 升级了 `protobuf` 子模块 by @ClydeTime
