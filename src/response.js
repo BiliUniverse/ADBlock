@@ -79,7 +79,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 							switch (Settings?.Splash) {
 								case true:
 								default: {
-									Console.log("✅ 开屏页广告去除");
+									Console.info("✅ 开屏页广告去除");
 									const item = ["account", "event_list", "preload", "show"];
 									if (body.data) {
 										item.forEach(i => {
@@ -108,14 +108,14 @@ Console.info(`FORMAT: ${FORMAT}`);
 															case true:
 																Caches.banner_hash = item.hash;
 																Storage.setItem("@BiliBili.ADBlock.Caches", Caches); // 获取banner_hash,无此字段会有活动页且此字段无法伪造.
-																Console.log("✅ 推荐页活动大图去除");
+																Console.info("✅ 推荐页活动大图去除");
 																return undefined;
 															case false:
 															default:
 																if (item.banner_item) {
 																	item.banner_item = item.banner_item.filter(i => {
 																		if (i.type === "ad") {
-																			Console.log("✅ 推荐页大图广告去除");
+																			Console.info("✅ 推荐页大图广告去除");
 																			return false;
 																		}
 																		return true;
@@ -144,19 +144,19 @@ Console.info(`FORMAT: ${FORMAT}`);
 														Console.log(`✅ ${cardGoto}广告去除`);
 														return undefined; //大广告直接去除
 													} else if (cardType === "small_cover_v10" && cardGoto === "game") {
-														Console.log("✅ 游戏广告去除");
+														Console.info("✅ 游戏广告去除");
 														if (url.searchParams.get("device") !== "phone") {
 															return undefined; //pad直接去除
 														} else {
 															await fixPosition().then(result => (item = result)); //小广告补位
 														}
 													} else if (cardType === "cm_double_v9" && cardGoto === "ad_inline_av") {
-														Console.log("✅ 大视频广告去除");
+														Console.info("✅ 大视频广告去除");
 														return undefined; //大广告直接去除
 													} else if (Goto === "vertical_av") {
 														switch (Settings?.Feed?.Vertical) {
 															case true:
-																Console.log("✅ 竖屏视频去除");
+																Console.info("✅ 竖屏视频去除");
 																await fixPosition().then(result => (item = result)); //小视频补位
 																break;
 															case false:
@@ -176,7 +176,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 										let singleItem = {};
 										if (itemsCache && itemsCache.length > 0) {
 											singleItem = itemsCache.pop();
-											Console.log("✅ 推荐页空缺位填充成功");
+											Console.info("✅ 推荐页空缺位填充成功");
 										} else {
 											//重新获取填充位
 											const myRequest = {
@@ -211,7 +211,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 															})
 															.filter(fix => fix !== undefined);
 														Storage.setItem("@BiliBili.Index.Caches", body.data.items);
-														Console.log("✅ 推荐页缓存数组补充成功");
+														Console.info("✅ 推荐页缓存数组补充成功");
 													} else {
 														Console.warn("访问推荐页尝试填补失败");
 													}
@@ -222,7 +222,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 											itemsCache = Storage.getItem("@BiliBili.Index.Caches");
 											if (itemsCache.length > 0) {
 												singleItem = itemsCache.pop();
-												Console.log("✅ 推荐页空缺位填充成功");
+												Console.info("✅ 推荐页空缺位填充成功");
 											}
 										}
 										Storage.setItem("@BiliBili.Index.Caches", itemsCache);
@@ -242,7 +242,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 									if (body.data?.items) {
 										// vertical_live 直播内容
 										// vertical_pgc 大会员专享
-										Console.log("✅ 首页短视频流广告去除");
+										Console.info("✅ 首页短视频流广告去除");
 										const filterSet = new Set(["vertical_ad_av", "vertical_ad_picture", "vertical_ad_live", "vertical_pgc"]);
 										body.data.items = body.data.items.filter(i => {!(i.hasOwnProperty("ad_info") || filterSet.has(i.card_goto))});
 									}
@@ -256,7 +256,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 							switch (Settings?.Search?.HotSearch) {
 								case true:
 								default:
-									Console.log("✅ 搜索页热搜内容去除");
+									Console.info("✅ 搜索页热搜内容去除");
 									body.data = body.data.filter(i => !(i.type === "trending"));
 									break;
 								case false:
@@ -275,7 +275,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 								case true:
 								default:
 									if (body.result?.modules) {
-										Console.log("✅ 观影页广告去除");
+										Console.info("✅ 观影页广告去除");
 										body.result.modules.forEach(i => {
 											if (i.style.startsWith("banner")) {
 												i.items = i.items.filter(j => j.link.includes("play"));
@@ -300,7 +300,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 							switch (Settings?.Feed?.AD) {
 								case true:
 								default:
-									Console.log("✅ 首页广告内容去除");
+									Console.info("✅ 首页广告内容去除");
 									body.data.item = body.data.item.filter(i => !(i.goto === "ad"));
 									break;
 								case false:
@@ -316,13 +316,13 @@ Console.info(`FORMAT: ${FORMAT}`);
 							switch (Settings?.Xlive?.AD) {
 								case true:
 								default:
-									Console.log("✅ 直播banner广告去除");
+									Console.info("✅ 直播banner广告去除");
 									delete body.data?.activity_banner_info;
 									if (body.data?.shopping_info) {
 										body.data.shopping_info = {
 											is_show: 0,
 										};
-										Console.log("✅ 直播购物广告去除");
+										Console.info("✅ 直播购物广告去除");
 									}
 									if (body.data?.new_tab_info?.outer_list?.length > 0) {
 										body.data.new_tab_info.outer_list = body.data.new_tab_info.outer_list.filter(i => i.biz_id !== 33);
@@ -369,7 +369,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 											body = PlayViewReply.fromBinary(rawBody);
 											const oldBackgroundConf = body.playArc?.backgroundPlayConf;
 											if (oldBackgroundConf && (!oldBackgroundConf.isSupport || oldBackgroundConf.disabled)) {
-												Console.log("✅ 后台播放限制去除");
+												Console.info("✅ 后台播放限制去除");
 												body.playArc.backgroundPlayConf.isSupport = true;
 												body.playArc.backgroundPlayConf.disabled = false;
 												body.playArc.backgroundPlayConf.extraContent = null;
@@ -390,7 +390,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 											switch (Settings?.Dynamic?.HotTopics) {
 												case true:
 												default:
-													Console.log("✅ 动态综合页热门话题去除");
+													Console.info("✅ 动态综合页热门话题去除");
 													body.topicList = undefined;
 													break;
 												case false:
@@ -399,7 +399,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 											}
 											switch (Settings?.Dynamic?.MostVisited) {
 												case true:
-													Console.log("✅ 动态综合页最常访问去除");
+													Console.info("✅ 动态综合页最常访问去除");
 													body.upList = undefined;
 													break;
 												case false:
@@ -413,7 +413,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 													if (body.dynamicList?.list?.length) {
 														body.dynamicList.list = body.dynamicList.list.filter(item => {
 															if (item.cardType === 15) {
-																Console.log("✅ 动态综合页广告动态去除");
+																Console.info("✅ 动态综合页广告动态去除");
 																return false;
 															} else return true;
 														});
@@ -429,7 +429,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 											body = DynVideoReply.fromBinary(rawBody);
 											switch (Settings?.Dynamic?.MostVisited) {
 												case true:
-													Console.log("✅ 动态视频页最常访问去除");
+													Console.info("✅ 动态视频页最常访问去除");
 													body.videoUpList = undefined;
 													break;
 												case false:
@@ -449,20 +449,20 @@ Console.info(`FORMAT: ${FORMAT}`);
 												default:
 													body = ViewReply.fromBinary(rawBody);
 													if (body.cms?.length) {
-														Console.log("✅ 播放页广告卡片去除");
+														Console.info("✅ 播放页广告卡片去除");
 														body.cms = [];
 													}
 													if (body.relates?.length) {
 														body.relates = body.relates.filter(item => {
 															if (item.cm) {
-																Console.log("✅ 播放页关联推荐广告去除");
+																Console.info("✅ 播放页关联推荐广告去除");
 																return false;
 															}
 															return true;
 														});
 													}
 													if (body.cmConfig || body.cmIpad) {
-														Console.log("✅ 播放页定制tab去除");
+														Console.info("✅ 播放页定制tab去除");
 														body.cmConfig = undefined;
 														body.cmIpad = undefined;
 													}
@@ -484,7 +484,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 											body = TFInfoReply.fromBinary(rawBody);
 											Console.debug(`tipsId: ${body.tipsId}`);
 											if (body?.tipsId) {
-												Console.log("✅ 播放页办卡免流广告去除");
+												Console.info("✅ 播放页办卡免流广告去除");
 												body.tfToast = undefined;
 												body.tfPanelCustomized = undefined;
 											}
@@ -560,7 +560,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 												if (mode?.name === "teenagers") {
 													if (mode?.f5?.f1) {
 														mode.f5.f1 = 0;
-														Console.log("✅ 青少年模式弹窗去除");
+														Console.info("✅ 青少年模式弹窗去除");
 													}
 												}
 												return mode;
@@ -575,7 +575,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 											body = DmViewReply.fromBinary(rawBody);
 											switch (Settings?.DM?.Command) {
 												case true:
-													Console.log("✅ 交互式弹幕去除");
+													Console.info("✅ 交互式弹幕去除");
 													_.set(body, "commandDms[0].data", []);
 													break;
 												case false:
@@ -584,7 +584,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 													break;
 											}
 											if (body.activityMeta.length) {
-												Console.log("✅ 雲視聽水印去除");
+												Console.info("✅ 雲視聽水印去除");
 												body.activityMeta = [];
 											}
 											rawBody = DmViewReply.toBinary(body);
@@ -599,7 +599,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 														}
 														return ele;
 													});
-													Console.log("✅ 会员弹幕已替换为普通弹幕");
+													Console.info("✅ 会员弹幕已替换为普通弹幕");
 													rawBody = DmSegMobileReply.toBinary(body);
 													break;
 												case false:
@@ -624,14 +624,14 @@ Console.info(`FORMAT: ${FORMAT}`);
 														if (Object.keys(urls).some(url => pattern.test(url)) || pattern.test(message)) {
 															// 排查广告的方法为是否放了带货链接，如跳转淘宝京东等，判断力度较轻，避免杀错。
 															// cm: 第三方链接, mall: 第三方APP, 视频链接不会被过滤
-															Console.log("✅ 评论置顶带货广告去除");
+															Console.info("✅ 评论置顶带货广告去除");
 															return false;
 														}
 														return true;
 													});
 													if (Object.keys(body.cm || {}).length) {
 														body.cm = undefined;
-														Console.log("✅ 评论列表广告去除");
+														Console.info("✅ 评论列表广告去除");
 													}
 													body.subjectTopCards = body.subjectTopCards?.filter(item => {
 														if (item.type === 3) {
@@ -643,7 +643,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 													rawBody = MainListReply.toBinary(body);
 													break;
 												case false:
-													Console.log("✅ 用户设置评论列表广告不去除");
+													Console.info("✅ 用户设置评论列表广告不去除");
 													break;
 											}
 											break;
@@ -687,7 +687,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 												case true:
 												default:
 													body = SearchAllResponse.fromBinary(rawBody);
-													Console.log("✅ 搜索页广告去除");
+													Console.info("✅ 搜索页广告去除");
 													body.item = body.item.filter(i => !(i.cardItem?.oneofKind === "cm" || i.cardItem?.oneofKind === "game"));
 													rawBody = SearchAllResponse.toBinary(body);
 													break;
