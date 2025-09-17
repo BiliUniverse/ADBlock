@@ -244,7 +244,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 										// vertical_pgc 大会员专享
 										Console.info("✅ 首页短视频流广告去除");
 										const filterSet = new Set(["vertical_ad_av", "vertical_ad_picture", "vertical_ad_live", "vertical_pgc"]);
-										body.data.items = body.data.items.filter(i => {!(i.hasOwnProperty("ad_info") || filterSet.has(i.card_goto))});
+										body.data.items = body.data.items.filter(i => !(i.hasOwnProperty("ad_info") || filterSet.has(i.card_goto)));
 									}
 									break;
 								case false:
