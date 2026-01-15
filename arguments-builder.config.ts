@@ -117,6 +117,13 @@ export default defineConfig({
 			description: "是否启用此处修改",
 		},
 		{
+			key: "Dynamic.MostVisitedLiveOnly",
+			name: "[动态] “最常访问”仅显示直播",
+			defaultValue: false,
+			type: "boolean",
+			description: "是否启用此处修改",
+		},
+		{
 			key: "Dynamic.AdCard",
 			name: "[动态] 去除广告卡片",
 			defaultValue: true,

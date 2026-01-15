@@ -105,6 +105,14 @@ export interface Settings {
          */
         MostVisited?: boolean;
     /**
+         * [动态] “最常访问”仅显示直播”
+         *
+         * 是否启用此处修改
+         *
+         * @defaultValue false
+         */
+        MostVisitedLiveOnly?: boolean;
+    /**
          * [动态] 去除广告卡片
          *
          * 是否启用此处修改

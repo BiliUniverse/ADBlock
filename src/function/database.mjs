@@ -22,6 +22,7 @@ export default {
 			Dynamic: {
 				HotTopics: true,
 				MostVisited: false,
+				MostVisitedLiveOnly: false,
 				AdCard: true,
 			},
 			View: {
