@@ -404,7 +404,24 @@ Console.info(`FORMAT: ${FORMAT}`);
 													break;
 												case false:
 												default:
-													Console.warn("用户设置动态综合页最常访问不去除");
+													switch (Settings?.Dynamic?.MostVisitedLiveOnly) {
+														case true:
+															Console.info("✅ 动态综合页最常访问仅显示直播");
+															if (body.upList?.list?.length || body.upList?.listSecond?.length) {
+																body.upList.list = [...body.upList.list || [], ...body.upList.listSecond || []]
+																	.filter(item => {
+																		return item.liveState == 1;
+																	});
+																body.upList.listSecond = [];
+															} else {
+																body.upList = undefined;
+															}
+															break;
+														case false:
+														default:
+															Console.warn("用户设置动态综合页最常访问不去除");
+															break;
+													}
 													break;
 											}
 											switch (Settings?.Dynamic?.AdCard) {
@@ -535,7 +552,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 																	Console.info("✅ 番剧下方活动横幅去除");
 																	return false;
 																}
-																return true;
+															return true;
 															});
 													}
 													rawBody = ViewUniteReply.toBinary(body);
