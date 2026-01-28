@@ -1,3 +1,2 @@
-### 🛠️ Bug Fixes
-  * 修复竖屏视频播放异常 by @kokoryh
-
+### 🆕 New Features
+  * 增加"最常访问仅显示直播"功能 by @vancez
