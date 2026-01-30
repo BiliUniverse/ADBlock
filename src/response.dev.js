@@ -11,6 +11,7 @@ import { DmViewReply, DmSegMobileReply } from "./protobuf/bilibili/community/ser
 import { MainListReply } from "./protobuf/bilibili/main/community/reply/v1/reply.js";
 import { PlayViewReply as PGCPlayViewReply } from "./protobuf/bilibili/pgc/gateway/player/v2/playurl.js";
 import { SearchAllResponse } from "./protobuf/bilibili/polymer/app/search/v1/search.js";
+import fixHeaders from "./function/fixHeaders.mjs";
 /***************** Processing *****************/
 // 解构URL
 const url = new URL($request.url);
@@ -344,6 +345,8 @@ Console.info(`FORMAT: ${FORMAT}`);
 		case "application/grpc":
 		case "application/grpc+proto":
 		case "applecation/octet-stream": {
+			// headers修复
+			$response.headers = fixHeaders($request.headers, $response.headers);
 			//Console.debug(`$response.body: ${JSON.stringify($response.body)}`);
 			let rawBody = $app === "Quantumult X" ? new Uint8Array($response.bodyBytes ?? []) : ($response.body ?? new Uint8Array());
 			//Console.debug(`isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`);
