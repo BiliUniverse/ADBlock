@@ -34,7 +34,8 @@
 		"build:dev": "rspack build -c rspack.dev.config.js --mode=development",
 		"build:args": "arguments-builder build",
 		"dts": "arguments-builder dts",
-		"submodule": "git submodule update --remote"
+		"submodule": "git submodule update --remote",
+		"update": "npm update --save"
 	},
 	"browserslist": [
 		"iOS >= 15"
@@ -49,7 +50,7 @@
 	},
 	"dependencies": {
 		"@nsnanocat/grpc": "^1.0.0",
-		"@nsnanocat/util": "^1.8.10",
+		"@nsnanocat/util": "^2.0.0",
 		"@protobuf-ts/runtime": "^2.11.1",
 		"@protobuf-ts/runtime-rpc": "^2.11.1",
 		"crypto-js": "^4.2.0"
