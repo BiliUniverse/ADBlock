@@ -345,8 +345,6 @@ Console.info(`FORMAT: ${FORMAT}`);
 		case "application/grpc":
 		case "application/grpc+proto":
 		case "applecation/octet-stream": {
-			// headers修复
-			$response.headers = fixHeaders($request.headers, $response.headers);
 			//Console.debug(`$response.body: ${JSON.stringify($response.body)}`);
 			let rawBody = $app === "Quantumult X" ? new Uint8Array($response.bodyBytes ?? []) : ($response.body ?? new Uint8Array());
 			//Console.debug(`isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`);
@@ -357,6 +355,8 @@ Console.info(`FORMAT: ${FORMAT}`);
 					break;
 				case "application/grpc":
 				case "application/grpc+proto":
+					// headers修复
+					$response.headers = fixHeaders($request.headers, $response.headers);
 					rawBody = gRPC.decode(rawBody);
 					// 解析链接并处理protobuf数据
 					// 主机判断
