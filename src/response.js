@@ -173,7 +173,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 										body.data.items = body.data.items.filter(fix => fix !== undefined);
 									}
 									async function fixPosition() {
-										let itemsCache = Storage.getItem("@BiliBili.Index.Caches");
+										let itemsCache = Storage.getItem("@BiliBili.Index.Caches", []);
 										let singleItem = {};
 										if (itemsCache && itemsCache.length > 0) {
 											singleItem = itemsCache.pop();
@@ -220,7 +220,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 													Console.error(e, response);
 												}
 											});
-											itemsCache = Storage.getItem("@BiliBili.Index.Caches");
+											itemsCache = Storage.getItem("@BiliBili.Index.Caches", []);
 											if (itemsCache.length > 0) {
 												singleItem = itemsCache.pop();
 												Console.info("✅ 推荐页空缺位填充成功");
