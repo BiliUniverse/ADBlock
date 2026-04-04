@@ -28,8 +28,6 @@
 		"example": "example"
 	},
 	"scripts": {
-		"netlify:dev": "bunx netlify dev --no-open",
-		"netlify:deploy": "bunx netlify deploy --prod",
 		"vercel:dev": "bunx vercel dev",
 		"vercel:deploy": "bunx vercel deploy --prod",
 		"wrangler:dev": "bunx wrangler dev",
@@ -60,6 +58,7 @@
 		"@protobuf-ts/runtime": "^2.11.1",
 		"@protobuf-ts/runtime-rpc": "^2.11.1",
 		"crypto-js": "^4.2.0",
+		"fetch-cookie": "^3.2.0",
 		"hono": "^4.12.8"
 	}
 }

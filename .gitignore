@@ -147,3 +147,4 @@ dist
 .netlify
 .vercel
 .env*.local
+.wrangler
