@@ -91,7 +91,7 @@ export default class HonoWorkerAdapter {
 	 * @returns {WorkerHeaders} 标准化后的请求头 / Normalized request headers.
 	 */
 	static normalizeRequestHeaders(headers = {}) {
-		const requestHeaderBlacklist = new Set(["connection", "content-length", "host", "x-forwarded-proto", "x-real-ip"]);
+		const requestHeaderBlacklist = new Set(["connection", "x-forwarded-proto", "x-real-ip"]);
 		return Object.entries(headers).reduce((normalizedHeaders, [key, value]) => {
 			if (value === undefined) return normalizedHeaders;
 			const normalizedKey = key.toLowerCase();
