@@ -1,14 +1,10 @@
-#!name = 📺 BiliBili: 🛡️ ADBlock (Workers)
-#!desc = 哔哩哔哩：去广告\n重定向请求到 Nanocat Workers\n保留基础无脚本去广告规则
+#!name = 📺 BiliBili: 🛡️ ADBlock (Rewrite)
+#!desc = 哔哩哔哩：去广告\n自定义去除APP内界面元素
+#!openUrl = http://boxjs.com/#/app/BiliBili.ADBlock
 #!author = ClydeTime[https://github.com/ClydeTime],VirgilClyne[https://github.com/VirgilClyne],app2smile[https://github.com/app2smile],RuCu6[https://github.com/RuCu6],Maasea[https://github.com/Maasea]
 #!homepage = https://ADBlock.BiliUniverse.io
 #!icon = https://github.com/BiliUniverse/ADBlock/raw/main/src/assets/icon_rounded.png
 #!category = 🪐 BiliUniverse
-#!date = 2026-04-06 00:15:50
-
-[Rule]
-DOMAIN,app.nanocat.cloud,DIRECT
-DOMAIN,grpc.nanocat.cloud,DIRECT
 
 [URL Rewrite]
 # 去除搜索中的默认关键词
@@ -44,12 +40,16 @@ DOMAIN,grpc.nanocat.cloud,DIRECT
 ^https?:\/\/api\.vc\.bilibili\.com\/topic_svr\/v1\/topic_svr data-type=text data="{}" header="application/json"
 # 去除动态中的最常访问
 ^https?:\/\/api\.vc\.bilibili\.com\/dynamic_svr\/v1\/dynamic_svr\/mix_uplist data-type=text data="{}" header="application/json"
-# BiliBili 漫画去广告
+# BiliBili漫画去广告
 ^https?:\/\/manga\.bilibili\.com\/twirp\/comic\.v\d\.Comic\/Flash data-type=text data="{}" header="application/json"
 ^https?:\/\/manga\.bilibili\.com\/twirp\/comic\.v\d\.Comic\/ListFlash data-type=text data="{}" header="application/json"
 ^https?:\/\/api\.live\.bilibili\.com\/xlive\/e-commerce-interface\/v1\/ecommerce-user\/get_shopping_info\? data-type=text data="{}" header="application/json"
-# 番剧页可能弹出的 HTML 广告
+# 番剧页可能弹出的HTML广告
 ^https:\/\/api\.bilibili\.com\/pgc\/activity\/deliver\/material\/receive\? header="content-type: application/json" data-type=text data="{\"code\":0,\"data\":{\"closeType\":\"close_win\",\"container\":[],\"showTime\":\"\"},\"message\":\"success\"}"
+
+[Body Rewrite]
+# iPad端番剧推荐列表上方广告
+http-response-jq ^https:\/\/api\.bilibili\.com\/pgc\/view\/v2\/app\/season\? 'del(.data.payment)'
 
 [MITM]
 hostname = manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, api.bilibili.com, api.biliapi.net, grpc.biliapi.net, grpc.bilibili.com
