@@ -642,9 +642,8 @@ export async function Response($request, $response) {
 											switch (Settings?.DM?.Airborne) {
 												case true:
 													Console.warn("空降助手: 获取 Segment");
-													const requestBody = DmSegMobileReq.fromBinary(gRPC.decode($request.body instanceof ArrayBuffer ? new Uint8Array($request.body) : ($request.body ?? new Uint8Array())));
-													if (requestBody.type !== 1) break;
-													const { pid, oid } = requestBody;
+													const { oid, pid, type } = DmSegMobileReq.fromBinary(gRPC.decode($request.body instanceof ArrayBuffer ? new Uint8Array($request.body) : ($request.body ?? new Uint8Array())));
+													if (type !== 1) break;													
 													const videoId = toBvid(pid);
 													const segments = await fetchSponsorBlock(videoId, oid);
 													// 构建响应体

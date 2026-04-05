@@ -1,3 +1,4 @@
+import { $argument } from "@nsnanocat/util";
 import { Lodash as _ } from "@nsnanocat/util";
 
 /**
@@ -125,6 +126,9 @@ export default class HonoWorkerAdapter {
 				break;
 		}
 		HonoWorkerAdapter.parseRequestArguments(url.search);
+		Array.from(url.searchParams.keys()).forEach(key => {
+			if (key.startsWith('.')) url.searchParams.delete(key);
+		});
 		return {
 			method,
 			url: url.toString(),
