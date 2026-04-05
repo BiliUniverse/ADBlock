@@ -26,6 +26,18 @@ export default new Hono().all("/:rest{.*}", async c => {
         body: ["GET", "HEAD"].includes(c.req.method) ? undefined : new Uint8Array(await c.req.arrayBuffer()),
     };
     if ($request.headers["content-type"] === "application/grpc-web") $request.headers["content-type"] = "application/grpc";
+    // --- 获取参数 --- //
+    url.search
+        .slice(1)
+        .split('&')
+        .forEach(pair => {
+            let target = $argument;
+            const [key, value] = pair.split('=');
+            key.split('.').forEach((k, i, arr) => {
+            if (i === arr.length - 1) target[k] = value;
+            else target = target[k] = target[k] || {};
+            });
+        });
     ({ $request, $response } = await Request($request));
     if (!$response) {
         while (true) {
@@ -33,7 +45,7 @@ export default new Hono().all("/:rest{.*}", async c => {
                 $response = await fetch($request);
                 break;
             } catch (e) {
-                console.error(e);
+                // console.error(e);
             }
         }
         $response = await Response($request, $response);

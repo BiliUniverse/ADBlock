@@ -626,10 +626,7 @@ export async function Response($request, $response) {
 													Console.warn("用户设置会员弹幕不修改");
 													break;
 											}
-											switch (
-												// Settings?.DM?.airborne
-												true
-											) {
+											switch (Settings?.DM?.Airborne) {
 												case true:
 													Console.warn("空降助手: 获取 Segment");
 													let requestBody = DmSegMobileReq.fromBinary(gRPC.decode($request.body instanceof ArrayBuffer ? new Uint8Array($request.body) : ($request.body ?? new Uint8Array())));

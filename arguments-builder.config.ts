@@ -152,6 +152,13 @@ export default defineConfig({
 			description: "是否启用此处修改",
 		},
 		{
+			key: "DM.Airborne",
+			name: "[弹幕] 空降助手",
+			defaultValue: false,
+			type: "boolean",
+			description: "是否启用此处修改",
+		},
+		{
 			key: "Reply.AD",
 			name: "[评论] 去除广告",
 			defaultValue: true,
