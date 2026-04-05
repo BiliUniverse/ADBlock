@@ -343,8 +343,8 @@ export async function Response($request, $response) {
 		case "application/x-protobuf":
 		case "application/vnd.google.protobuf":
 		case "application/grpc":
-		case "application/grpc+proto":
 		case "application/grpc-web":
+		case "application/grpc+proto":
 		case "applecation/octet-stream": {
 			//Console.debug(`$response.body: ${JSON.stringify($response.body)}`);
             let rawBody = $response.bodyBytes ? new Uint8Array($response.bodyBytes) : ($response.body ?? new Uint8Array());
@@ -742,9 +742,8 @@ export async function Response($request, $response) {
 					rawBody = gRPC.encode(rawBody);
 					switch (FORMAT) {
 						case "application/grpc-web":
-							if ($response.headers?.["Content-Type"] !== undefined) $response.headers["Content-Type"] = "application/grpc";
-							if ($response.headers?.["content-type"] !== undefined) $response.headers["content-type"] = "application/grpc";
-							if ($response.headers?.["Content-Type"] === undefined && $response.headers?.["content-type"] === undefined) $response.headers["content-type"] = "application/grpc";
+							if ($response.headers?.["Content-Type"]) $response.headers["Content-Type"] = "application/grpc";
+							if ($response.headers?.["content-type"]) $response.headers["content-type"] = "application/grpc";
 							break;
 					}
 					break;
