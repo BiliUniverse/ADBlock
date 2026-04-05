@@ -51,6 +51,12 @@ export default class HonoWorkerAdapter {
 	 */
 	static routeRewrite(url, restPath = "") {
 		switch (true) {
+			case url.hostname.startsWith("api-live."):
+				url.hostname = "api.live.bilibili.com";
+				break;
+			case url.hostname.startsWith("api."):
+				url.hostname = "api.bilibili.com";
+				break;
 			case url.hostname.startsWith("app."):
 				url.hostname = "app.bilibili.com";
 				break;
