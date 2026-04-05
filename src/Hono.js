@@ -14,16 +14,7 @@ export default new Hono().all("/:rest{.*}", async c => {
             return HonoWorkerAdapter.writeResponse(c, $response);
         case "undefined":
             console.debug("finally", `$request: ${JSON.stringify($request, null, 2)}`);
-            if ($request.headers["content-type"].startsWith("application/grpc")) {
-                for (const _ of Array(10)) {
-                    try {
-                        $response = await fetch($request);
-                        break;
-                    } catch {}
-                }
-            } else {
-                $response = await fetch($request);
-            }
+            $response = await fetch($request);
             $response = await Response($request, $response);
             return HonoWorkerAdapter.writeResponse(c, $response);
         default:
