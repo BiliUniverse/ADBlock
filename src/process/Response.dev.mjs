@@ -245,7 +245,7 @@ export async function Response($request, $response) {
 										// vertical_pgc 大会员专享
 										Console.info("✅ 首页短视频流广告去除");
 										const filterSet = new Set(["vertical_ad_av", "vertical_ad_picture", "vertical_ad_live", "vertical_pgc"]);
-										body.data.items = body.data.items.filter(i => !(i.hasOwnProperty("ad_info") || filterSet.has(i.card_goto)));
+										body.data.items = body.data.items.filter(i => !(Object.prototype.hasOwnProperty.call(i, "ad_info") || filterSet.has(i.card_goto)));
 									}
 									break;
 								case false:
@@ -344,6 +344,7 @@ export async function Response($request, $response) {
 		case "application/vnd.google.protobuf":
 		case "application/grpc":
 		case "application/grpc+proto":
+		case "application/grpc-web":
 		case "applecation/octet-stream": {
 			//Console.debug(`$response.body: ${JSON.stringify($response.body)}`);
             let rawBody = $response.bodyBytes ? new Uint8Array($response.bodyBytes) : ($response.body ?? new Uint8Array());
@@ -355,9 +356,21 @@ export async function Response($request, $response) {
 					break;
 				case "application/grpc":
 				case "application/grpc+proto":
+				case "application/grpc-web":
+					switch (FORMAT) {
+						case "application/grpc":
+						case "application/grpc+proto":
+							$response.headers = fixHeaders($request.headers, $response.headers);
+							rawBody = gRPC.decode(rawBody);
+							break;
+						case "application/grpc-web": {
+							const { bodyBytes, header } = gRPC.decodeWeb(rawBody);
+							rawBody = bodyBytes;
+							$response.headers = fixHeaders($request.headers, { ...$request.headers, ...($response.headers ?? {}), ...header });
+							break;
+						}
+					}
 					// headers修复
-					$response.headers = fixHeaders($request.headers, $response.headers);
-					rawBody = gRPC.decode(rawBody);
 					// 解析链接并处理protobuf数据
 					// 主机判断
 					switch (url.hostname) {
@@ -727,6 +740,13 @@ export async function Response($request, $response) {
 							break;
 					}
 					rawBody = gRPC.encode(rawBody);
+					switch (FORMAT) {
+						case "application/grpc-web":
+							if ($response.headers?.["Content-Type"] !== undefined) $response.headers["Content-Type"] = "application/grpc";
+							if ($response.headers?.["content-type"] !== undefined) $response.headers["content-type"] = "application/grpc";
+							if ($response.headers?.["Content-Type"] === undefined && $response.headers?.["content-type"] === undefined) $response.headers["content-type"] = "application/grpc";
+							break;
+					}
 					break;
 			}
 			// 写入二进制数据
