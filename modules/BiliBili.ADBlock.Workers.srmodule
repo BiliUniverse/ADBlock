@@ -6,33 +6,6 @@
 #!icon = https://github.com/BiliUniverse/ADBlock/raw/main/src/assets/icon_rounded.png
 #!category = 🪐 BiliUniverse
 
-[URL Rewrite]
-# 去除搜索中的默认关键词
-^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$ - reject
-# 重定向 JSON 接口到 app.nanocat.cloud
-^https?:\/\/app\.bili(bili\.com|api\.net)(\/x\/v2\/(?:splash\/(?:brand\/list|event\/list2|list|show)|feed\/index(?:\/story)?|search\/square)(?:\?.*)?)$ https://app.nanocat.cloud$2 header
-^https?:\/\/api\.bili(bili\.com|api\.net)(\/x\/web-interface\/wbi\/index\/top\/feed\/rcmd(?:\?.*)?)$ https://app.nanocat.cloud$2 header
-^https?:\/\/api\.bili(bili\.com|api\.net)(\/pgc\/page\/(?:bangumi|cinema\/tab)(?:\?.*)?)$ https://app.nanocat.cloud$2 header
-^https?:\/\/api\.live\.bilibili\.com(\/xlive\/app-room\/v1\/index\/getInfoByRoom(?:\?.*)?)$ https://app.nanocat.cloud$1 header
-# 重定向 app gRPC 接口到 app.nanocat.cloud
-^https?:\/\/app\.bili(bili\.com|api\.net)(\/bilibili\.app\.(?:view|viewunite)\.v1\.View\/(?:View|TFInfo|RelatesFeed))$ https://app.nanocat.cloud$2 header
-^https?:\/\/app\.bili(bili\.com|api\.net)(\/bilibili\.app\.dynamic\.v2\.Dynamic\/Dyn(?:All|Video))$ https://app.nanocat.cloud$2 header
-^https?:\/\/app\.bili(bili\.com|api\.net)(\/bilibili\.app\.playurl\.v1\.PlayURL\/PlayView)$ https://app.nanocat.cloud$2 header
-^https?:\/\/app\.bili(bili\.com|api\.net)(\/bilibili\.polymer\.app\.search\.v1\.Search\/SearchAll)$ https://app.nanocat.cloud$2 header
-^https?:\/\/app\.bili(bili\.com|api\.net)(\/bilibili\.community\.service\.dm\.v1\.DM\/(?:DmView|DmSegMobile))$ https://app.nanocat.cloud$2 header
-^https?:\/\/app\.bili(bili\.com|api\.net)(\/bilibili\.app\.interface\.v1\.Teenagers\/ModeStatus)$ https://app.nanocat.cloud$2 header
-^https?:\/\/app\.bili(bili\.com|api\.net)(\/bilibili\.main\.community\.reply\.v1\.Reply\/MainList)$ https://app.nanocat.cloud$2 header
-^https?:\/\/app\.bili(bili\.com|api\.net)(\/bilibili\.pgc\.gateway\.player\.v2\.PlayURL\/PlayView)$ https://app.nanocat.cloud$2 header
-# 重定向 grpc 接口到 grpc.nanocat.cloud
-^https?:\/\/grpc\.bili(bili\.com|api\.net)(\/bilibili\.app\.(?:view|viewunite)\.v1\.View\/(?:View|TFInfo|RelatesFeed))$ https://grpc.nanocat.cloud$2 header
-^https?:\/\/grpc\.bili(bili\.com|api\.net)(\/bilibili\.app\.dynamic\.v2\.Dynamic\/Dyn(?:All|Video))$ https://grpc.nanocat.cloud$2 header
-^https?:\/\/grpc\.bili(bili\.com|api\.net)(\/bilibili\.app\.playurl\.v1\.PlayURL\/PlayView)$ https://grpc.nanocat.cloud$2 header
-^https?:\/\/grpc\.bili(bili\.com|api\.net)(\/bilibili\.polymer\.app\.search\.v1\.Search\/SearchAll)$ https://grpc.nanocat.cloud$2 header
-^https?:\/\/grpc\.bili(bili\.com|api\.net)(\/bilibili\.community\.service\.dm\.v1\.DM\/(?:DmView|DmSegMobile))$ https://grpc.nanocat.cloud$2 header
-^https?:\/\/grpc\.bili(bili\.com|api\.net)(\/bilibili\.app\.interface\.v1\.Teenagers\/ModeStatus)$ https://grpc.nanocat.cloud$2 header
-^https?:\/\/grpc\.bili(bili\.com|api\.net)(\/bilibili\.main\.community\.reply\.v1\.Reply\/MainList)$ https://grpc.nanocat.cloud$2 header
-^https?:\/\/grpc\.bili(bili\.com|api\.net)(\/bilibili\.pgc\.gateway\.player\.v2\.PlayURL\/PlayView)$ https://grpc.nanocat.cloud$2 header
-
 [Map Local]
 # 去除搜索中的大家都在搜
 ^https?:\/\/api\.vc\.bilibili\.com\/search_svr\/v\d\/Search\/recommend_words data-type=text data="{}" header="application/json"
@@ -50,6 +23,33 @@
 [Body Rewrite]
 # iPad端番剧推荐列表上方广告
 http-response-jq ^https:\/\/api\.bilibili\.com\/pgc\/view\/v2\/app\/season\? 'del(.data.payment)'
+
+[URL Rewrite]
+# 去除搜索中的默认关键词
+^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$ - reject
+# 重定向 JSON 接口到 app.nanocat.cloud
+^https?:\/\/app\.bili(bili\.com|api\.net)\/(x\/v2\/(?:splash\/(?:brand\/list|event\/list2|list|show)|feed\/index(?:\/story)?|search\/square)(?:\?.*)?)$ https://app.nanocat.cloud/$2 header
+^https?:\/\/api\.bili(bili\.com|api\.net)\/(x\/web-interface\/wbi\/index\/top\/feed\/rcmd(?:\?.*)?)$ https://app.nanocat.cloud/$2 header
+^https?:\/\/api\.bili(bili\.com|api\.net)\/(pgc\/page\/(?:bangumi|cinema\/tab)(?:\?.*)?)$ https://app.nanocat.cloud/$2 header
+^https?:\/\/api\.live\.bilibili\.com\/(xlive\/app-room\/v1\/index\/getInfoByRoom(?:\?.*)?)$ https://app.nanocat.cloud/$1 header
+# 重定向 app gRPC 接口到 app.nanocat.cloud
+^https?:\/\/app\.bili(bili\.com|api\.net)\/(bilibili\.app\.(?:view|viewunite)\.v1\.View\/(?:View|TFInfo|RelatesFeed))$ https://app.nanocat.cloud/$2 header
+^https?:\/\/app\.bili(bili\.com|api\.net)\/(bilibili\.app\.dynamic\.v2\.Dynamic\/Dyn(?:All|Video))$ https://app.nanocat.cloud/$2 header
+^https?:\/\/app\.bili(bili\.com|api\.net)\/(bilibili\.app\.playurl\.v1\.PlayURL\/PlayView)$ https://app.nanocat.cloud/$2 header
+^https?:\/\/app\.bili(bili\.com|api\.net)\/(bilibili\.polymer\.app\.search\.v1\.Search\/SearchAll)$ https://app.nanocat.cloud/$2 header
+^https?:\/\/app\.bili(bili\.com|api\.net)\/(bilibili\.community\.service\.dm\.v1\.DM\/(?:DmView|DmSegMobile))$ https://app.nanocat.cloud/$2 header
+^https?:\/\/app\.bili(bili\.com|api\.net)\/(bilibili\.app\.interface\.v1\.Teenagers\/ModeStatus)$ https://app.nanocat.cloud/$2 header
+^https?:\/\/app\.bili(bili\.com|api\.net)\/(bilibili\.main\.community\.reply\.v1\.Reply\/MainList)$ https://app.nanocat.cloud/$2 header
+^https?:\/\/app\.bili(bili\.com|api\.net)\/(bilibili\.pgc\.gateway\.player\.v2\.PlayURL\/PlayView)$ https://app.nanocat.cloud/$2 header
+# 重定向 grpc 接口到 grpc.nanocat.cloud
+^https?:\/\/grpc\.bili(bili\.com|api\.net)\/(bilibili\.app\.(?:view|viewunite)\.v1\.View\/(?:View|TFInfo|RelatesFeed))$ https://grpc.nanocat.cloud/$2 header
+^https?:\/\/grpc\.bili(bili\.com|api\.net)\/(bilibili\.app\.dynamic\.v2\.Dynamic\/Dyn(?:All|Video))$ https://grpc.nanocat.cloud/$2 header
+^https?:\/\/grpc\.bili(bili\.com|api\.net)\/(bilibili\.app\.playurl\.v1\.PlayURL\/PlayView)$ https://grpc.nanocat.cloud/$2 header
+^https?:\/\/grpc\.bili(bili\.com|api\.net)\/(bilibili\.polymer\.app\.search\.v1\.Search\/SearchAll)$ https://grpc.nanocat.cloud/$2 header
+^https?:\/\/grpc\.bili(bili\.com|api\.net)\/(bilibili\.community\.service\.dm\.v1\.DM\/(?:DmView|DmSegMobile))$ https://grpc.nanocat.cloud/$2 header
+^https?:\/\/grpc\.bili(bili\.com|api\.net)\/(bilibili\.app\.interface\.v1\.Teenagers\/ModeStatus)$ https://grpc.nanocat.cloud/$2 header
+^https?:\/\/grpc\.bili(bili\.com|api\.net)\/(bilibili\.main\.community\.reply\.v1\.Reply\/MainList)$ https://grpc.nanocat.cloud/$2 header
+^https?:\/\/grpc\.bili(bili\.com|api\.net)\/(bilibili\.pgc\.gateway\.player\.v2\.PlayURL\/PlayView)$ https://grpc.nanocat.cloud/$2 header
 
 [MITM]
 hostname = manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, api.bilibili.com, api.biliapi.net, grpc.biliapi.net, grpc.bilibili.com
