@@ -72,6 +72,7 @@ export async function Request($request) {
 				case "application/x-protobuf":
 				case "application/vnd.google.protobuf":
 				case "application/grpc":
+				case "application/grpc-web":
 				case "application/grpc+proto":
 				case "applecation/octet-stream": {
 					//Console.debug(`$request.body: ${JSON.stringify($request.body)}`);
