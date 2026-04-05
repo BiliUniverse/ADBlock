@@ -96,7 +96,7 @@ export default class HonoWorkerAdapter {
 			if (value === undefined) return normalizedHeaders;
 			const normalizedKey = key.toLowerCase();
 			if (normalizedKey.startsWith("cf-") || requestHeaderBlacklist.has(normalizedKey)) return normalizedHeaders;
-			normalizedHeaders[key] = normalizedKey === "content-type" && value === "application/grpc-web" ? "application/grpc" : value;
+			normalizedHeaders[key] = value;
 			return normalizedHeaders;
 		}, {});
 	}
