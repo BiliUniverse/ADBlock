@@ -187,7 +187,7 @@ export async function Response($request, $response) {
 											await fetch(myRequest).then(response => {
 												try {
 													const body = JSON.parse(response.body || "{}");
-													if (body?.code === 0 && body?.message === "0") {
+													if (body?.code === 0 && body?.message === "OK") {
 														body.data.items = body.data.items
 															.map(item => {
 																const { card_type: cardType, card_goto: cardGoto, goto: Goto } = item;
