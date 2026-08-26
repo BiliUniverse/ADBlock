@@ -10,7 +10,7 @@
 
 #[rewrite_local]
 # 去除搜索中的默认关键词
-^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$ url reject
+^https?:\/\/((grpc|app)\.bili(bili\.com|api\.net)|app\.biliapi\.com)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$ url reject
 # 去除搜索中的大家都在搜
 ^https?:\/\/api\.vc\.bilibili\.com\/search_svr\/v\d\/Search\/recommend_words url reject-dict
 # 去除动态中的话题
@@ -39,4 +39,4 @@
 ^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.pgc\.gateway\.player\.v2\.PlayURL\/PlayView$ url script-response-body https://github.com/BiliUniverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js
 
 #[mitm]
-hostname = manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, api.bilibili.com, api.biliapi.net, grpc.biliapi.net
+hostname = manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, app.biliapi.com, api.bilibili.com, api.biliapi.net, grpc.biliapi.net

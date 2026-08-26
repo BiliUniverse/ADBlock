@@ -73,7 +73,7 @@ export async function Request($request) {
 				case "application/vnd.google.protobuf":
 				case "application/grpc":
 				case "application/grpc+proto":
-				case "applecation/octet-stream": {
+				case "application/octet-stream": {
 					//Console.debug(`$request.body: ${JSON.stringify($request.body)}`);
 					//let rawBody = $app === "Quantumult X" ? new Uint8Array($request.bodyBytes ?? []) : ($request.body ?? new Uint8Array());
 					//Console.debug(`isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`);

@@ -182,7 +182,7 @@ export async function Response($request, $response) {
 											//重新获取填充位
 											const myRequest = {
 												url: $request.url,
-												headers: $request.heders,
+												headers: $request.headers,
 											};
 											await fetch(myRequest).then(response => {
 												try {
@@ -344,7 +344,7 @@ export async function Response($request, $response) {
 		case "application/vnd.google.protobuf":
 		case "application/grpc":
 		case "application/grpc+proto":
-		case "applecation/octet-stream": {
+		case "application/octet-stream": {
 			//Console.debug(`$response.body: ${JSON.stringify($response.body)}`);
             let rawBody = $response.bodyBytes ? new Uint8Array($response.bodyBytes) : ($response.body ?? new Uint8Array());
 			//Console.debug(`isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`);

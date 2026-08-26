@@ -10,7 +10,7 @@
 
 [URL Rewrite]
 # 去除搜索中的默认关键词
-^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$ - reject
+^https?:\/\/((grpc|app)\.bili(bili\.com|api\.net)|app\.biliapi\.com)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$ - reject
 
 [Map Local]
 # 去除搜索中的大家都在搜
@@ -40,5 +40,5 @@
 📺 BiliBili.ADBlock.pgc.response.grpc = type=http-response, pattern=^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.pgc\.gateway\.player\.v2\.PlayURL\/PlayView$, requires-body=1, binary-body-mode=1, script-path=https://github.com/BiliUniverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
 
 [MITM]
-hostname = %APPEND% manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, api.bilibili.com, api.biliapi.net, grpc.biliapi.net
+hostname = %APPEND% manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, app.biliapi.com, api.bilibili.com, api.biliapi.net, grpc.biliapi.net
 h2 = true
