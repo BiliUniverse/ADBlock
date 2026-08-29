@@ -132,8 +132,8 @@ export default class HonoWorkerAdapter {
 				break;
 		}
 		const headers = HonoWorkerAdapter.normalizeRequestHeaders(c.req.header())
-		HonoWorkerAdapter.parseRequestArguments(headers["biliuniverse-args"])
-		delete headers["biliuniverse-args"];
+		HonoWorkerAdapter.parseRequestArguments(headers["biliverse-args"])
+		delete headers["biliverse-args"];
 		HonoWorkerAdapter.parseRequestArguments(url.search);
 		Array.from(url.searchParams.keys()).forEach(key => {
 			if (key.startsWith('.')) url.searchParams.delete(key);

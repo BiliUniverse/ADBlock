@@ -9,9 +9,9 @@ author: |-
   app2smile[https://github.com/app2smile]
   RuCu6[https://github.com/RuCu6]
   Maasea[https://github.com/Maasea]
-homepage: "https://ADBlock.BiliUniverse.io"
-icon: "https://github.com/BiliUniverse/ADBlock/raw/main/src/assets/icon_rounded.png"
-category: "🪐 BiliUniverse"
+homepage: "https://biliverse.github.io/guide/ad-block"
+icon: "https://github.com/Biliverse/ADBlock/raw/main/src/assets/icon_rounded.png"
+category: "🪐 Biliverse"
 
 http:
   mitm:

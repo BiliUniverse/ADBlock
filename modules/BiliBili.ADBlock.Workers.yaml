@@ -2,8 +2,8 @@ name: '📺 BiliBili: 🛡️ ADBlock (Rewrite)'
 description: 哔哩哔哩：去广告\n自定义去除APP内界面元素
 open_url: http://boxjs.com/#/app/BiliBili.ADBlock
 author: ClydeTime[https://github.com/ClydeTime],VirgilClyne[https://github.com/VirgilClyne],app2smile[https://github.com/app2smile],RuCu6[https://github.com/RuCu6],Maasea[https://github.com/Maasea]
-homepage: https://ADBlock.BiliUniverse.io
-icon: https://github.com/BiliUniverse/ADBlock/raw/main/src/assets/icon_rounded.png
+homepage: https://biliverse.github.io/guide/ad-block
+icon: https://github.com/Biliverse/ADBlock/raw/main/src/assets/icon_rounded.png
 url_rewrites:
 - match: ^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$
   location: http://reject/
