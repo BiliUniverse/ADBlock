@@ -8,10 +8,6 @@
 #!date = {{now "yyyy-MM-dd HH:mm:ss"}}
 #!version = {{@package 'version'}}
 
-[URL Rewrite]
-# 去除搜索中的默认关键词
-^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$ - reject
-
 [Map Local]
 # 去除搜索中的大家都在搜
 ^https?:\/\/api\.vc\.bilibili\.com\/search_svr\/v\d\/Search\/recommend_words data-type=text data="{}" header="application/json"
@@ -25,20 +21,23 @@
 ^https?:\/\/api\.live\.bilibili\.com\/xlive\/e-commerce-interface\/v1\/ecommerce-user\/get_shopping_info\? data-type=text data="{}" header="application/json"
 
 [Script]
+📺 BiliBili.ADBlock.defaultwords.request.grpc = type=http-request, pattern=^https?:\/\/((grpc|app)\.bili(bili\.com|api\.net)|app\.biliapi\.com)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/request.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.feed.index.request.json = type=http-request,pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/feed\/index\?, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/request.bundle.js, argument={{{scriptParams}}}
-📺 BiliBili.ADBlock.response.json = type=http-response, pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/(splash\/(brand\/list|event\/list2|list|show)|feed\/index(\/story)?|search\/square), requires-body=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
+📺 BiliBili.ADBlock.privacy.request = type=http-request, pattern=^https?:\/\/(cm\.bilibili\.com\/cm\/api\/(conversion\/mobile\/v2|fees\/wise)|adtrack\.qianwen\.com\/v3\/ad\/(show\/)?bilibili|tkio-redirect\.solar-engine\.com\/receive\/turl\/), script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/request.bundle.js, argument={{{scriptParams}}}
+📺 BiliBili.ADBlock.response.json = type=http-response, pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/(splash\/(brand\/list|event\/list2|list|show)|feed\/index(\/(relate\/)?story)?|search\/square), requires-body=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.response.json = type=http-response, pattern=^https?:\/\/api\.bilibili\.com\/x\/web-interface\/wbi\/index\/top\/feed\/rcmd\?, requires-body=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.pgc.page.response.json = type=http-response, pattern=^https?:\/\/api\.bili(bili\.com|api\.net)\/pgc\/page\/(bangumi|cinema\/tab\?), requires-body=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
-📺 BiliBili.ADBlock.app-room.response.json = type=http-response, pattern=^https?:\/\/api\.live\.bilibili\.com\/xlive\/app-room\/v1\/index\/getInfoByRoom, requires-body=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
+📺 BiliBili.ADBlock.xlive.response.json = type=http-response, pattern=^https?:\/\/api\.live\.bilibili\.com\/xlive\/(app-room\/v1\/index\/getInfoByRoom|app-interface\/v2\/(index\/feed|room\/recList)), requires-body=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.view.response.grpc = type=http-response, pattern=^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.(view|viewunite)\.v1\.View\/(View|TFInfo|RelatesFeed)$, requires-body=1, binary-body-mode=1, max-size=262144, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
-📺 BiliBili.ADBlock.dynamic.response.grpc = type=http-response, pattern=^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.dynamic\.v2\.Dynamic\/Dyn(All|Video)$, requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
+📺 BiliBili.ADBlock.dynamic.response.grpc = type=http-response, pattern=^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.dynamic\.v2\.Dynamic\/Dyn(All|Video)(Personal)?$, requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.playurl.response.grpc = type=http-response, pattern=^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.playurl\.v1\.PlayURL\/PlayView$, requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.search.response.grpc = type=http-response, pattern=^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.polymer\.app\.search\.v1\.Search\/SearchAll$, requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.dm.response.grpc = type=http-response, pattern=^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.community\.service\.dm\.v1\.DM\/(DmView|DmSegMobile), requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.interface.response.grpc = type=http-response, pattern=^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.interface\.v1\.Teenagers\/ModeStatus, requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
-📺 BiliBili.ADBlock.reply.response.grpc = type=http-response, pattern=^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.main\.community\.reply\.v1\.Reply\/MainList, requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
+📺 BiliBili.ADBlock.reply.response.grpc = type=http-response, pattern=^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.main\.community\.reply\.v1\.Reply\/(MainList|DetailList|ReplyInfo)$, requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
+📺 BiliBili.ADBlock.reply.v2.response.grpc = type=http-response, pattern=^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.main\.community\.reply\.v2\.Reply\/SubjectDescription$, requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.pgc.response.grpc = type=http-response, pattern=^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.pgc\.gateway\.player\.v2\.PlayURL\/PlayView$, requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}
 
 [MITM]
-hostname = %APPEND% manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, api.bilibili.com, api.biliapi.net, grpc.biliapi.net
+hostname = %APPEND% manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, app.biliapi.com, api.bilibili.com, api.biliapi.net, grpc.biliapi.net, cm.bilibili.com, adtrack.qianwen.com, tkio-redirect.solar-engine.com
 h2 = true

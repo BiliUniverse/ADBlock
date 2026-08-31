@@ -1,11 +1,14 @@
+import gRPC from "@nsnanocat/grpc";
 import { Console, Lodash as _ } from "@nsnanocat/util";
-import database from "../function/database.mjs";
-import setENV from "../function/setENV.mjs";
 import MD5 from "crypto-js/md5.js";
+import database from "../function/database.mjs";
+import fixHeaders from "../function/fixHeaders.mjs";
+import setENV from "../function/setENV.mjs";
+import { DefaultWordsReply } from "../protobuf/bilibili/app/interface/v1/search.js";
 /***************** Processing *****************/
 export async function Request($request) {
 	// 构造回复数据
-    let $response = undefined;
+	let $response = undefined;
 	// 解构URL
 	const url = new URL($request.url);
 	Console.info(`url: ${url.toJSON()}`);
@@ -21,6 +24,43 @@ export async function Request($request) {
 	 */
 	const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
 	Console.logLevel = Settings.LogLevel;
+	const strictPrivacy = Settings?.Privacy?.Strict === true;
+	const createResponse = value => ({
+		status: 200,
+		headers: { "Content-Type": typeof value === "string" ? "text/plain; charset=utf-8" : "application/json; charset=utf-8" },
+		body: typeof value === "string" ? value : JSON.stringify(value),
+	});
+	const createEmptyGrpcResponse = () => ({
+		status: 200,
+		headers: fixHeaders($request.headers, {
+			"Content-Type": "application/grpc",
+			"Content-Length": "5",
+		}),
+		body: gRPC.encode(DefaultWordsReply.toBinary(DefaultWordsReply.create())),
+	});
+	if (["grpc.biliapi.net", "app.biliapi.net", "app.bilibili.com", "app.biliapi.com"].includes(url.hostname) && url.pathname === "/bilibili.app.interface.v1.Search/DefaultWords") {
+		$response = createEmptyGrpcResponse();
+		Console.info("✅ 搜索默认关键词已返回空 gRPC 响应");
+	}
+	if (Settings?.Privacy?.BlockBiliCommercial === true || strictPrivacy) {
+		if (url.hostname === "cm.bilibili.com" && url.pathname === "/cm/api/conversion/mobile/v2") {
+			$response = createResponse({ code: 0, message: "success" });
+			Console.info("✅ B站商业转化上报已本地响应");
+		} else if (url.hostname === "cm.bilibili.com" && url.pathname === "/cm/api/fees/wise") {
+			$response = createResponse({ code: 0 });
+			Console.info("✅ B站商业曝光上报已本地响应");
+		}
+	}
+	if (!$response && (Settings?.Privacy?.BlockThirdParty === true || strictPrivacy)) {
+		if (url.hostname === "adtrack.qianwen.com" && /^\/v3\/ad\/(?:show\/)?bilibili$/.test(url.pathname)) {
+			$response = createResponse("");
+			Console.info("✅ 千问广告归因请求已本地响应");
+		} else if (url.hostname === "tkio-redirect.solar-engine.com" && url.pathname.startsWith("/receive/turl/")) {
+			$response = createResponse({ status: 0 });
+			Console.info("✅ Solar Engine广告归因请求已本地响应");
+		}
+	}
+	if ($response) return { $request, $response };
 	// 创建空数据
 	const body = { code: 0, message: "0", data: {} };
 	// 方法判断
@@ -74,7 +114,7 @@ export async function Request($request) {
 				case "application/grpc":
 				case "application/grpc-web":
 				case "application/grpc+proto":
-				case "applecation/octet-stream": {
+				case "application/octet-stream": {
 					//Console.debug(`$request.body: ${JSON.stringify($request.body)}`);
 					//let rawBody = $app === "Quantumult X" ? new Uint8Array($request.bodyBytes ?? []) : ($request.body ?? new Uint8Array());
 					//Console.debug(`isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`);
@@ -162,7 +202,7 @@ export async function Request($request) {
 		case "TRACE":
 			break;
 	}
-    $request.url = url.toString();
-    Console.debug(`$request.url: ${$request.url}`);
-    return { $request, $response };
+	$request.url = url.toString();
+	Console.debug(`$request.url: ${$request.url}`);
+	return { $request, $response };
 }
