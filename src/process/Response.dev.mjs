@@ -7,7 +7,7 @@ import { DynAllReply, DynVideoReply } from "@biliverse/protobuf/bilibili/app/dyn
 import { ViewReply, TFInfoReply } from "@biliverse/protobuf/bilibili/app/view/v1/view.js";
 import { ViewReply as ViewUniteReply, RelatesFeedReply } from "@biliverse/protobuf/bilibili/app/viewunite/v1/viewunite.js";
 import { ModeStatusReply } from "@biliverse/protobuf/bilibili/app/interface/teenagers.js";
-import { DmViewReply, DmSegMobileReply } from "@biliverse/protobuf/bilibili/community/service/dm/v1/dm.js";
+import { DmViewReply, DmSegMobileReply, DmSegMobileReq, DmColorfulType } from "@biliverse/protobuf/bilibili/community/service/dm/v1/dm.js";
 import { MainListReply } from "@biliverse/protobuf/bilibili/main/community/reply/v1/reply.js";
 import { PlayViewReply as PGCPlayViewReply } from "@biliverse/protobuf/bilibili/pgc/gateway/player/v2/playurl.js";
 import { SearchAllResponse } from "@biliverse/protobuf/bilibili/polymer/app/search/v1/search.js";
@@ -628,9 +628,9 @@ export async function Response($request, $response, KV) {
 											rawBody = DmViewReply.toBinary(body);
 											break;
 										case "DmSegMobile": // 弹幕列表
+											body = DmSegMobileReply.fromBinary(rawBody);
 											switch (Settings?.DM?.Colorful) {
 												case true:
-													body = DmSegMobileReply.fromBinary(rawBody);
 													body.elems = body.elems.map(ele => {
 														if (ele?.colorful === 60001) {
 															ele.colorful = 0;
@@ -638,13 +638,31 @@ export async function Response($request, $response, KV) {
 														return ele;
 													});
 													Console.info("✅ 会员弹幕已替换为普通弹幕");
-													rawBody = DmSegMobileReply.toBinary(body);
 													break;
 												case false:
 												default:
 													Console.warn("用户设置会员弹幕不修改");
 													break;
 											}
+											switch (Settings?.DM?.Airborne) {
+												case true: {
+													Console.warn("空降助手: 获取 Segment");
+													const { oid, pid, type } = DmSegMobileReq.fromBinary(gRPC.decode($request.body instanceof ArrayBuffer ? new Uint8Array($request.body) : ($request.body ?? new Uint8Array())));
+													if (type !== 1) break;
+													const videoId = toBvid(pid);
+													const segments = await fetchSponsorBlock(videoId, oid);
+													// 构建响应体。
+													// Build the response body.
+													body.elems.push(...createAirborneDanmaku(segments));
+													Console.info("✅ 空降助手");
+													break;
+												}
+												case false:
+												default:
+													Console.warn("用户设置空降助手关闭");
+													break;
+											}
+											rawBody = DmSegMobileReply.toBinary(body);
 											break;
 									}
 									break;
@@ -758,5 +776,87 @@ export async function Response($request, $response, KV) {
 			break;
 		}
 	}
-    return $response;
+	return $response;
+}
+
+function toBvid(avid) {
+	const XOR_CODE = 23442827791579n;
+	const MAX_AID = 1n << 51n;
+	const BASE = 58n;
+	const data = "FcwAPNKTMug3GV5Lj7EJnHpWsx4tb8haYeviqBz6rkCy12mUSDQX9RdoZf";
+	const bytes = ["B", "V", "1", "0", "0", "0", "0", "0", "0", "0", "0", "0"];
+	let bvIndex = bytes.length - 1;
+	let tmp = (MAX_AID | BigInt(avid)) ^ XOR_CODE;
+	while (tmp > 0) {
+		bytes[bvIndex] = data[Number(tmp % BASE)];
+		tmp /= BASE;
+		bvIndex -= 1;
+	}
+	[bytes[3], bytes[9]] = [bytes[9], bytes[3]];
+	[bytes[4], bytes[7]] = [bytes[7], bytes[4]];
+	return bytes.join("");
+}
+
+async function fetchSponsorBlock(videoId, cid) {
+	try {
+		const { status, body } = await getSkipSegments(videoId, cid);
+
+		Console.debug("[SponsorBlock]");
+		Console.debug({ videoId, status, body });
+
+		if (status !== 200 || !body || body === "[]") return [];
+		return parseSegments(body);
+	} catch (error) {
+		Console.info("[SponsorBlock]");
+		Console.info(error);
+		return [];
+	}
+}
+
+function getSkipSegments(videoId, cid = "") {
+	cid = cid !== "0" ? cid : "";
+	return fetch(`https://bsbsb.top/api/skipSegments?videoID=${videoId}&cid=${cid}&category=sponsor`, {
+		headers: {
+			origin: "https://github.com/kokoryh/Sparkle/blob/master/release/surge/module/bilibili.sgmodule",
+			"x-ext-version": "1.0.0",
+		},
+		timeout: 3,
+	});
+}
+
+function parseSegments(body) {
+	return JSON.parse(body).reduce((memo, { actionType, segment }) => {
+		if (actionType === "skip" && segment[1] - segment[0] >= 8) memo.push(segment);
+		return memo;
+	}, []);
+}
+
+function createAirborneDanmaku(segments) {
+	const offset = 2000;
+	return segments.map((segment, index) => {
+		const id = String(index + 1);
+		const start = Math.floor(segment[0] * 1000) + offset;
+		const end = Math.floor(segment[1] * 1000);
+		return {
+			id,
+			progress: start,
+			mode: 5,
+			fontsize: 50,
+			color: 16777215,
+			midHash: "1948dd5d",
+			content: "空指部已就位",
+			ctime: "1735660800",
+			weight: 11,
+			action: `airborne:${end}`,
+			pool: 0,
+			idStr: id,
+			attr: 1310724,
+			animation: "",
+			extra: "",
+			colorful: DmColorfulType.NoneType,
+			type: 1,
+			oid: "212364987",
+			dmFrom: 1,
+		};
+	});
 }

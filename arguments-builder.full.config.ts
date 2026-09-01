@@ -31,14 +31,6 @@ export const output = {
 	},
 };
 
-const airborne: ArgumentItem = {
-	key: "DM.Airborne",
-	name: "[弹幕] 空降助手",
-	defaultValue: false,
-	type: "boolean",
-	description: "是否启用此处修改",
-};
-
 export const args: ArgumentItem[] = [
 	{
 		key: "Splash",
@@ -160,6 +152,13 @@ export const args: ArgumentItem[] = [
 		description: "是否启用此处修改",
 	},
 	{
+		key: "DM.Airborne",
+		name: "[弹幕] 空降助手",
+		defaultValue: false,
+		type: "boolean",
+		description: "是否启用此处修改",
+	},
+	{
 		key: "Reply.AD",
 		name: "[评论] 去除广告",
 		defaultValue: true,
@@ -183,6 +182,6 @@ export const args: ArgumentItem[] = [
 	},
 ];
 
-export const argsFull: ArgumentItem[] = [...args, airborne];
+export const argsFull: ArgumentItem[] = [...args];
 
 export default defineConfig({ output, args: argsFull });

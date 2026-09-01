@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { DmSegMobileReply, DmSegMobileReq } from "@biliverse/protobuf/bilibili/community/service/dm/v1/dm.js";
+import gRPC from "@nsnanocat/grpc";
 import HonoWorkerAdapter from "../src/class/HonoWorkerAdapter.mjs";
 import database from "../src/function/database.mjs";
 import setENV from "../src/function/setENV.mjs";
+import { Response as DevResponse } from "../src/process/Response.dev.mjs";
 
 test("rewrites Pages and Workers paths to the original upstream host", () => {
 	const pages = HonoWorkerAdapter.routeRewrite(new URL("https://adblock-dux.pages.dev/api.bilibili.com/x/v2/feed/index?foo=bar"), "api.bilibili.com/x/v2/feed/index");
@@ -43,4 +46,25 @@ test("loads ADBlock caches from the request-scoped Worker KV adapter", async () 
 	const { Caches } = await setENV("BiliBili", "ADBlock", database, KV);
 	assert.deepEqual(requestedKeys, ["@BiliBili.ADBlock.Caches"]);
 	assert.deepEqual(Caches, { banner_hash: "worker-cache" });
+});
+
+test("development response parses the Airborne request payload", async () => {
+	HonoWorkerAdapter.buildArgument({
+		url: "https://grpc.biliapi.net/bilibili.community.service.dm.v1.DM/DmSegMobile",
+		headers: { "biliverse-args": "DM.Airborne=true&DM.Colorful=false&LogLevel=OFF" },
+	});
+	const requestBody = gRPC.encode(DmSegMobileReq.toBinary(DmSegMobileReq.create({ pid: "1", oid: "2", type: 2, segmentIndex: "1" })));
+	const responseBody = gRPC.encode(DmSegMobileReply.toBinary(DmSegMobileReply.create({ elems: [], state: 0, colorfulSrc: [] })));
+	const originalDecode = gRPC.decode;
+	let decodeCount = 0;
+	gRPC.decode = body => {
+		decodeCount += 1;
+		return originalDecode.call(gRPC, body);
+	};
+	try {
+		await DevResponse({ method: "POST", url: "https://grpc.biliapi.net/bilibili.community.service.dm.v1.DM/DmSegMobile", headers: { "user-agent": "bili-universal/80000100" }, body: requestBody }, { status: 200, headers: { "content-type": "application/grpc" }, body: responseBody });
+	} finally {
+		gRPC.decode = originalDecode;
+	}
+	assert.equal(decodeCount, 2);
 });
