@@ -2,18 +2,18 @@ import { Console, fetch, Lodash as _, Storage } from "@nsnanocat/util";
 import gRPC from "@nsnanocat/grpc";
 import database from "../function/database.mjs";
 import setENV from "../function/setENV.mjs";
-import { PlayViewReply } from "../protobuf/bilibili/app/playurl/v1/playurl.js";
-import { DynAllReply, DynVideoReply } from "../protobuf/bilibili/app/dynamic/v2/dynamic.js";
-import { ViewReply, TFInfoReply } from "../protobuf/bilibili/app/view/v1/view.js";
-import { ViewReply as ViewUniteReply, RelatesFeedReply } from "../protobuf/bilibili/app/viewunite/v1/viewunite.js";
-import { ModeStatusReply } from "../protobuf/bilibili/app/interface/teenagers.js";
-import { DmViewReply, DmSegMobileReply } from "../protobuf/bilibili/community/service/dm/v1/dm.js";
-import { MainListReply } from "../protobuf/bilibili/main/community/reply/v1/reply.js";
-import { PlayViewReply as PGCPlayViewReply } from "../protobuf/bilibili/pgc/gateway/player/v2/playurl.js";
-import { SearchAllResponse } from "../protobuf/bilibili/polymer/app/search/v1/search.js";
+import { PlayViewReply } from "@biliverse/protobuf/bilibili/app/playurl/v1/playurl.js";
+import { DynAllReply, DynVideoReply } from "@biliverse/protobuf/bilibili/app/dynamic/v2/dynamic.js";
+import { ViewReply, TFInfoReply } from "@biliverse/protobuf/bilibili/app/view/v1/view.js";
+import { ViewReply as ViewUniteReply, RelatesFeedReply } from "@biliverse/protobuf/bilibili/app/viewunite/v1/viewunite.js";
+import { ModeStatusReply } from "@biliverse/protobuf/bilibili/app/interface/teenagers.js";
+import { DmViewReply, DmSegMobileReply } from "@biliverse/protobuf/bilibili/community/service/dm/v1/dm.js";
+import { MainListReply } from "@biliverse/protobuf/bilibili/main/community/reply/v1/reply.js";
+import { PlayViewReply as PGCPlayViewReply } from "@biliverse/protobuf/bilibili/pgc/gateway/player/v2/playurl.js";
+import { SearchAllResponse } from "@biliverse/protobuf/bilibili/polymer/app/search/v1/search.js";
 import fixHeaders from "../function/fixHeaders.mjs";
 /***************** Processing *****************/
-export async function Response($request, $response) {
+export async function Response($request, $response, KV) {
 	// 解构URL
 	const url = new URL($request.url);
 	Console.info(`url: ${url.toJSON()}`);
@@ -27,7 +27,7 @@ export async function Response($request, $response) {
 	 * 设置
 	 * @type {{Settings: import('./types').Settings}}
 	 */
-	const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
+	const { Settings, Caches, Configs } = await setENV("BiliBili", "ADBlock", database, KV);
 	Console.logLevel = Settings.LogLevel;
 	// 创建空数据
 	let body = { code: 0, message: "0", data: {} };
@@ -108,7 +108,10 @@ export async function Response($request, $response) {
 														switch (Settings?.Feed?.Activity) {
 															case true:
 																Caches.banner_hash = item.hash;
-																Storage.setItem("@BiliBili.ADBlock.Caches", Caches); // 获取banner_hash,无此字段会有活动页且此字段无法伪造.
+																// 缓存 banner_hash；缺少该字段时会出现无法伪造的活动页。
+																// Cache banner_hash; without it, an activity page that cannot be forged appears.
+																if (KV) await KV.setItem("@BiliBili.ADBlock.Caches", Caches);
+																else Storage.setItem("@BiliBili.ADBlock.Caches", Caches);
 																Console.info("✅ 推荐页活动大图去除");
 																return undefined;
 															case false:
@@ -173,7 +176,7 @@ export async function Response($request, $response) {
 										body.data.items = body.data.items.filter(fix => fix !== undefined);
 									}
 									async function fixPosition() {
-										let itemsCache = Storage.getItem("@BiliBili.Index.Caches", []);
+										let itemsCache = KV ? await KV.getItem("@BiliBili.Index.Caches", []) : Storage.getItem("@BiliBili.Index.Caches", []);
 										let singleItem = {};
 										if (itemsCache && itemsCache.length > 0) {
 											singleItem = itemsCache.pop();
@@ -184,7 +187,7 @@ export async function Response($request, $response) {
 												url: $request.url,
 												headers: $request.heders,
 											};
-											await fetch(myRequest).then(response => {
+											await fetch(myRequest).then(async response => {
 												try {
 													const body = JSON.parse(response.body || "{}");
 													if (body?.code === 0 && body?.message === "0") {
@@ -211,7 +214,8 @@ export async function Response($request, $response) {
 																return item;
 															})
 															.filter(fix => fix !== undefined);
-														Storage.setItem("@BiliBili.Index.Caches", body.data.items);
+																if (KV) await KV.setItem("@BiliBili.Index.Caches", body.data.items);
+																else Storage.setItem("@BiliBili.Index.Caches", body.data.items);
 														Console.info("✅ 推荐页缓存数组补充成功");
 													} else {
 														Console.warn("访问推荐页尝试填补失败");
@@ -220,13 +224,14 @@ export async function Response($request, $response) {
 													Console.error(e, response);
 												}
 											});
-											itemsCache = Storage.getItem("@BiliBili.Index.Caches", []);
+											itemsCache = KV ? await KV.getItem("@BiliBili.Index.Caches", []) : Storage.getItem("@BiliBili.Index.Caches", []);
 											if (itemsCache.length > 0) {
 												singleItem = itemsCache.pop();
 												Console.info("✅ 推荐页空缺位填充成功");
 											}
 										}
-										Storage.setItem("@BiliBili.Index.Caches", itemsCache);
+										if (KV) await KV.setItem("@BiliBili.Index.Caches", itemsCache);
+										else Storage.setItem("@BiliBili.Index.Caches", itemsCache);
 										return singleItem;
 									}
 									break;

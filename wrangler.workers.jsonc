@@ -1,0 +1,14 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "adblock",
+	"main": "src/Hono.js",
+	"compatibility_date": "2026-09-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"kv_namespaces": [{ "binding": "PersistentStore", "id": "c4303c6939174610b82f76dbf7c33895" }, { "binding": "ADBlock", "id": "29baadedc68f4f509349e08897be9ed3" }],
+	"observability": {
+		"enabled": true,
+		"logs": { "enabled": true, "head_sampling_rate": 1, "persist": true, "invocation_logs": true },
+		"traces": { "enabled": true, "persist": true, "head_sampling_rate": 0.01 }
+	},
+	"placement": { "mode": "smart" }
+}

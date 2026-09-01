@@ -13,12 +13,52 @@ jobs:
   dev:
     uses: ./.github/workflows/dev.yml
     secrets: inherit
+  deploy-pages:
+    needs: dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          ref: dev
+      - name: Install Node Dependencies
+        uses: ./.github/actions/node-build
+        with:
+          package-token: ${{ secrets.PACKAGE_TOKEN }}
+      - name: Deploy Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy pages --project-name adblock --branch dev
+          wranglerVersion: "4.127.1"
+  deploy-workers:
+    needs: dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          ref: dev
+          submodules: recursive
+          token: ${{ secrets.SUBMODULE_TOKEN }}
+      - name: Install Node Dependencies
+        uses: ./.github/actions/node-build
+        with:
+          package-token: ${{ secrets.PACKAGE_TOKEN }}
+      - name: Deploy Cloudflare Worker
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --minify -c wrangler.workers.jsonc
+          wranglerVersion: "4.127.1"
   deploy:
     needs: dev
     runs-on: ubuntu-latest
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@master
+        uses: actions/download-artifact@v8
         with:
           name: artifact
       - name: Deploy Request
@@ -27,11 +67,39 @@ jobs:
           token: ${{ secrets.GIST_TOKEN }}
           gist_id: 0b0c5ac2b8977d5461d4b3276d120896
           gist_description: "📺 BiliBili: 🛡️ ADBlock β"
-          file_path: dist/request.bundle.js
+          file_path: dist/request.dev.bundle.js
       - name: Deploy Response
         uses: exuanbo/actions-deploy-gist@main
         with:
           token: ${{ secrets.GIST_TOKEN }}
           gist_id: 0b0c5ac2b8977d5461d4b3276d120896
           gist_description: "📺 BiliBili: 🛡️ ADBlock β"
-          file_path: dist/response.bundle.js
+          file_path: dist/response.dev.bundle.js
+      - name: Deploy Surge Module
+        uses: exuanbo/actions-deploy-gist@main
+        with:
+          token: ${{ secrets.GIST_TOKEN }}
+          gist_id: 0b0c5ac2b8977d5461d4b3276d120896
+          gist_description: "📺 BiliBili: 🛡️ ADBlock β"
+          file_path: dist/BiliBili.ADBlock.dev.sgmodule
+      - name: Deploy Loon Plugin
+        uses: exuanbo/actions-deploy-gist@main
+        with:
+          token: ${{ secrets.GIST_TOKEN }}
+          gist_id: 0b0c5ac2b8977d5461d4b3276d120896
+          gist_description: "📺 BiliBili: 🛡️ ADBlock β"
+          file_path: dist/BiliBili.ADBlock.dev.plugin
+      - name: Deploy Quantumult X Snippet
+        uses: exuanbo/actions-deploy-gist@main
+        with:
+          token: ${{ secrets.GIST_TOKEN }}
+          gist_id: 0b0c5ac2b8977d5461d4b3276d120896
+          gist_description: "📺 BiliBili: 🛡️ ADBlock β"
+          file_path: dist/BiliBili.ADBlock.dev.snippet
+      - name: Deploy Stash Override
+        uses: exuanbo/actions-deploy-gist@main
+        with:
+          token: ${{ secrets.GIST_TOKEN }}
+          gist_id: 0b0c5ac2b8977d5461d4b3276d120896
+          gist_description: "📺 BiliBili: 🛡️ ADBlock β"
+          file_path: dist/BiliBili.ADBlock.dev.stoverride

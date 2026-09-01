@@ -1,3 +1,0 @@
-[submodule "src/protobuf"]
-	path = src/protobuf
-	url = https://github.com/Biliverse/protobuf.git

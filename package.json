@@ -20,6 +20,7 @@
 	],
 	"systemVersion": 15,
 	"license": "Apache-2.0",
+	"type": "module",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Biliverse/ADBlock.git"
@@ -28,15 +29,24 @@
 		"example": "example"
 	},
 	"scripts": {
+		"dev": "npm-run-all --parallel build:dev build:dev-args",
+		"dev:pages": "npx wrangler pages dev --port 8787",
+		"dev:workers": "npx wrangler dev -c wrangler.workers.jsonc",
+		"deploy:pages": "npx wrangler pages deploy",
+		"deploy:workers": "npx wrangler deploy --minify -c wrangler.workers.jsonc",
 		"vercel:dev": "bunx vercel dev",
 		"vercel:deploy": "bunx vercel deploy --prod",
 		"wrangler:dev": "bunx wrangler dev",
 		"wrangler:deploy": "bunx wrangler deploy --minify",
-		"serve": "webpack serve",
-		"build": "rspack build",
-		"build:dev": "rspack build -c rspack.dev.config.mjs --mode=development",
-		"build:args": "arguments-builder build",
-		"dts": "arguments-builder dts",
+		"build": "rollup -c",
+		"build:dev": "rollup -c rollup.dev.config.mjs",
+		"build:dev-args": "arguments-builder build -c arguments-builder.dev.config.ts",
+		"build:release-args": "arguments-builder build -c arguments-builder.release.config.ts",
+		"build:full-args": "arguments-builder boxjs -c arguments-builder.full.config.ts",
+		"build:args:rewrite": "arguments-builder build -c arguments-builder.rewrite.config.ts",
+		"build:args": "npm-run-all --serial build:release-args build:full-args",
+		"test": "node --test tests/*.test.mjs",
+		"dts": "arguments-builder dts -c arguments-builder.full.config.ts",
 		"submodule": "git submodule update --remote",
 		"update": "npm update --save"
 	},
@@ -44,21 +54,25 @@
 		"iOS >= 15"
 	],
 	"devDependencies": {
-		"@biomejs/biome": "1.9.4",
+		"@biomejs/biome": "2.5.11",
 		"@iringo/arguments-builder": "^1.8.5",
-		"@protobuf-ts/plugin": "^2.11.1",
-		"@rspack/cli": "^1.7.11",
-		"@rspack/core": "^1.7.11",
-		"node-polyfill-webpack-plugin": "^4.1.0",
-		"typescript": "^5.9.3"
+		"@rollup/plugin-commonjs": "^29.0.2",
+		"@rollup/plugin-node-resolve": "^16.0.3",
+		"@rollup/plugin-terser": "^1.0.0",
+		"npm-run-all": "^4.1.5",
+		"rollup": "^4.63.1",
+		"typescript": "^5.9.3",
+		"wrangler": "^4.127.1"
 	},
 	"dependencies": {
+		"@auraflare/shared": "^1.1.1",
 		"@nsnanocat/grpc": "^1.1.0",
-		"@nsnanocat/util": "^2.6.7",
+		"@nsnanocat/util": "^2.7.4",
+		"@biliverse/protobuf": "^1.0.0",
 		"@protobuf-ts/runtime": "^2.11.1",
 		"@protobuf-ts/runtime-rpc": "^2.11.1",
 		"crypto-js": "^4.2.0",
 		"fetch-cookie": "^3.2.0",
-		"hono": "^4.12.12"
+		"hono": "^4.13.5"
 	}
 }

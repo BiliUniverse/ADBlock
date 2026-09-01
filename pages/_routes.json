@@ -1,0 +1,5 @@
+{
+	"version": 1,
+	"include": ["/app.bilibili.com/*", "/app.biliapi.net/*", "/api.bilibili.com/*", "/api.biliapi.net/*", "/api.live.bilibili.com/*", "/grpc.biliapi.net/*"],
+	"exclude": []
+}

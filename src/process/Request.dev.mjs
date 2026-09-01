@@ -3,7 +3,7 @@ import database from "../function/database.mjs";
 import setENV from "../function/setENV.mjs";
 import MD5 from "crypto-js/md5.js";
 /***************** Processing *****************/
-export async function Request($request) {
+export async function Request($request, KV) {
 	// 构造回复数据
     let $response = undefined;
 	// 解构URL
@@ -19,7 +19,7 @@ export async function Request($request) {
 	 * 设置
 	 * @type {{Settings: import('./types').Settings}}
 	 */
-	const { Settings, Caches, Configs } = setENV("BiliBili", "ADBlock", database);
+	const { Settings, Caches, Configs } = await setENV("BiliBili", "ADBlock", database, KV);
 	Console.logLevel = Settings.LogLevel;
 	// 创建空数据
 	const body = { code: 0, message: "0", data: {} };

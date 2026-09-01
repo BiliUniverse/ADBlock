@@ -1,36 +1,17 @@
 {
-  "name": "adblock",
-  "main": "src/Hono.js",
-  "compatibility_date": "2025-11-21",
-  "kv_namespaces": [
-    {
-      "binding": "PersistentStore",
-      "id": "c4303c6939174610b82f76dbf7c33895"
-    },
-    {
-      "binding": "ADBlock",
-      "id": "29baadedc68f4f509349e08897be9ed3"
-    }
-  ],
-  "observability": {
-    "enabled": false,
-    "head_sampling_rate": 1,
-    "logs": {
-      "enabled": true,
-      "head_sampling_rate": 1,
-      "persist": true,
-      "invocation_logs": true
-    },
-    "traces": {
-      "enabled": true,
-      "persist": true,
-      "head_sampling_rate": 1
-    }
-  },
-  "placement": {
-    "mode": "smart"
-  },
-  "compatibility_flags": [
-    "nodejs_compat"
-  ]
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "adblock",
+	"pages_build_output_dir": "./pages",
+	"compatibility_date": "2026-09-01",
+	"kv_namespaces": [
+		{
+			"binding": "PersistentStore",
+			"id": "c4303c6939174610b82f76dbf7c33895"
+		},
+		{
+			"binding": "ADBlock",
+			"id": "29baadedc68f4f509349e08897be9ed3"
+		}
+	],
+	"compatibility_flags": ["nodejs_compat"]
 }

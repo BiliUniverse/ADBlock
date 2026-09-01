@@ -1,10 +1,15 @@
-import { $argument } from "@nsnanocat/util";
-import { Lodash as _ } from "@nsnanocat/util";
+import { qs } from "@nsnanocat/util";
 
 /**
  * Hono 路由上下文类型。
  * Hono route context type.
  * @typedef {import("hono").Context} HonoContext
+ */
+
+/**
+ * Hono 请求类型。
+ * Hono request type.
+ * @typedef {HonoContext["req"]} HonoRequest
  */
 
 /**
@@ -50,7 +55,18 @@ export default class HonoWorkerAdapter {
 	 * @returns {URL} 重写后的 URL / Routed URL.
 	 */
 	static routeRewrite(url, restPath = "") {
+		url.protocol = "https:";
+		url.port = "443";
 		switch (true) {
+			case url.hostname === "api.nanocat.cloud":
+			case url.hostname.endsWith(".pages.dev"):
+			case url.hostname.endsWith(".workers.dev"): {
+				const [host, ...path] = `${restPath}`.split("/");
+				if (!host) break;
+				url.hostname = host;
+				url.pathname = `/${path.join("/")}`;
+				break;
+			}
 			case url.hostname.startsWith("api-live."):
 				url.hostname = "api.live.bilibili.com";
 				break;
@@ -64,31 +80,9 @@ export default class HonoWorkerAdapter {
 				url.hostname = "grpc.biliapi.net";
 				break;
 			default:
-			case url.hostname.endsWith(".workers.dev"): {
-				const [host, ...path] = `${restPath}`.split("/");
-				if (!host) break;
-				url.protocol = "https:";
-				url.hostname = host;
-				url.port = "443";
-				url.pathname = `/${path.join("/")}`;
 				break;
-			}
 		}
 		return url;
-	}
-
-	/**
-	 * 解析请求查询参数，兼容旧入口中的点路径嵌套写法。
-	 * Parse request query arguments using the legacy dotted path convention.
-	 * @param {string} search URL 查询串 / URL search string.
-	 * @returns {Record<string, unknown>} 解析后的参数对象 / Parsed argument object.
-	 */
-	static parseRequestArguments(search = "") {
-		globalThis.$argument = {};
-		for (const [key, value] of new URLSearchParams(search).entries()) {
-			_.set(globalThis.$argument, key, value);
-		}
-		return globalThis.$argument;
 	}
 
 	/**
@@ -109,14 +103,14 @@ export default class HonoWorkerAdapter {
 	}
 
 	/**
-	 * 从 Hono context 构造内部统一请求对象。
-	 * Build the normalized internal request payload from Hono context.
-	 * @param {HonoContext} c Hono 上下文 / Hono context.
+	 * 从 Hono request 构造内部统一请求对象。
+	 * Build the normalized internal request payload from Hono request.
+	 * @param {HonoRequest} req Hono 请求 / Hono request.
 	 * @returns {Promise<WorkerRequest>} 标准化请求对象 / Normalized request object.
 	 */
-	static async buildRequest(c) {
-		const url = HonoWorkerAdapter.routeRewrite(new URL(c.req.url), c.req.param("rest"));
-		const method = c.req.method;
+	static async buildRequest(req) {
+		const url = HonoWorkerAdapter.routeRewrite(new URL(req.url), req.param("rest"));
+		const method = req.method;
 		let bodyBytes;
 		switch (method) {
 			case "GET":
@@ -124,24 +118,17 @@ export default class HonoWorkerAdapter {
 			case "OPTIONS":
 				break;
 			default:
-				bodyBytes = await c.req.arrayBuffer().catch(error => {
+				bodyBytes = await req.arrayBuffer().catch(error => {
 					console.info(error);
 					return undefined;
 				});
 				if (!bodyBytes?.byteLength) bodyBytes = undefined;
 				break;
 		}
-		const headers = HonoWorkerAdapter.normalizeRequestHeaders(c.req.header())
-		HonoWorkerAdapter.parseRequestArguments(headers["biliverse-args"])
-		delete headers["biliverse-args"];
-		HonoWorkerAdapter.parseRequestArguments(url.search);
-		Array.from(url.searchParams.keys()).forEach(key => {
-			if (key.startsWith('.')) url.searchParams.delete(key);
-		});
 		return {
 			method,
 			url: url.toString(),
-			headers,
+			headers: HonoWorkerAdapter.normalizeRequestHeaders(req.header()),
 			body: bodyBytes,
 			bodyBytes,
 		};
@@ -182,5 +169,28 @@ export default class HonoWorkerAdapter {
 		}
 		c.status($response.status ?? $response.statusCode ?? 200);
 		return c.body($response.body ?? $response.bodyBytes ?? null);
+	}
+
+	/**
+	 * 从 WorkerRequest 提取模块参数。
+	 * Extract module arguments from WorkerRequest.
+	 * @param {WorkerRequest} $request 标准化请求对象 / Normalized request object.
+	 * @returns {WorkerRequest} 标准化请求对象 / Normalized request object.
+	 */
+	static buildArgument($request = {}) {
+		const headerArgument = $request.headers.$argument ?? $request.headers["biliverse-args"];
+		if (headerArgument) {
+			globalThis.$argument = qs.parse(headerArgument);
+			delete $request.headers.$argument;
+			delete $request.headers["biliverse-args"];
+			return $request;
+		}
+		const url = new URL($request.url);
+		globalThis.$argument = qs.parse(url.search);
+		for (const key of [...url.searchParams.keys()]) {
+			if (/^[A-Z]/.test(key)) url.searchParams.delete(key);
+		}
+		$request.url = url.toString();
+		return $request;
 	}
 }

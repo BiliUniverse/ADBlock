@@ -148,6 +148,14 @@ export interface Settings {
          * @defaultValue false
          */
         Colorful?: boolean;
+    /**
+         * [弹幕] 空降助手
+         *
+         * 是否启用此处修改
+         *
+         * @defaultValue false
+         */
+        Airborne?: boolean;
 };
     Reply?: {
     /**
