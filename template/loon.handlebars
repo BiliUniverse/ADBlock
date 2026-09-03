@@ -14,8 +14,6 @@
 {{{arguments}}}
 
 [Rewrite]
-# 去除搜索中的默认关键词
-^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$ - reject
 # 去除搜索中的大家都在搜
 ^https?:\/\/api\.vc\.bilibili\.com\/search_svr\/v\d\/Search\/recommend_words - reject-dict
 # 去除动态中的话题
@@ -32,20 +30,23 @@
 ^https:\/\/api\.bilibili\.com\/pgc\/view\/v2\/app\/season\? response-body-json-jq 'del(.data.payment)'
 
 [Script]
+http-request ^https?:\/\/((grpc|app)\.bili(bili\.com|api\.net)|app\.biliapi\.com)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$ requires-body=0, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/request.bundle.js, tag=📺 BiliBili.ADBlock.defaultwords.request.grpc, argument={{{scriptParams}}}
 http-request ^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/feed\/index\? requires-body=0, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/request.bundle.js, tag=📺 BiliBili.ADBlock.request.json, argument={{{scriptParams}}}
-http-response ^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/(splash\/(brand\/list|event\/list2|list|show)|feed\/index(\/story)?|search\/square) requires-body=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.response.json, argument={{{scriptParams}}}
+http-request ^https?:\/\/(cm\.bilibili\.com\/cm\/api\/(conversion\/mobile\/v2|fees\/wise)|adtrack\.qianwen\.com\/v3\/ad\/(show\/)?bilibili|tkio-redirect\.solar-engine\.com\/receive\/turl\/) requires-body=0, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/request.bundle.js, tag=📺 BiliBili.ADBlock.privacy.request, argument={{{scriptParams}}}
+http-response ^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/(splash\/(brand\/list|event\/list2|list|show)|feed\/index(\/(relate\/)?story)?|search\/square) requires-body=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.response.json, argument={{{scriptParams}}}
 http-response ^https?:\/\/api\.bilibili\.com\/x\/web-interface\/wbi\/index\/top\/feed\/rcmd\? requires-body=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.response.json, argument={{{scriptParams}}}
 http-response ^https?:\/\/api\.bili(bili\.com|api\.net)\/pgc\/page\/(bangumi|cinema\/tab\?) requires-body=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.response.json, argument={{{scriptParams}}}
-http-response ^https?:\/\/api\.live\.bilibili\.com\/xlive\/app-room\/v1\/index\/getInfoByRoom requires-body=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.response.json, argument={{{scriptParams}}}
+http-response ^https?:\/\/api\.live\.bilibili\.com\/xlive\/(app-room\/v1\/index\/getInfoByRoom|app-interface\/v2\/(index\/feed|room\/recList)) requires-body=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.response.json, argument={{{scriptParams}}}
 http-response ^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.(view|viewunite)\.v1\.View\/(View|TFInfo|RelatesFeed)$ requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.view.response.grpc, argument={{{scriptParams}}}
-http-response ^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.dynamic\.v2\.Dynamic\/Dyn(All|Video)$ requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.dynamic.response.grpc, argument={{{scriptParams}}}
+http-response ^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.dynamic\.v2\.Dynamic\/Dyn(All|Video)(Personal)?$ requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.dynamic.response.grpc, argument={{{scriptParams}}}
 http-response ^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.playurl\.v1\.PlayURL\/PlayView$ requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.playurl.response.grpc, argument={{{scriptParams}}}
 http-response ^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.polymer\.app\.search\.v1\.Search\/SearchAll$ requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.search.response.grpc, argument={{{scriptParams}}}
 http-response ^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.community\.service\.dm\.v1\.DM\/(DmView|DmSegMobile) requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.dm.response.grpc, argument={{{scriptParams}}}
 http-response ^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.interface\.v1\.Teenagers\/ModeStatus requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.interface.response.grpc, argument={{{scriptParams}}}
-http-response ^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.main\.community\.reply\.v1\.Reply\/MainList requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.reply.response.grpc, argument={{{scriptParams}}}
+http-response ^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.main\.community\.reply\.v1\.Reply\/(MainList|DetailList|ReplyInfo)$ requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.reply.response.grpc, argument={{{scriptParams}}}
+http-response ^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.main\.community\.reply\.v2\.Reply\/SubjectDescription$ requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.reply.v2.response.grpc, argument={{{scriptParams}}}
 http-response ^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.pgc\.gateway\.player\.v2\.PlayURL\/PlayView$ requires-body=1, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, tag=📺 BiliBili.ADBlock.pgc.response.grpc, argument={{{scriptParams}}}
 
 [MitM]
-hostname = manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, api.bilibili.com, api.biliapi.net, grpc.biliapi.net
+hostname = manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, app.biliapi.com, api.bilibili.com, api.biliapi.net, grpc.biliapi.net, cm.bilibili.com, adtrack.qianwen.com, tkio-redirect.solar-engine.com
 h2 = true
