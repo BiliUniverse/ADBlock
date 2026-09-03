@@ -12,7 +12,6 @@ import gRPC from "@nsnanocat/grpc";
 import { Lodash as _, Console, fetch, Storage } from "@nsnanocat/util";
 import database from "../function/database.mjs";
 import fixHeaders from "../function/fixHeaders.mjs";
-import { asArray, cleanJsonTracking, cleanLiveCardTracking, cleanReplyCommercialLinks, cleanReplyTracking, cleanSearchTracking, cleanStoryItem, isCommercialReply, isFeedAd, isLiveCardAd, isObject, stringListIncludes } from "../function/responseCleaner.mjs";
 import setENV from "../function/setENV.mjs";
 /***************** Processing *****************/
 export async function Response($request, $response, KV) {
@@ -66,7 +65,7 @@ export async function Response($request, $response, KV) {
 			//$response.body = VTT.stringify(body);
 			break;
 		case "text/json":
-		case "application/json":
+		case "application/json": {
 			body = JSON.parse($response.body ?? "{}");
 			// 解析链接
 			switch (url.hostname) {
@@ -74,7 +73,43 @@ export async function Response($request, $response, KV) {
 					break;
 				case "app.bilibili.com":
 				case "app.biliapi.net":
-				case "app.biliapi.com":
+				case "app.biliapi.com": {
+					const stripTracking = value => {
+						if (Array.isArray(value)) {
+							value.forEach(stripTracking);
+							return;
+						}
+						if (!value || typeof value !== "object") return;
+						for (const [key, child] of Object.entries(value)) {
+							if (Configs.Privacy.TrackingFields.JSON.includes(key)) {
+								value[key] = undefined;
+								continue;
+							}
+							if (Configs.Privacy.URLFields.JSON.includes(key) && typeof child === "string") {
+								const protocolRelative = child.startsWith("//");
+								if (!protocolRelative && !/^[a-z][a-z\d+.-]*:\/\//i.test(child)) continue;
+								try {
+									const target = new URL(protocolRelative ? `https:${child}` : child);
+									let changed = false;
+									for (const parameter of [...target.searchParams.keys()]) {
+										if (Configs.Privacy.TrackingParameters.includes(parameter.toLowerCase())) {
+											target.searchParams.delete(parameter);
+											changed = true;
+										}
+									}
+									if (changed) value[key] = protocolRelative ? target.toString().replace(/^https:/, "") : target.toString();
+								} catch {}
+								continue;
+							}
+							if (child && typeof child === "object") stripTracking(child);
+						}
+					};
+					const isFeedAd = item => {
+						if (!item || typeof item !== "object") return false;
+						const cardType = typeof item.card_type === "string" ? item.card_type : "";
+						const cardGoto = typeof item.card_goto === "string" ? item.card_goto : "";
+						return (Object.prototype.hasOwnProperty.call(item, "ad_info") && item.ad_info !== null) || cardType.startsWith("cm_") || cardGoto.startsWith("ad_") || item.goto === "ad" || item.is_ad === true;
+					};
 					switch (url.pathname) {
 						case "/x/v2/splash/show": // 开屏页
 						case "/x/v2/splash/list": // 开屏页
@@ -85,7 +120,7 @@ export async function Response($request, $response, KV) {
 								default: {
 									Console.info("✅ 开屏页广告去除");
 									const item = ["account", "event_list", "preload", "show"];
-									if (isObject(body?.data)) {
+									if (body?.data && typeof body.data === "object") {
 										item.forEach(i => {
 											delete body.data[i];
 										});
@@ -105,7 +140,7 @@ export async function Response($request, $response, KV) {
 										//区分pad与phone
 										body.data.items = await Promise.all(
 											body.data.items.map(async item => {
-												if (!isObject(item)) return item;
+												if (!item || typeof item !== "object") return item;
 												const { card_type: cardType, card_goto: cardGoto, goto: Goto } = item;
 												if (cardType && cardGoto) {
 													if (["banner_v8", "banner_ipad_v8"].includes(cardType) && cardGoto === "banner") {
@@ -144,7 +179,12 @@ export async function Response($request, $response, KV) {
 														if (typeof BlockUpLiveList === "number") {
 															BlockUpLiveList = BlockUpLiveList.toString();
 														}
-														if (stringListIncludes(BlockUpLiveList, item?.args?.up_id)) {
+														if (
+															BlockUpLiveList?.split(",")
+																.map(item => item.trim())
+																.filter(Boolean)
+																.includes(String(item?.args?.up_id))
+														) {
 															Console.log(`✅ 屏蔽Up主<${item?.args?.up_name}>直播推广`);
 															await fixPosition().then(result => (item = result)); //小广告补位
 														}
@@ -184,7 +224,8 @@ export async function Response($request, $response, KV) {
 										body.data.items = body.data.items.filter(fix => fix !== undefined);
 									}
 									async function fixPosition() {
-										let itemsCache = asArray(KV ? await KV.getItem("@BiliBili.Index.Caches", []) : Storage.getItem("@BiliBili.Index.Caches", []));
+										let itemsCache = KV ? await KV.getItem("@BiliBili.Index.Caches", []) : Storage.getItem("@BiliBili.Index.Caches", []);
+										if (!Array.isArray(itemsCache)) itemsCache = [];
 										let singleItem;
 										if (itemsCache.length > 0) {
 											singleItem = itemsCache.pop();
@@ -201,7 +242,7 @@ export async function Response($request, $response, KV) {
 													if (Array.isArray(body?.data?.items) && body.data.items.length) {
 														body.data.items = body.data.items
 															.map(item => {
-																if (!isObject(item) || isFeedAd(item)) return undefined;
+																if (!item || typeof item !== "object" || isFeedAd(item)) return undefined;
 																const { card_type: cardType, card_goto: cardGoto, goto: Goto } = item;
 																if (cardType && cardGoto) {
 																	if (cardType === "banner_v8" && cardGoto === "banner") {
@@ -233,7 +274,8 @@ export async function Response($request, $response, KV) {
 													Console.error(e, response);
 												}
 											});
-											itemsCache = asArray(KV ? await KV.getItem("@BiliBili.Index.Caches", []) : Storage.getItem("@BiliBili.Index.Caches", []));
+											itemsCache = KV ? await KV.getItem("@BiliBili.Index.Caches", []) : Storage.getItem("@BiliBili.Index.Caches", []);
+											if (!Array.isArray(itemsCache)) itemsCache = [];
 											if (itemsCache.length > 0) {
 												singleItem = itemsCache.pop();
 												Console.info("✅ 推荐页空缺位填充成功");
@@ -249,15 +291,15 @@ export async function Response($request, $response, KV) {
 									Console.warn("用户设置推荐页广告不去除");
 									break;
 							}
-							if ((Settings?.Privacy?.Tracking === true || Settings?.Privacy?.Strict === true) && Array.isArray(body?.data?.items)) {
-								body.data.items.forEach(cleanJsonTracking);
+							if ((Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict) && Array.isArray(body?.data?.items)) {
+								body.data.items.forEach(stripTracking);
 							}
 							break;
 						case "/x/v2/feed/index/story": // 首页短视频流
 						case "/x/v2/feed/index/relate/story": {
 							// 首页短视频关联流
-							const removeStoryCommercial = Settings?.Feed?.StoryCommercial !== false;
-							const removeStoryTracking = Settings?.Privacy?.Tracking === true || Settings?.Privacy?.Strict === true;
+							const removeStoryCommercial = Settings?.Feed?.StoryCommercial;
+							const removeStoryTracking = Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict;
 							switch (Settings?.Feed?.Story) {
 								case true:
 								default:
@@ -265,20 +307,59 @@ export async function Response($request, $response, KV) {
 										// vertical_live 直播内容
 										// vertical_pgc 大会员专享
 										Console.info("✅ 首页短视频流广告去除");
-										const filterSet = new Set(["vertical_ad_av", "vertical_ad_picture", "vertical_ad_live", "vertical_pgc"]);
-										body.data.items = body.data.items.filter(item => isObject(item) && !isFeedAd(item) && !filterSet.has(item.card_goto)).map(item => cleanStoryItem(item, removeStoryCommercial, removeStoryTracking));
+										body.data.items = body.data.items
+											.filter(item => item && typeof item === "object" && !isFeedAd(item) && !Configs.Feed.StoryAdCardGotos.includes(item.card_goto))
+											.map(item => {
+												if (removeStoryCommercial && Array.isArray(item.share_bottom_button)) {
+													item.share_bottom_button = item.share_bottom_button.filter(button => {
+														if (!button || typeof button !== "object" || button.type !== 20) return true;
+														return (
+															!Array.isArray(button.button_metas) ||
+															!button.button_metas.some(meta => {
+																if (!meta || typeof meta !== "object") return false;
+																if (meta.text === "助TA必火") return true;
+																try {
+																	const link = new URL(meta.link);
+																	return link.hostname === "cm.bilibili.com" && link.pathname === "/fly-h5";
+																} catch {
+																	return false;
+																}
+															})
+														);
+													});
+												}
+												if (removeStoryTracking) stripTracking(item);
+												return item;
+											});
 									}
 									break;
 								case false:
 									Console.warn("用户设置首页短视频流广告不去除");
 									if (Array.isArray(body?.data?.items)) {
 										body.data.items.forEach(item => {
-											cleanStoryItem(item, removeStoryCommercial, removeStoryTracking);
+											if (removeStoryCommercial && Array.isArray(item?.share_bottom_button)) {
+												item.share_bottom_button = item.share_bottom_button.filter(button => {
+													if (!button || typeof button !== "object" || button.type !== 20) return true;
+													return (
+														!Array.isArray(button.button_metas) ||
+														!button.button_metas.some(meta => {
+															if (!meta || typeof meta !== "object") return false;
+															if (meta.text === "助TA必火") return true;
+															try {
+																const link = new URL(meta.link);
+																return link.hostname === "cm.bilibili.com" && link.pathname === "/fly-h5";
+															} catch {
+																return false;
+															}
+														})
+													);
+												});
+											}
+											if (removeStoryTracking) stripTracking(item);
 										});
 									}
 									break;
 							}
-							break;
 						}
 						case "/x/v2/search/square": // 搜索页
 							switch (Settings?.Search?.HotSearch) {
@@ -294,6 +375,7 @@ export async function Response($request, $response, KV) {
 							break;
 					}
 					break;
+				}
 				case "api.bilibili.com":
 				case "api.biliapi.net":
 					switch (url.pathname) {
@@ -342,21 +424,59 @@ export async function Response($request, $response, KV) {
 					switch (url.pathname) {
 						case "/xlive/app-interface/v2/index/feed": {
 							// 直播首页推荐
-							const removeTracking = Settings?.Privacy?.Tracking === true || Settings?.Privacy?.Strict === true;
-							const removeCallbacks = Settings?.Xlive?.RemoveTrackingCallbacks === true || Settings?.Privacy?.Strict === true;
-							const removePreloadTracking = Settings?.Xlive?.RemovePreloadTracking === true;
+							const removeTracking = Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict;
+							const removeCallbacks = Settings?.Xlive?.RemoveTrackingCallbacks || Settings?.Privacy?.Strict;
+							const removePreloadTracking = Settings?.Xlive?.RemovePreloadTracking;
+							const isLiveCardAd = card => {
+								if (!card || typeof card !== "object") return false;
+								const isExplicitAd = value => value === true || value === 1 || value === "1";
+								const transparent = card.ad_transparent_content;
+								const hasTransparentAd = typeof transparent === "string" ? transparent.trim().length > 0 : transparent && typeof transparent === "object" ? Object.keys(transparent).length > 0 : Boolean(transparent);
+								return isExplicitAd(card.is_ad) || isExplicitAd(card.show_ad_icon) || hasTransparentAd;
+							};
+							const removeTrackId = value => {
+								if (typeof value !== "string" || value.length === 0) return value;
+								const protocolRelative = value.startsWith("//");
+								if (!protocolRelative && !/^[a-z][a-z\d+.-]*:\/\//i.test(value)) return value;
+								try {
+									const target = new URL(protocolRelative ? `https:${value}` : value);
+									for (const parameter of [...target.searchParams.keys()]) {
+										if (parameter.toLowerCase() === "trackid") target.searchParams.delete(parameter);
+									}
+									const sanitized = target.toString();
+									return protocolRelative ? sanitized.replace(/^https:/, "") : sanitized;
+								} catch {
+									return value;
+								}
+							};
+							const cleanLiveCard = card => {
+								if (!card || typeof card !== "object") return;
+								if (removeTracking) {
+									card.trackid = undefined;
+									card.track_id = undefined;
+									card.report_flow_data = undefined;
+									card.link = removeTrackId(card.link);
+								}
+								if (removeCallbacks) {
+									card.show_callback = undefined;
+									card.click_callback = undefined;
+								}
+								if (removePreloadTracking && typeof card.subtitle_style?.link === "string") {
+									card.subtitle_style.link = removeTrackId(card.subtitle_style.link);
+								}
+							};
 							if (Array.isArray(body?.data?.card_list)) {
 								body.data.card_list = body.data.card_list.filter(item => {
 									const cardData = item?.card_data;
 									const liveCard = cardData?.small_card_v1;
-									if (Settings?.Xlive?.AD !== false && isLiveCardAd(liveCard)) {
+									if (Settings?.Xlive?.AD && isLiveCardAd(liveCard)) {
 										Console.info("✅ 直播首页广告卡片去除");
 										return false;
 									}
 									if (removeTracking || removeCallbacks || removePreloadTracking) {
-										cleanLiveCardTracking(liveCard, removeTracking, removeCallbacks, removePreloadTracking);
+										cleanLiveCard(liveCard);
 										for (const section of Object.values(cardData ?? {})) {
-											for (const card of asArray(section?.list)) cleanLiveCardTracking(card, removeTracking, removeCallbacks, removePreloadTracking);
+											for (const card of Array.isArray(section?.list) ? section.list : []) cleanLiveCard(card);
 										}
 									}
 									return true;
@@ -366,14 +486,52 @@ export async function Response($request, $response, KV) {
 						}
 						case "/xlive/app-interface/v2/room/recList": {
 							// 直播间推荐
-							const removeTracking = Settings?.Privacy?.Tracking === true || Settings?.Privacy?.Strict === true;
-							const removeCallbacks = Settings?.Xlive?.RemoveTrackingCallbacks === true || Settings?.Privacy?.Strict === true;
-							const removePreloadTracking = Settings?.Xlive?.RemovePreloadTracking === true;
+							const removeTracking = Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict;
+							const removeCallbacks = Settings?.Xlive?.RemoveTrackingCallbacks || Settings?.Privacy?.Strict;
+							const removePreloadTracking = Settings?.Xlive?.RemovePreloadTracking;
+							const isLiveCardAd = card => {
+								if (!card || typeof card !== "object") return false;
+								const isExplicitAd = value => value === true || value === 1 || value === "1";
+								const transparent = card.ad_transparent_content;
+								const hasTransparentAd = typeof transparent === "string" ? transparent.trim().length > 0 : transparent && typeof transparent === "object" ? Object.keys(transparent).length > 0 : Boolean(transparent);
+								return isExplicitAd(card.is_ad) || isExplicitAd(card.show_ad_icon) || hasTransparentAd;
+							};
+							const removeTrackId = value => {
+								if (typeof value !== "string" || value.length === 0) return value;
+								const protocolRelative = value.startsWith("//");
+								if (!protocolRelative && !/^[a-z][a-z\d+.-]*:\/\//i.test(value)) return value;
+								try {
+									const target = new URL(protocolRelative ? `https:${value}` : value);
+									for (const parameter of [...target.searchParams.keys()]) {
+										if (parameter.toLowerCase() === "trackid") target.searchParams.delete(parameter);
+									}
+									const sanitized = target.toString();
+									return protocolRelative ? sanitized.replace(/^https:/, "") : sanitized;
+								} catch {
+									return value;
+								}
+							};
+							const cleanLiveCard = card => {
+								if (!card || typeof card !== "object") return;
+								if (removeTracking) {
+									card.trackid = undefined;
+									card.track_id = undefined;
+									card.report_flow_data = undefined;
+									card.link = removeTrackId(card.link);
+								}
+								if (removeCallbacks) {
+									card.show_callback = undefined;
+									card.click_callback = undefined;
+								}
+								if (removePreloadTracking && typeof card.subtitle_style?.link === "string") {
+									card.subtitle_style.link = removeTrackId(card.subtitle_style.link);
+								}
+							};
 							if (Array.isArray(body?.data?.list)) {
-								if (Settings?.Xlive?.AD !== false) body.data.list = body.data.list.filter(item => !isLiveCardAd(item));
+								if (Settings?.Xlive?.AD) body.data.list = body.data.list.filter(item => !isLiveCardAd(item));
 								if (removeTracking || removeCallbacks || removePreloadTracking) {
 									body.data.list.forEach(card => {
-										cleanLiveCardTracking(card, removeTracking, removeCallbacks, removePreloadTracking);
+										cleanLiveCard(card);
 									});
 								}
 							}
@@ -405,488 +563,594 @@ export async function Response($request, $response, KV) {
 			}
 			$response.body = JSON.stringify(body);
 			break;
+		}
 		case "application/protobuf":
 		case "application/x-protobuf":
 		case "application/vnd.google.protobuf":
 		case "application/grpc":
 		case "application/grpc-web":
 		case "application/grpc+proto":
-		case "application/octet-stream": {
-			//Console.debug(`$response.body: ${JSON.stringify($response.body)}`);
-			let rawBody = $response.bodyBytes ? new Uint8Array($response.bodyBytes) : ($response.body ?? new Uint8Array());
-			//Console.debug(`isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`);
-			switch (FORMAT) {
-				case "application/protobuf":
-				case "application/x-protobuf":
-				case "application/vnd.google.protobuf":
-					break;
-				case "application/grpc":
-				case "application/grpc+proto":
-				case "application/grpc-web":
-					switch (FORMAT) {
-						case "application/grpc":
-						case "application/grpc+proto":
-							$response.headers = fixHeaders($request.headers, $response.headers);
-							rawBody = gRPC.decode(rawBody);
-							break;
-						case "application/grpc-web": {
-							const { bodyBytes, header } = gRPC.decodeWeb(rawBody);
-							rawBody = bodyBytes;
-							$response.headers = fixHeaders($request.headers, { ...$request.headers, ...($response.headers ?? {}), ...header });
-							break;
+		case "application/octet-stream":
+			{
+				//Console.debug(`$response.body: ${JSON.stringify($response.body)}`);
+				let rawBody = $response.bodyBytes ? new Uint8Array($response.bodyBytes) : ($response.body ?? new Uint8Array());
+				//Console.debug(`isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`);
+				switch (FORMAT) {
+					case "application/protobuf":
+					case "application/x-protobuf":
+					case "application/vnd.google.protobuf":
+						break;
+					case "application/grpc":
+					case "application/grpc+proto":
+					case "application/grpc-web":
+						switch (FORMAT) {
+							case "application/grpc":
+							case "application/grpc+proto":
+								$response.headers = fixHeaders($request.headers, $response.headers);
+								rawBody = gRPC.decode(rawBody);
+								break;
+							case "application/grpc-web": {
+								const { bodyBytes, header } = gRPC.decodeWeb(rawBody);
+								rawBody = bodyBytes;
+								$response.headers = fixHeaders($request.headers, { ...$request.headers, ...($response.headers ?? {}), ...header });
+								break;
+							}
 						}
-					}
-					// headers修复
-					// 解析链接并处理protobuf数据
-					// 主机判断
-					switch (url.hostname) {
-						case "grpc.biliapi.net": // HTTP/2
-						case "app.biliapi.net": // HTTP/1.1
-						case "app.bilibili.com": // HTTP/1.1
-						case "app.biliapi.com": // HTTP/1.1
-							switch (PATHs?.[0]) {
-								case "bilibili.app.playurl.v1.PlayURL": // 投稿视频
-									switch (PATHs?.[1]) {
-										case "PlayView": {
-											// 播放地址
-											body = PlayViewReply.fromBinary(rawBody);
-											const oldBackgroundConf = body.playArc?.backgroundPlayConf;
-											if (oldBackgroundConf && (!oldBackgroundConf.isSupport || oldBackgroundConf.disabled)) {
-												Console.info("✅ 后台播放限制去除");
-												body.playArc.backgroundPlayConf.isSupport = true;
-												body.playArc.backgroundPlayConf.disabled = false;
-												body.playArc.backgroundPlayConf.extraContent = null;
-											} else {
-												Console.warn("无后台播放限制");
+						// headers修复
+						// 解析链接并处理protobuf数据
+						// 主机判断
+						switch (url.hostname) {
+							case "grpc.biliapi.net": // HTTP/2
+							case "app.biliapi.net": // HTTP/1.1
+							case "app.bilibili.com": // HTTP/1.1
+							case "app.biliapi.com": // HTTP/1.1
+								switch (PATHs?.[0]) {
+									case "bilibili.app.playurl.v1.PlayURL": // 投稿视频
+										switch (PATHs?.[1]) {
+											case "PlayView": {
+												// 播放地址
+												body = PlayViewReply.fromBinary(rawBody);
+												const oldBackgroundConf = body.playArc?.backgroundPlayConf;
+												if (oldBackgroundConf && (!oldBackgroundConf.isSupport || oldBackgroundConf.disabled)) {
+													Console.info("✅ 后台播放限制去除");
+													body.playArc.backgroundPlayConf.isSupport = true;
+													body.playArc.backgroundPlayConf.disabled = false;
+													body.playArc.backgroundPlayConf.extraContent = null;
+												} else {
+													Console.warn("无后台播放限制");
+												}
+												rawBody = PlayViewReply.toBinary(body);
+												break;
 											}
-											rawBody = PlayViewReply.toBinary(body);
-											break;
+											case "PlayConf": // 播放配置
+												break;
 										}
-										case "PlayConf": // 播放配置
-											break;
-									}
-									break;
-								case "bilibili.app.dynamic.v2.Dynamic": // 动态
-									switch (PATHs?.[1]) {
-										case "DynAll": // 动态综合页
-											body = DynAllReply.fromBinary(rawBody);
-											switch (Settings?.Dynamic?.HotTopics) {
-												case true:
-												default:
-													Console.info("✅ 动态综合页热门话题去除");
-													body.topicList = undefined;
-													break;
-												case false:
-													Console.warn("用户设置动态综合页热门话题不去除");
-													break;
-											}
-											switch (Settings?.Dynamic?.MostVisited) {
-												case true:
-													Console.info("✅ 动态综合页最常访问去除");
-													body.upList = undefined;
-													break;
-												case false:
-												default:
-													switch (Settings?.Dynamic?.MostVisitedLiveOnly) {
-														case true:
-															Console.info("✅ 动态综合页最常访问仅显示直播");
-															if (body.upList?.list?.length || body.upList?.listSecond?.length) {
-																body.upList.list = [...(body.upList.list || []), ...(body.upList.listSecond || [])].filter(item => {
-																	return item.liveState == 1;
-																});
-																body.upList.listSecond = [];
-															} else {
-																body.upList = undefined;
-															}
-															break;
-														case false:
-														default:
-															Console.warn("用户设置动态综合页最常访问不去除");
-															break;
-													}
-													break;
-											}
-											switch (Settings?.Dynamic?.AdCard) {
-												case true:
-												default:
-													if (body.dynamicList?.list?.length) {
-														body.dynamicList.list = body.dynamicList.list.filter(item => {
-															if (item.cardType === 15) {
-																Console.info("✅ 动态综合页广告动态去除");
-																return false;
-															} else return true;
-														});
-													}
-													break;
-												case false:
-													Console.warn("用户设置动态综合页广告动态不去除");
-													break;
-											}
-											rawBody = DynAllReply.toBinary(body);
-											break;
-										case "DynVideo": // 动态视频页
-											body = DynVideoReply.fromBinary(rawBody);
-											switch (Settings?.Dynamic?.MostVisited) {
-												case true:
-													Console.info("✅ 动态视频页最常访问去除");
-													body.videoUpList = undefined;
-													break;
-												case false:
-												default:
-													Console.warn("用户设置动态视频页最常访问不去除");
-													break;
-											}
-											rawBody = DynVideoReply.toBinary(body);
-											break;
-										case "DynAllPersonal":
-										case "DynVideoPersonal": {
-											// 个人动态流
-											if (Settings?.Dynamic?.PersonalAdCard === true) {
-												const ReplyType = PATHs[1] === "DynAllPersonal" ? DynAllPersonalReply : DynVideoPersonalReply;
-												body = ReplyType.fromBinary(rawBody);
-												const oldLength = asArray(body.list).length;
-												body.list = asArray(body.list).filter(item => item?.cardType !== 15);
-												Console.info(`✅ 个人动态流广告卡片去除: ${oldLength - body.list.length}`);
-												rawBody = ReplyType.toBinary(body);
-											} else Console.warn("用户设置个人动态流广告卡片不去除");
-											break;
-										}
-									}
-									break;
-								case "bilibili.app.view.v1.View": // 视频
-									switch (PATHs?.[1]) {
-										case "View": // 视频播放页
-											switch (Settings?.View?.AD) {
-												case true:
-												default:
-													body = ViewReply.fromBinary(rawBody);
-													if (body.cms?.length) {
-														Console.info("✅ 播放页广告卡片去除");
-														body.cms = [];
-													}
-													if (body.relates?.length) {
-														body.relates = body.relates.filter(item => {
-															if (item.cm) {
-																Console.info("✅ 播放页关联推荐广告去除");
-																return false;
-															}
-															return true;
-														});
-													}
-													if (body.cmConfig || body.cmIpad) {
-														Console.info("✅ 播放页定制tab去除");
-														body.cmConfig = undefined;
-														body.cmIpad = undefined;
-													}
-													for (const i in body.tIcon) {
-														if (body.tIcon[i] === null) {
-															// 解决tIcon的null is not an object问题
-															// console.log(`tIconMap:${i}`);
-															delete body.tIcon[i];
+										break;
+									case "bilibili.app.dynamic.v2.Dynamic": // 动态
+										switch (PATHs?.[1]) {
+											case "DynAll": // 动态综合页
+												body = DynAllReply.fromBinary(rawBody);
+												switch (Settings?.Dynamic?.HotTopics) {
+													case true:
+													default:
+														Console.info("✅ 动态综合页热门话题去除");
+														body.topicList = undefined;
+														break;
+													case false:
+														Console.warn("用户设置动态综合页热门话题不去除");
+														break;
+												}
+												switch (Settings?.Dynamic?.MostVisited) {
+													case true:
+														Console.info("✅ 动态综合页最常访问去除");
+														body.upList = undefined;
+														break;
+													case false:
+													default:
+														switch (Settings?.Dynamic?.MostVisitedLiveOnly) {
+															case true:
+																Console.info("✅ 动态综合页最常访问仅显示直播");
+																if (body.upList?.list?.length || body.upList?.listSecond?.length) {
+																	body.upList.list = [...(body.upList.list || []), ...(body.upList.listSecond || [])].filter(item => {
+																		return item.liveState == 1;
+																	});
+																	body.upList.listSecond = [];
+																} else {
+																	body.upList = undefined;
+																}
+																break;
+															case false:
+															default:
+																Console.warn("用户设置动态综合页最常访问不去除");
+																break;
 														}
-													}
-													rawBody = ViewReply.toBinary(body);
-													break;
-												case false:
-													Console.warn("用户设置播放页广告不去除");
-													break;
-											}
-											break;
-										case "TFInfo": {
-											body = TFInfoReply.fromBinary(rawBody);
-											Console.debug(`tipsId: ${body.tipsId}`);
-											if (body?.tipsId) {
-												Console.info("✅ 播放页办卡免流广告去除");
-												body.tfToast = undefined;
-												body.tfPanelCustomized = undefined;
-											}
-											rawBody = TFInfoReply.toBinary(body);
-											break;
-										}
-									}
-									break;
-								case "bilibili.app.viewunite.v1.View": {
-									// 视频
-									// 4: 游戏, 5: 广告, 11: 课程
-									// cmStock: 广告字段, uniqueId: 推广视频
-									const filterRelateCard = card => {
-										if ([4, 5, 11].includes(card.relateCardType) || card.cmStock || card.basicInfo?.uniqueId) {
-											Console.info("✅ 视频详情下方推荐列表广告去除");
-											return false;
-										}
-										return true;
-									};
-									switch (PATHs?.[1]) {
-										case "View": // 视频播放页
-											switch (Settings?.View?.AD) {
-												case true:
-												default:
-													body = ViewUniteReply.fromBinary(rawBody);
-													Console.debug(`ViewUniteReply: ${JSON.stringify(body, null, 2)}`);
-													if (body.cm) {
-														Console.info("✅ 视频下方广告去除");
-														delete body.cm;
-													}
-													if (body.tab?.tabModule?.[0]?.tab?.introduction?.modules) {
-														body.tab.tabModule[0].tab.introduction.modules = body.tab.tabModule[0].tab.introduction.modules
-															.map(i => {
-																if (i.type === 28 && i.data?.relates?.cards) {
-																	i.data.relates.cards = i.data.relates.cards.filter(filterRelateCard);
-																}
-																return i;
-															})
-															.filter(i => {
-																if (i.type === 55) {
-																	Console.info("✅ 视频详情下方up主分享好物去除");
+														break;
+												}
+												switch (Settings?.Dynamic?.AdCard) {
+													case true:
+													default:
+														if (body.dynamicList?.list?.length) {
+															body.dynamicList.list = body.dynamicList.list.filter(item => {
+																if (item.cardType === 15) {
+																	Console.info("✅ 动态综合页广告动态去除");
 																	return false;
-																}
-																if (i.type === 29) {
-																	Console.info("✅ 番剧标题下方大会员横幅广告去除");
-																	return false;
-																}
-																if (i.type === 18) {
-																	Console.info("✅ 番剧下方活动横幅去除");
+																} else return true;
+															});
+														}
+														break;
+													case false:
+														Console.warn("用户设置动态综合页广告动态不去除");
+														break;
+												}
+												rawBody = DynAllReply.toBinary(body);
+												break;
+											case "DynVideo": // 动态视频页
+												body = DynVideoReply.fromBinary(rawBody);
+												switch (Settings?.Dynamic?.MostVisited) {
+													case true:
+														Console.info("✅ 动态视频页最常访问去除");
+														body.videoUpList = undefined;
+														break;
+													case false:
+													default:
+														Console.warn("用户设置动态视频页最常访问不去除");
+														break;
+												}
+												rawBody = DynVideoReply.toBinary(body);
+												break;
+											case "DynAllPersonal":
+											case "DynVideoPersonal": {
+												// 个人动态流
+												if (Settings?.Dynamic?.PersonalAdCard) {
+													const ReplyType = PATHs[1] === "DynAllPersonal" ? DynAllPersonalReply : DynVideoPersonalReply;
+													body = ReplyType.fromBinary(rawBody);
+													const oldLength = body.list.length;
+													body.list = body.list.filter(item => item.cardType !== 15);
+													Console.info(`✅ 个人动态流广告卡片去除: ${oldLength - body.list.length}`);
+													rawBody = ReplyType.toBinary(body);
+												} else Console.warn("用户设置个人动态流广告卡片不去除");
+												break;
+											}
+										}
+										break;
+									case "bilibili.app.view.v1.View": // 视频
+										switch (PATHs?.[1]) {
+											case "View": // 视频播放页
+												switch (Settings?.View?.AD) {
+													case true:
+													default:
+														body = ViewReply.fromBinary(rawBody);
+														if (body.cms?.length) {
+															Console.info("✅ 播放页广告卡片去除");
+															body.cms = [];
+														}
+														if (body.relates?.length) {
+															body.relates = body.relates.filter(item => {
+																if (item.cm) {
+																	Console.info("✅ 播放页关联推荐广告去除");
 																	return false;
 																}
 																return true;
 															});
-													}
-													rawBody = ViewUniteReply.toBinary(body);
-													break;
-												case false:
-													Console.warn("用户设置up主推荐广告不去除");
-													break;
-											}
-											break;
-										case "RelatesFeed": // 播放页下方推荐卡
-											body = RelatesFeedReply.fromBinary(rawBody);
-											body.relates = body.relates.filter(filterRelateCard);
-											rawBody = RelatesFeedReply.toBinary(body);
-											break;
-									}
-									break;
-								}
-								case "bilibili.app.interface.v1.Teenagers": // 青少年模式
-									switch (PATHs?.[1]) {
-										case "ModeStatus": // 青少年模式
-											body = ModeStatusReply.fromBinary(rawBody);
-											body.modes = body.modes.map(mode => {
-												if (mode?.name === "teenagers") {
-													if (mode?.f5?.f1) {
-														mode.f5.f1 = 0;
-														Console.info("✅ 青少年模式弹窗去除");
-													}
-												}
-												return mode;
-											});
-											rawBody = ModeStatusReply.toBinary(body);
-											break;
-									}
-									break;
-								case "bilibili.community.service.dm.v1.DM": //弹幕
-									switch (PATHs?.[1]) {
-										case "DmView": // 弹幕配置
-											body = DmViewReply.fromBinary(rawBody);
-											switch (Settings?.DM?.Command) {
-												case true:
-													Console.info("✅ 交互式弹幕去除");
-													_.set(body, "commandDms[0].data", []);
-													break;
-												case false:
-												default:
-													Console.warn("用户设置交互式弹幕不去除");
-													break;
-											}
-											if (body.activityMeta.length) {
-												Console.info("✅ 雲視聽水印去除");
-												body.activityMeta = [];
-											}
-											rawBody = DmViewReply.toBinary(body);
-											break;
-										case "DmSegMobile": // 弹幕列表
-											body = DmSegMobileReply.fromBinary(rawBody);
-											switch (Settings?.DM?.Colorful) {
-												case true:
-													body.elems = body.elems.map(ele => {
-														if (ele?.colorful === 60001) {
-															ele.colorful = 0;
 														}
-														return ele;
-													});
-													Console.info("✅ 会员弹幕已替换为普通弹幕");
-													break;
-												case false:
-												default:
-													Console.warn("用户设置会员弹幕不修改");
-													break;
-											}
-											switch (Settings?.DM?.Airborne) {
-												case true: {
-													Console.warn("空降助手: 获取 Segment");
-													const { oid, pid, type } = DmSegMobileReq.fromBinary(gRPC.decode($request.body instanceof ArrayBuffer ? new Uint8Array($request.body) : ($request.body ?? new Uint8Array())));
-													if (type !== 1) break;
-													const videoId = toBvid(pid);
-													const segments = await fetchSponsorBlock(videoId, oid);
-													// 构建响应体
-													body.elems.push(...createAirborneDanmaku(segments));
-													Console.info("✅ 空降助手");
-													break;
+														if (body.cmConfig || body.cmIpad) {
+															Console.info("✅ 播放页定制tab去除");
+															body.cmConfig = undefined;
+															body.cmIpad = undefined;
+														}
+														for (const i in body.tIcon) {
+															if (body.tIcon[i] === null) {
+																// 解决tIcon的null is not an object问题
+																// console.log(`tIconMap:${i}`);
+																delete body.tIcon[i];
+															}
+														}
+														rawBody = ViewReply.toBinary(body);
+														break;
+													case false:
+														Console.warn("用户设置播放页广告不去除");
+														break;
 												}
-												case false:
-												default:
-													Console.warn("用户设置空降助手关闭");
-													break;
+												break;
+											case "TFInfo": {
+												body = TFInfoReply.fromBinary(rawBody);
+												Console.debug(`tipsId: ${body.tipsId}`);
+												if (body?.tipsId) {
+													Console.info("✅ 播放页办卡免流广告去除");
+													body.tfToast = undefined;
+													body.tfPanelCustomized = undefined;
+												}
+												rawBody = TFInfoReply.toBinary(body);
+												break;
 											}
-											rawBody = DmSegMobileReply.toBinary(body);
-											break;
+										}
+										break;
+									case "bilibili.app.viewunite.v1.View": {
+										// 视频
+										// 4: 游戏, 5: 广告, 11: 课程
+										// cmStock: 广告字段, uniqueId: 推广视频
+										const filterRelateCard = card => {
+											if ([4, 5, 11].includes(card.relateCardType) || card.cmStock || card.basicInfo?.uniqueId) {
+												Console.info("✅ 视频详情下方推荐列表广告去除");
+												return false;
+											}
+											return true;
+										};
+										switch (PATHs?.[1]) {
+											case "View": // 视频播放页
+												switch (Settings?.View?.AD) {
+													case true:
+													default:
+														body = ViewUniteReply.fromBinary(rawBody);
+														Console.debug(`ViewUniteReply: ${JSON.stringify(body, null, 2)}`);
+														if (body.cm) {
+															Console.info("✅ 视频下方广告去除");
+															delete body.cm;
+														}
+														if (body.tab?.tabModule?.[0]?.tab?.introduction?.modules) {
+															body.tab.tabModule[0].tab.introduction.modules = body.tab.tabModule[0].tab.introduction.modules
+																.map(i => {
+																	if (i.type === 28 && i.data?.relates?.cards) {
+																		i.data.relates.cards = i.data.relates.cards.filter(filterRelateCard);
+																	}
+																	return i;
+																})
+																.filter(i => {
+																	if (i.type === 55) {
+																		Console.info("✅ 视频详情下方up主分享好物去除");
+																		return false;
+																	}
+																	if (i.type === 29) {
+																		Console.info("✅ 番剧标题下方大会员横幅广告去除");
+																		return false;
+																	}
+																	if (i.type === 18) {
+																		Console.info("✅ 番剧下方活动横幅去除");
+																		return false;
+																	}
+																	return true;
+																});
+														}
+														rawBody = ViewUniteReply.toBinary(body);
+														break;
+													case false:
+														Console.warn("用户设置up主推荐广告不去除");
+														break;
+												}
+												break;
+											case "RelatesFeed": // 播放页下方推荐卡
+												body = RelatesFeedReply.fromBinary(rawBody);
+												body.relates = body.relates.filter(filterRelateCard);
+												rawBody = RelatesFeedReply.toBinary(body);
+												break;
+										}
+										break;
 									}
-									break;
-								case "bilibili.main.community.reply.v1.Reply": //评论区
-									switch (PATHs?.[1]) {
-										case "MainList": {
-											body = MainListReply.fromBinary(rawBody);
-											if (Settings?.Reply?.AD !== false) {
-												body.topReplies = asArray(body.topReplies).filter(item => {
-													if (isCommercialReply(item)) {
-														Console.info("✅ 评论置顶带货广告去除");
-														return false;
+									case "bilibili.app.interface.v1.Teenagers": // 青少年模式
+										switch (PATHs?.[1]) {
+											case "ModeStatus": // 青少年模式
+												body = ModeStatusReply.fromBinary(rawBody);
+												body.modes = body.modes.map(mode => {
+													if (mode?.name === "teenagers") {
+														if (mode?.f5?.f1) {
+															mode.f5.f1 = 0;
+															Console.info("✅ 青少年模式弹窗去除");
+														}
 													}
-													return true;
+													return mode;
 												});
-												for (const key of ["upTop", "adminTop", "voteTop"]) {
-													if (isCommercialReply(body[key])) {
-														body[key] = undefined;
-														Console.info(`✅ 评论${key}带货广告去除`);
+												rawBody = ModeStatusReply.toBinary(body);
+												break;
+										}
+										break;
+									case "bilibili.community.service.dm.v1.DM": //弹幕
+										switch (PATHs?.[1]) {
+											case "DmView": // 弹幕配置
+												body = DmViewReply.fromBinary(rawBody);
+												switch (Settings?.DM?.Command) {
+													case true:
+														Console.info("✅ 交互式弹幕去除");
+														_.set(body, "commandDms[0].data", []);
+														break;
+													case false:
+													default:
+														Console.warn("用户设置交互式弹幕不去除");
+														break;
+												}
+												if (body.activityMeta.length) {
+													Console.info("✅ 雲視聽水印去除");
+													body.activityMeta = [];
+												}
+												rawBody = DmViewReply.toBinary(body);
+												break;
+											case "DmSegMobile": // 弹幕列表
+												body = DmSegMobileReply.fromBinary(rawBody);
+												switch (Settings?.DM?.Colorful) {
+													case true:
+														body.elems = body.elems.map(ele => {
+															if (ele?.colorful === 60001) {
+																ele.colorful = 0;
+															}
+															return ele;
+														});
+														Console.info("✅ 会员弹幕已替换为普通弹幕");
+														break;
+													case false:
+													default:
+														Console.warn("用户设置会员弹幕不修改");
+														break;
+												}
+												switch (Settings?.DM?.Airborne) {
+													case true: {
+														Console.warn("空降助手: 获取 Segment");
+														const { oid, pid, type } = DmSegMobileReq.fromBinary(gRPC.decode($request.body instanceof ArrayBuffer ? new Uint8Array($request.body) : ($request.body ?? new Uint8Array())));
+														if (type !== 1) break;
+														const videoId = toBvid(pid);
+														const segments = await fetchSponsorBlock(videoId, oid);
+														// 构建响应体
+														body.elems.push(...createAirborneDanmaku(segments));
+														Console.info("✅ 空降助手");
+														break;
+													}
+													case false:
+													default:
+														Console.warn("用户设置空降助手关闭");
+														break;
+												}
+												rawBody = DmSegMobileReply.toBinary(body);
+												break;
+										}
+										break;
+									case "bilibili.main.community.reply.v1.Reply":
+										{
+											//评论区
+											const commercialUrlPattern = /https?:\/\/(?:b23\.tv\/(?:cm|mall)|cm\.bilibili\.com\/ad-showcase-h5\/?#\/goods-select)/i;
+											const isCommercialReply = reply => {
+												const content = reply?.content;
+												if (!content || typeof content !== "object") return false;
+												if (commercialUrlPattern.test(String(content.message ?? ""))) return true;
+												for (const [key, link] of Object.entries(content.url ?? {})) {
+													if (commercialUrlPattern.test(key)) return true;
+													if (link && typeof link === "object" && (commercialUrlPattern.test(String(link.appUrlSchema ?? "")) || commercialUrlPattern.test(String(link.pcUrl ?? "")))) return true;
+												}
+												return false;
+											};
+											const cleanCommercialLinks = reply => {
+												if (!reply || typeof reply !== "object") return 0;
+												let changed = 0;
+												const urls = reply.content?.url;
+												if (urls && typeof urls === "object") {
+													for (const [key, link] of Object.entries(urls)) {
+														if (commercialUrlPattern.test(key) || (link && typeof link === "object" && (commercialUrlPattern.test(String(link.appUrlSchema ?? "")) || commercialUrlPattern.test(String(link.pcUrl ?? ""))))) {
+															delete urls[key];
+															changed++;
+														}
 													}
 												}
-												if (body.cm && Object.keys(body.cm).length) {
-													body.cm = undefined;
-													Console.info("✅ 评论列表广告去除");
+												for (const child of reply.replies) changed += cleanCommercialLinks(child);
+												return changed;
+											};
+											const sanitizeTrackingUrl = value => {
+												if (typeof value !== "string" || value.length === 0) return value;
+												const protocolRelative = value.startsWith("//");
+												if (!protocolRelative && !/^[a-z][a-z\d+.-]*:\/\//i.test(value)) return value;
+												try {
+													const target = new URL(protocolRelative ? `https:${value}` : value);
+													for (const parameter of [...target.searchParams.keys()]) {
+														if (Configs.Privacy.TrackingParameters.includes(parameter.toLowerCase())) target.searchParams.delete(parameter);
+													}
+													const sanitized = target.toString();
+													return protocolRelative ? sanitized.replace(/^https:/, "") : sanitized;
+												} catch {
+													return value;
 												}
-												body.subjectTopCards = asArray(body.subjectTopCards).filter(item => item?.type !== 3);
-											} else {
-												Console.warn("用户设置评论列表广告不去除");
-											}
-											const replies = [...asArray(body.replies), ...asArray(body.topReplies), body.upTop, body.adminTop, body.voteTop];
-											if (Settings?.Reply?.CommercialLinks === true || Settings?.Privacy?.Strict === true) {
+											};
+											const cleanTracking = reply => {
+												if (!reply || typeof reply !== "object") return 0;
 												let changed = 0;
-												for (const reply of replies) changed += cleanReplyCommercialLinks(reply);
-												if (changed) Console.info(`✅ 普通评论商业跳转去除: ${changed}`);
-											}
-											if (Settings?.Privacy?.Tracking === true || Settings?.Privacy?.Strict === true) {
-												let changed = 0;
-												for (const reply of replies) changed += cleanReplyTracking(reply);
-												if (changed) Console.info(`✅ 评论跳转链接跟踪参数去除: ${changed}`);
-											}
-											rawBody = MainListReply.toBinary(body);
-											break;
-										}
-										case "DetailList": {
-											body = DetailListReply.fromBinary(rawBody);
-											if (Settings?.Reply?.CommercialLinks === true || Settings?.Privacy?.Strict === true) cleanReplyCommercialLinks(body.root);
-											if (Settings?.Privacy?.Tracking === true || Settings?.Privacy?.Strict === true) cleanReplyTracking(body.root);
-											rawBody = DetailListReply.toBinary(body);
-											break;
-										}
-										case "ReplyInfo": {
-											body = ReplyInfoReply.fromBinary(rawBody);
-											if (Settings?.Reply?.CommercialLinks === true || Settings?.Privacy?.Strict === true) cleanReplyCommercialLinks(body.reply);
-											if (Settings?.Privacy?.Tracking === true || Settings?.Privacy?.Strict === true) cleanReplyTracking(body.reply);
-											rawBody = ReplyInfoReply.toBinary(body);
-											break;
-										}
-									}
-									break;
-								case "bilibili.main.community.reply.v2.Reply": // 评论编辑器能力
-									switch (PATHs?.[1]) {
-										case "SubjectDescription":
-											if (Settings?.Reply?.SubjectDescriptionCommercial === true) {
-												body = SubjectDescriptionReply.fromBinary(rawBody);
-												if (Array.isArray(body.input?.funcButtons?.buttons)) {
-													const oldLength = body.input.funcButtons.buttons.length;
-													body.input.funcButtons.buttons = body.input.funcButtons.buttons.filter(button => ![5, 8].includes(button?.type));
-													Console.info(`✅ 评论编辑器商品能力去除: ${oldLength - body.input.funcButtons.buttons.length}`);
+												for (const link of Object.values(reply.content?.url ?? {})) {
+													if (!link || typeof link !== "object") continue;
+													const appUrlSchema = sanitizeTrackingUrl(link.appUrlSchema);
+													const pcUrl = sanitizeTrackingUrl(link.pcUrl);
+													if (appUrlSchema !== link.appUrlSchema) {
+														link.appUrlSchema = appUrlSchema;
+														changed++;
+													}
+													if (pcUrl !== link.pcUrl) {
+														link.pcUrl = pcUrl;
+														changed++;
+													}
+													if (link.clickReport) {
+														link.clickReport = "";
+														changed++;
+													}
+													if (link.exposureReport) {
+														link.exposureReport = "";
+														changed++;
+													}
 												}
-												rawBody = SubjectDescriptionReply.toBinary(body);
-											} else Console.warn("用户设置评论编辑器商品能力不去除");
-											break;
-									}
-									break;
-								case "bilibili.pgc.gateway.player.v2.PlayURL": // 番剧
-									switch (PATHs?.[1]) {
-										case "PlayView": // 播放地址
-											body = PGCPlayViewReply.fromBinary(rawBody);
-											if (body.viewInfo?.tryWatchPromptBar) {
-												body.viewInfo.tryWatchPromptBar = undefined;
-												Console.info("✅ 番剧播放器下方提示栏去除");
+												for (const child of reply.replies) changed += cleanTracking(child);
+												return changed;
+											};
+											switch (PATHs?.[1]) {
+												case "MainList": {
+													body = MainListReply.fromBinary(rawBody);
+													if (Settings?.Reply?.AD) {
+														body.topReplies = body.topReplies.filter(item => {
+															if (isCommercialReply(item)) {
+																Console.info("✅ 评论置顶带货广告去除");
+																return false;
+															}
+															return true;
+														});
+														for (const key of ["upTop", "adminTop", "voteTop"]) {
+															if (isCommercialReply(body[key])) {
+																body[key] = undefined;
+																Console.info(`✅ 评论${key}带货广告去除`);
+															}
+														}
+														if (body.cm && Object.keys(body.cm).length) {
+															body.cm = undefined;
+															Console.info("✅ 评论列表广告去除");
+														}
+														body.subjectTopCards = body.subjectTopCards.filter(item => item.type !== 3);
+													} else {
+														Console.warn("用户设置评论列表广告不去除");
+													}
+													const replies = [...body.replies, ...body.topReplies, body.upTop, body.adminTop, body.voteTop];
+													if (Settings?.Reply?.CommercialLinks || Settings?.Privacy?.Strict) {
+														let changed = 0;
+														for (const reply of replies) changed += cleanCommercialLinks(reply);
+														if (changed) Console.info(`✅ 普通评论商业跳转去除: ${changed}`);
+													}
+													if (Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict) {
+														let changed = 0;
+														for (const reply of replies) changed += cleanTracking(reply);
+														if (changed) Console.info(`✅ 评论跳转链接跟踪参数去除: ${changed}`);
+													}
+													rawBody = MainListReply.toBinary(body);
+													break;
+												}
+												case "DetailList": {
+													body = DetailListReply.fromBinary(rawBody);
+													if (Settings?.Reply?.CommercialLinks || Settings?.Privacy?.Strict) cleanCommercialLinks(body.root);
+													if (Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict) cleanTracking(body.root);
+													rawBody = DetailListReply.toBinary(body);
+													break;
+												}
+												case "ReplyInfo": {
+													body = ReplyInfoReply.fromBinary(rawBody);
+													if (Settings?.Reply?.CommercialLinks || Settings?.Privacy?.Strict) cleanCommercialLinks(body.reply);
+													if (Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict) cleanTracking(body.reply);
+													rawBody = ReplyInfoReply.toBinary(body);
+													break;
+												}
 											}
-											if (body.playExtConf?.castTips) {
-												body.playExtConf.castTips = { code: 0, message: "" };
-												Console.info("✅ 番剧播放器下方提示栏去除");
-											}
-											rawBody = PGCPlayViewReply.toBinary(body);
-											break;
-										case "PlayConf": // 播放配置
-											break;
-									}
-									break;
-								case "bilibili.app.nativeact.v1.NativeAct": // 活动-节目、动画、韩综（港澳台）
-									switch (PATHs?.[1]) {
-										case "Index": // 首页
-											break;
-									}
-									break;
-								case "bilibili.app.interface.v1.Search": // 搜索框
-									switch (PATHs?.[1]) {
-										case "Suggest3": // 搜索建议
-											break;
-									}
-									break;
-								case "bilibili.polymer.app.search.v1.Search": // 搜索结果
-									switch (PATHs?.[1]) {
-										case "SearchAll": {
-											// 全部结果（综合）
-											const removeAD = Settings?.Search?.AD !== false;
-											const removeTracking = Settings?.Search?.Tracking === true || Settings?.Privacy?.Strict === true;
-											if (removeAD || removeTracking) {
-												body = SearchAllResponse.fromBinary(rawBody);
-												if (removeAD) {
-													const oldLength = body.item.length;
-													body.item = body.item.filter(i => !(i.cardItem?.oneofKind === "cm" || i.cardItem?.oneofKind === "game"));
-													Console.info(`✅ 搜索页广告去除: ${oldLength - body.item.length}`);
-												} else Console.warn("用户设置搜索页广告不去除");
-												if (removeTracking) {
-													const changed = cleanSearchTracking(body);
-													Console.info(`✅ 搜索页响应跟踪参数去除: ${changed}`);
-												} else Console.warn("用户设置搜索页响应跟踪参数不去除");
-												rawBody = SearchAllResponse.toBinary(body);
-											}
-											break;
 										}
-										case "SearchByType": {
-											// 分类结果（番剧、用户、影视、专栏）
-											break;
+										break;
+									case "bilibili.main.community.reply.v2.Reply": // 评论编辑器能力
+										switch (PATHs?.[1]) {
+											case "SubjectDescription":
+												if (Settings?.Reply?.SubjectDescriptionCommercial) {
+													body = SubjectDescriptionReply.fromBinary(rawBody);
+													if (Array.isArray(body.input?.funcButtons?.buttons)) {
+														const oldLength = body.input.funcButtons.buttons.length;
+														body.input.funcButtons.buttons = body.input.funcButtons.buttons.filter(button => ![5, 8].includes(button?.type));
+														Console.info(`✅ 评论编辑器商品能力去除: ${oldLength - body.input.funcButtons.buttons.length}`);
+													}
+													rawBody = SubjectDescriptionReply.toBinary(body);
+												} else Console.warn("用户设置评论编辑器商品能力不去除");
+												break;
 										}
+										break;
+									case "bilibili.pgc.gateway.player.v2.PlayURL": // 番剧
+										switch (PATHs?.[1]) {
+											case "PlayView": // 播放地址
+												body = PGCPlayViewReply.fromBinary(rawBody);
+												if (body.viewInfo?.tryWatchPromptBar) {
+													body.viewInfo.tryWatchPromptBar = undefined;
+													Console.info("✅ 番剧播放器下方提示栏去除");
+												}
+												if (body.playExtConf?.castTips) {
+													body.playExtConf.castTips = { code: 0, message: "" };
+													Console.info("✅ 番剧播放器下方提示栏去除");
+												}
+												rawBody = PGCPlayViewReply.toBinary(body);
+												break;
+											case "PlayConf": // 播放配置
+												break;
+										}
+										break;
+									case "bilibili.app.nativeact.v1.NativeAct": // 活动-节目、动画、韩综（港澳台）
+										switch (PATHs?.[1]) {
+											case "Index": // 首页
+												break;
+										}
+										break;
+									case "bilibili.app.interface.v1.Search": // 搜索框
+										switch (PATHs?.[1]) {
+											case "Suggest3": // 搜索建议
+												break;
+										}
+										break;
+									case "bilibili.polymer.app.search.v1.Search": {
+										// 搜索结果
+										const sanitizeTrackingUrl = value => {
+											if (typeof value !== "string" || value.length === 0) return value;
+											const protocolRelative = value.startsWith("//");
+											if (!protocolRelative && !/^[a-z][a-z\d+.-]*:\/\//i.test(value)) return value;
+											try {
+												const target = new URL(protocolRelative ? `https:${value}` : value);
+												for (const parameter of [...target.searchParams.keys()]) {
+													if (Configs.Privacy.TrackingParameters.includes(parameter.toLowerCase())) target.searchParams.delete(parameter);
+												}
+												const sanitized = target.toString();
+												return protocolRelative ? sanitized.replace(/^https:/, "") : sanitized;
+											} catch {
+												return value;
+											}
+										};
+										const cleanSearchTracking = value => {
+											if (!value || typeof value !== "object") return 0;
+											let changed = 0;
+											for (const [key, child] of Object.entries(value)) {
+												if (Configs.Privacy.TrackingFields.Search.includes(key) && typeof child === "string" && child !== "") {
+													value[key] = "";
+													changed++;
+												} else if (Configs.Privacy.URLFields.Search.includes(key) && typeof child === "string") {
+													const sanitized = sanitizeTrackingUrl(child);
+													if (sanitized !== child) {
+														value[key] = sanitized;
+														changed++;
+													}
+												} else if (child && typeof child === "object") changed += cleanSearchTracking(child);
+											}
+											return changed;
+										};
+										switch (PATHs?.[1]) {
+											case "SearchAll": {
+												// 全部结果（综合）
+												const removeAD = Settings?.Search?.AD;
+												const removeTracking = Settings?.Search?.Tracking || Settings?.Privacy?.Strict;
+												if (removeAD || removeTracking) {
+													body = SearchAllResponse.fromBinary(rawBody);
+													if (removeAD) {
+														const oldLength = body.item.length;
+														body.item = body.item.filter(i => !(i.cardItem?.oneofKind === "cm" || i.cardItem?.oneofKind === "game"));
+														Console.info(`✅ 搜索页广告去除: ${oldLength - body.item.length}`);
+													} else Console.warn("用户设置搜索页广告不去除");
+													if (removeTracking) {
+														const changed = cleanSearchTracking(body);
+														Console.info(`✅ 搜索页响应跟踪参数去除: ${changed}`);
+													} else Console.warn("用户设置搜索页响应跟踪参数不去除");
+													rawBody = SearchAllResponse.toBinary(body);
+												}
+												break;
+											}
+											case "SearchByType": {
+												// 分类结果（番剧、用户、影视、专栏）
+												break;
+											}
+										}
+										break;
 									}
-									break;
-							}
-							break;
-					}
-					rawBody = gRPC.encode(rawBody);
-					switch (FORMAT) {
-						case "application/grpc-web":
-							if ($response.headers?.["Content-Type"]) $response.headers["Content-Type"] = "application/grpc";
-							if ($response.headers?.["content-type"]) $response.headers["content-type"] = "application/grpc";
-							break;
-					}
-					break;
+								}
+								rawBody = gRPC.encode(rawBody);
+								switch (FORMAT) {
+									case "application/grpc-web":
+										if ($response.headers?.["Content-Type"]) $response.headers["Content-Type"] = "application/grpc";
+										if ($response.headers?.["content-type"]) $response.headers["content-type"] = "application/grpc";
+										break;
+								}
+								break;
+						}
+						// 写入二进制数据
+						$response.body = rawBody;
+						break;
+				}
 			}
-			// 写入二进制数据
-			$response.body = rawBody;
-			break;
-		}
+			return $response;
 	}
-	return $response;
 }
 
 function toBvid(avid) {

@@ -40,8 +40,8 @@ http:
     - ^https?:\/\/manga\.bilibili\.com\/twirp\/comic\.v\d\.Comic\/ListFlash - reject-dict
     - ^https?:\/\/api\.live\.bilibili\.com\/xlive\/e-commerce-interface\/v1\/ecommerce-user\/get_shopping_info\? - reject-dict
   script:
-    - match: ^https?:\/\/((grpc|app)\.bili(bili\.com|api\.net)|app\.biliapi\.com)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$
-      name: 📺 BiliBili.ADBlock.request.json
+    - match: ^https?:\/\/(grpc\.biliapi\.net|app\.biliapi\.net|app\.bilibili\.com|app\.biliapi\.com)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$
+      name: 📺 BiliBili.ADBlock.request.grpc
       type: request
       require-body: false
       binary-mode: true
@@ -133,6 +133,9 @@ http:
       argument:
 
 script-providers:
+  📺 BiliBili.ADBlock.request.grpc:
+    url: https://gist.githubusercontent.com/VirgilClyne/0b0c5ac2b8977d5461d4b3276d120896/raw/request.dev.bundle.js
+    interval: 86400
   📺 BiliBili.ADBlock.request.json:
     url: https://gist.githubusercontent.com/VirgilClyne/0b0c5ac2b8977d5461d4b3276d120896/raw/request.dev.bundle.js
     interval: 86400

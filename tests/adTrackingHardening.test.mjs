@@ -8,20 +8,20 @@ import { Request } from "../src/process/Request.mjs";
 import { Response as DevResponse } from "../src/process/Response.dev.mjs";
 
 test("returns a minimal valid gRPC response for DefaultWords", async () => {
-	HonoWorkerAdapter.buildArgument({
-		url: "https://grpc.biliapi.net/bilibili.app.interface.v1.Search/DefaultWords",
-		headers: { "biliverse-args": "LogLevel=OFF" },
-	});
-	const { $response } = await Request({
-		method: "GET",
-		url: "https://grpc.biliapi.net/bilibili.app.interface.v1.Search/DefaultWords",
-		headers: { "user-agent": "bili-universal/80000100" },
-	});
+	for (const hostname of ["grpc.biliapi.net", "app.biliapi.net", "app.bilibili.com", "app.biliapi.com"]) {
+		const url = `https://${hostname}/bilibili.app.interface.v1.Search/DefaultWords`;
+		HonoWorkerAdapter.buildArgument({ url, headers: { "biliverse-args": "LogLevel=OFF" } });
+		const { $response } = await Request({
+			method: "GET",
+			url,
+			headers: { "user-agent": "bili-universal/80000100" },
+		});
 
-	assert.equal($response.status, 200);
-	assert.equal($response.headers["Content-Type"], "application/grpc");
-	assert.equal($response.headers["Content-Length"], "5");
-	assert.deepEqual([...$response.body], [0, 0, 0, 0, 0]);
+		assert.equal($response.status, 200);
+		assert.equal($response.headers["Content-Type"], "application/grpc");
+		assert.equal($response.headers["Content-Length"], "5");
+		assert.deepEqual([...$response.body], [0, 0, 0, 0, 0]);
+	}
 });
 
 test("returns a local success response for blocked Bilibili commercial reports", async () => {

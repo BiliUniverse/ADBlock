@@ -24,43 +24,6 @@ export async function Request($request, KV) {
 	 */
 	const { Settings, Caches, Configs } = await setENV("BiliBili", "ADBlock", database, KV);
 	Console.logLevel = Settings.LogLevel;
-	const strictPrivacy = Settings?.Privacy?.Strict === true;
-	const createResponse = value => ({
-		status: 200,
-		headers: { "Content-Type": typeof value === "string" ? "text/plain; charset=utf-8" : "application/json; charset=utf-8" },
-		body: typeof value === "string" ? value : JSON.stringify(value),
-	});
-	const createEmptyGrpcResponse = () => ({
-		status: 200,
-		headers: fixHeaders($request.headers, {
-			"Content-Type": "application/grpc",
-			"Content-Length": "5",
-		}),
-		body: gRPC.encode(DefaultWordsReply.toBinary(DefaultWordsReply.create())),
-	});
-	if (["grpc.biliapi.net", "app.biliapi.net", "app.bilibili.com", "app.biliapi.com"].includes(url.hostname) && url.pathname === "/bilibili.app.interface.v1.Search/DefaultWords") {
-		$response = createEmptyGrpcResponse();
-		Console.info("✅ 搜索默认关键词已返回空 gRPC 响应");
-	}
-	if (Settings?.Privacy?.BlockBiliCommercial === true || strictPrivacy) {
-		if (url.hostname === "cm.bilibili.com" && url.pathname === "/cm/api/conversion/mobile/v2") {
-			$response = createResponse({ code: 0, message: "success" });
-			Console.info("✅ B站商业转化上报已本地响应");
-		} else if (url.hostname === "cm.bilibili.com" && url.pathname === "/cm/api/fees/wise") {
-			$response = createResponse({ code: 0 });
-			Console.info("✅ B站商业曝光上报已本地响应");
-		}
-	}
-	if (!$response && (Settings?.Privacy?.BlockThirdParty === true || strictPrivacy)) {
-		if (url.hostname === "adtrack.qianwen.com" && /^\/v3\/ad\/(?:show\/)?bilibili$/.test(url.pathname)) {
-			$response = createResponse("");
-			Console.info("✅ 千问广告归因请求已本地响应");
-		} else if (url.hostname === "tkio-redirect.solar-engine.com" && url.pathname.startsWith("/receive/turl/")) {
-			$response = createResponse({ status: 0 });
-			Console.info("✅ Solar Engine广告归因请求已本地响应");
-		}
-	}
-	if ($response) return { $request, $response };
 	// 创建空数据
 	const body = { code: 0, message: "0", data: {} };
 	// 方法判断
@@ -132,10 +95,22 @@ export async function Request($request, KV) {
 					break;
 				case "search.bilibili.com":
 					break;
-				case "app.bilibili.com":
+				case "grpc.biliapi.net":
 				case "app.biliapi.net":
-					// 路径判断
+				case "app.bilibili.com":
+				case "app.biliapi.com":
 					switch (url.pathname) {
+						case "/bilibili.app.interface.v1.Search/DefaultWords":
+							$response = {
+								status: 200,
+								headers: fixHeaders($request.headers, {
+									"Content-Type": "application/grpc",
+									"Content-Length": "5",
+								}),
+								body: gRPC.encode(DefaultWordsReply.toBinary(DefaultWordsReply.create())),
+							};
+							Console.info("✅ 搜索默认关键词已返回空 gRPC 响应");
+							break;
 						case "/x/v2/splash/show": // 开屏页
 						case "/x/v2/splash/list": // 开屏页
 						case "/x/v2/splash/brand/list": // 开屏页
@@ -193,6 +168,82 @@ export async function Request($request, KV) {
 				case "api.live.bilibili.com":
 					switch (url.pathname) {
 						case "/xlive/app-room/v1/index/getInfoByRoom": // 直播
+							break;
+					}
+					break;
+				case "cm.bilibili.com":
+					switch (url.pathname) {
+						case "/cm/api/conversion/mobile/v2":
+							switch (true) {
+								case Settings?.Privacy?.BlockBiliCommercial:
+								case Settings?.Privacy?.Strict:
+									$response = {
+										status: 200,
+										headers: { "Content-Type": "application/json; charset=utf-8" },
+										body: JSON.stringify({ code: 0, message: "success" }),
+									};
+									Console.info("✅ B站商业转化上报已本地响应");
+									break;
+								default:
+									break;
+							}
+							break;
+						case "/cm/api/fees/wise":
+							switch (true) {
+								case Settings?.Privacy?.BlockBiliCommercial:
+								case Settings?.Privacy?.Strict:
+									$response = {
+										status: 200,
+										headers: { "Content-Type": "application/json; charset=utf-8" },
+										body: JSON.stringify({ code: 0 }),
+									};
+									Console.info("✅ B站商业曝光上报已本地响应");
+									break;
+								default:
+									break;
+							}
+							break;
+					}
+					break;
+				case "adtrack.qianwen.com":
+					switch (true) {
+						case Settings?.Privacy?.BlockThirdParty:
+						case Settings?.Privacy?.Strict:
+							switch (true) {
+								case /^\/v3\/ad\/(?:show\/)?bilibili$/.test(url.pathname):
+									$response = {
+										status: 200,
+										headers: { "Content-Type": "text/plain; charset=utf-8" },
+										body: "",
+									};
+									Console.info("✅ 千问广告归因请求已本地响应");
+									break;
+								default:
+									break;
+							}
+							break;
+						default:
+							break;
+					}
+					break;
+				case "tkio-redirect.solar-engine.com":
+					switch (true) {
+						case Settings?.Privacy?.BlockThirdParty:
+						case Settings?.Privacy?.Strict:
+							switch (true) {
+								case url.pathname.startsWith("/receive/turl/"):
+									$response = {
+										status: 200,
+										headers: { "Content-Type": "application/json; charset=utf-8" },
+										body: JSON.stringify({ status: 0 }),
+									};
+									Console.info("✅ Solar Engine广告归因请求已本地响应");
+									break;
+								default:
+									break;
+							}
+							break;
+						default:
 							break;
 					}
 					break;
