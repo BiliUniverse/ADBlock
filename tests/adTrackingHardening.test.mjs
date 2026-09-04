@@ -3,9 +3,30 @@ import test from "node:test";
 import { DynAllPersonalReply } from "@biliverse/protobuf/bilibili/app/dynamic/v2/dynamic.js";
 import { SubjectDescriptionReply } from "@biliverse/protobuf/bilibili/main/community/reply/v2/reply.js";
 import gRPC from "@nsnanocat/grpc";
+import ADBlock from "../src/class/ADBlock.mjs";
 import HonoWorkerAdapter from "../src/class/HonoWorkerAdapter.mjs";
 import { Request } from "../src/process/Request.mjs";
 import { Response as DevResponse } from "../src/process/Response.dev.mjs";
+
+test("ADBlock centralizes search ad and tracking cleanup", () => {
+	const adBlock = new ADBlock();
+	const json = {
+		track_id: "track",
+		url: "https://example.com/video?spm_id_from=feed&foo=bar",
+	};
+	const search = {
+		data: [{ type: "trending" }, { type: "history" }],
+		trackId: "track",
+		jumpUrl: "https://example.com/video?trackid=1&foo=bar",
+	};
+
+	assert.equal(adBlock.cleanTracking(json), 2);
+	assert.equal(json.track_id, undefined);
+	assert.equal(json.url, "https://example.com/video?foo=bar");
+	assert.equal(adBlock.cleanTracking(search, "Search"), 2);
+	assert.equal(search.trackId, "");
+	assert.equal(search.jumpUrl, "https://example.com/video?foo=bar");
+});
 
 test("returns a minimal valid gRPC response for DefaultWords", async () => {
 	for (const hostname of ["grpc.biliapi.net", "app.biliapi.net", "app.bilibili.com", "app.biliapi.com"]) {

@@ -10,6 +10,7 @@ import { PlayViewReply as PGCPlayViewReply } from "@biliverse/protobuf/bilibili/
 import { SearchAllResponse } from "@biliverse/protobuf/bilibili/polymer/app/search/v1/search.js";
 import gRPC from "@nsnanocat/grpc";
 import { Lodash as _, Console, fetch, Storage } from "@nsnanocat/util";
+import ADBlock from "../class/ADBlock.mjs";
 import database from "../function/database.mjs";
 import fixHeaders from "../function/fixHeaders.mjs";
 import setENV from "../function/setENV.mjs";
@@ -29,6 +30,7 @@ export async function Response($request, $response, KV) {
 	 * @type {{Settings: import('./types').Settings}}
 	 */
 	const { Settings, Caches, Configs } = await setENV("BiliBili", "ADBlock", database, KV);
+	const adBlock = new ADBlock();
 	Console.logLevel = Settings.LogLevel;
 	// 创建空数据
 	let body = { code: 0, message: "0", data: {} };
@@ -74,42 +76,6 @@ export async function Response($request, $response, KV) {
 				case "app.bilibili.com":
 				case "app.biliapi.net":
 				case "app.biliapi.com": {
-					const stripTracking = value => {
-						if (Array.isArray(value)) {
-							value.forEach(stripTracking);
-							return;
-						}
-						if (!value || typeof value !== "object") return;
-						for (const [key, child] of Object.entries(value)) {
-							if (Configs.Privacy.TrackingFields.JSON.includes(key)) {
-								value[key] = undefined;
-								continue;
-							}
-							if (Configs.Privacy.URLFields.JSON.includes(key) && typeof child === "string") {
-								const protocolRelative = child.startsWith("//");
-								if (!protocolRelative && !/^[a-z][a-z\d+.-]*:\/\//i.test(child)) continue;
-								try {
-									const target = new URL(protocolRelative ? `https:${child}` : child);
-									let changed = false;
-									for (const parameter of [...target.searchParams.keys()]) {
-										if (Configs.Privacy.TrackingParameters.includes(parameter.toLowerCase())) {
-											target.searchParams.delete(parameter);
-											changed = true;
-										}
-									}
-									if (changed) value[key] = protocolRelative ? target.toString().replace(/^https:/, "") : target.toString();
-								} catch {}
-								continue;
-							}
-							if (child && typeof child === "object") stripTracking(child);
-						}
-					};
-					const isFeedAd = item => {
-						if (!item || typeof item !== "object") return false;
-						const cardType = typeof item.card_type === "string" ? item.card_type : "";
-						const cardGoto = typeof item.card_goto === "string" ? item.card_goto : "";
-						return (Object.prototype.hasOwnProperty.call(item, "ad_info") && item.ad_info !== null) || cardType.startsWith("cm_") || cardGoto.startsWith("ad_") || item.goto === "ad" || item.is_ad === true;
-					};
 					switch (url.pathname) {
 						case "/x/v2/splash/show": // 开屏页
 						case "/x/v2/splash/list": // 开屏页
@@ -214,7 +180,7 @@ export async function Response($request, $response, KV) {
 														}
 													}
 												}
-												if (isFeedAd(item)) {
+												if (adBlock.isFeedAd(item)) {
 													Console.info(`✅ 未枚举的推荐页广告去除: ${cardType ?? ""}/${cardGoto ?? ""}/${Goto ?? ""}`);
 													return undefined;
 												}
@@ -242,7 +208,7 @@ export async function Response($request, $response, KV) {
 													if (Array.isArray(body?.data?.items) && body.data.items.length) {
 														body.data.items = body.data.items
 															.map(item => {
-																if (!item || typeof item !== "object" || isFeedAd(item)) return undefined;
+																if (!item || typeof item !== "object" || adBlock.isFeedAd(item)) return undefined;
 																const { card_type: cardType, card_goto: cardGoto, goto: Goto } = item;
 																if (cardType && cardGoto) {
 																	if (cardType === "banner_v8" && cardGoto === "banner") {
@@ -292,7 +258,9 @@ export async function Response($request, $response, KV) {
 									break;
 							}
 							if ((Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict) && Array.isArray(body?.data?.items)) {
-								body.data.items.forEach(stripTracking);
+								body.data.items.forEach(item => {
+									adBlock.cleanTracking(item);
+								});
 							}
 							break;
 						case "/x/v2/feed/index/story": // 首页短视频流
@@ -308,27 +276,9 @@ export async function Response($request, $response, KV) {
 										// vertical_pgc 大会员专享
 										Console.info("✅ 首页短视频流广告去除");
 										body.data.items = body.data.items
-											.filter(item => item && typeof item === "object" && !isFeedAd(item) && !Configs.Feed.StoryAdCardGotos.includes(item.card_goto))
+											.filter(item => item && typeof item === "object" && !adBlock.isFeedAd(item) && !adBlock.isStoryAd(item))
 											.map(item => {
-												if (removeStoryCommercial && Array.isArray(item.share_bottom_button)) {
-													item.share_bottom_button = item.share_bottom_button.filter(button => {
-														if (!button || typeof button !== "object" || button.type !== 20) return true;
-														return (
-															!Array.isArray(button.button_metas) ||
-															!button.button_metas.some(meta => {
-																if (!meta || typeof meta !== "object") return false;
-																if (meta.text === "助TA必火") return true;
-																try {
-																	const link = new URL(meta.link);
-																	return link.hostname === "cm.bilibili.com" && link.pathname === "/fly-h5";
-																} catch {
-																	return false;
-																}
-															})
-														);
-													});
-												}
-												if (removeStoryTracking) stripTracking(item);
+												adBlock.cleanStoryItem(item, removeStoryCommercial, removeStoryTracking);
 												return item;
 											});
 									}
@@ -337,25 +287,7 @@ export async function Response($request, $response, KV) {
 									Console.warn("用户设置首页短视频流广告不去除");
 									if (Array.isArray(body?.data?.items)) {
 										body.data.items.forEach(item => {
-											if (removeStoryCommercial && Array.isArray(item?.share_bottom_button)) {
-												item.share_bottom_button = item.share_bottom_button.filter(button => {
-													if (!button || typeof button !== "object" || button.type !== 20) return true;
-													return (
-														!Array.isArray(button.button_metas) ||
-														!button.button_metas.some(meta => {
-															if (!meta || typeof meta !== "object") return false;
-															if (meta.text === "助TA必火") return true;
-															try {
-																const link = new URL(meta.link);
-																return link.hostname === "cm.bilibili.com" && link.pathname === "/fly-h5";
-															} catch {
-																return false;
-															}
-														})
-													);
-												});
-											}
-											if (removeStoryTracking) stripTracking(item);
+											adBlock.cleanStoryItem(item, removeStoryCommercial, removeStoryTracking);
 										});
 									}
 									break;
@@ -366,7 +298,7 @@ export async function Response($request, $response, KV) {
 								case true:
 								default:
 									Console.info("✅ 搜索页热搜内容去除");
-									if (Array.isArray(body?.data)) body.data = body.data.filter(i => !(i.type === "trending"));
+									if (Array.isArray(body?.data)) body.data = body.data.filter(item => item?.type !== "trending");
 									break;
 								case false:
 									Console.warn("用户设置搜索页热搜内容不去除");
@@ -427,56 +359,18 @@ export async function Response($request, $response, KV) {
 							const removeTracking = Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict;
 							const removeCallbacks = Settings?.Xlive?.RemoveTrackingCallbacks || Settings?.Privacy?.Strict;
 							const removePreloadTracking = Settings?.Xlive?.RemovePreloadTracking;
-							const isLiveCardAd = card => {
-								if (!card || typeof card !== "object") return false;
-								const isExplicitAd = value => value === true || value === 1 || value === "1";
-								const transparent = card.ad_transparent_content;
-								const hasTransparentAd = typeof transparent === "string" ? transparent.trim().length > 0 : transparent && typeof transparent === "object" ? Object.keys(transparent).length > 0 : Boolean(transparent);
-								return isExplicitAd(card.is_ad) || isExplicitAd(card.show_ad_icon) || hasTransparentAd;
-							};
-							const removeTrackId = value => {
-								if (typeof value !== "string" || value.length === 0) return value;
-								const protocolRelative = value.startsWith("//");
-								if (!protocolRelative && !/^[a-z][a-z\d+.-]*:\/\//i.test(value)) return value;
-								try {
-									const target = new URL(protocolRelative ? `https:${value}` : value);
-									for (const parameter of [...target.searchParams.keys()]) {
-										if (parameter.toLowerCase() === "trackid") target.searchParams.delete(parameter);
-									}
-									const sanitized = target.toString();
-									return protocolRelative ? sanitized.replace(/^https:/, "") : sanitized;
-								} catch {
-									return value;
-								}
-							};
-							const cleanLiveCard = card => {
-								if (!card || typeof card !== "object") return;
-								if (removeTracking) {
-									card.trackid = undefined;
-									card.track_id = undefined;
-									card.report_flow_data = undefined;
-									card.link = removeTrackId(card.link);
-								}
-								if (removeCallbacks) {
-									card.show_callback = undefined;
-									card.click_callback = undefined;
-								}
-								if (removePreloadTracking && typeof card.subtitle_style?.link === "string") {
-									card.subtitle_style.link = removeTrackId(card.subtitle_style.link);
-								}
-							};
 							if (Array.isArray(body?.data?.card_list)) {
 								body.data.card_list = body.data.card_list.filter(item => {
 									const cardData = item?.card_data;
 									const liveCard = cardData?.small_card_v1;
-									if (Settings?.Xlive?.AD && isLiveCardAd(liveCard)) {
+									if (Settings?.Xlive?.AD && adBlock.isLiveCardAd(liveCard)) {
 										Console.info("✅ 直播首页广告卡片去除");
 										return false;
 									}
 									if (removeTracking || removeCallbacks || removePreloadTracking) {
-										cleanLiveCard(liveCard);
+										adBlock.cleanLiveCard(liveCard, removeTracking, removeCallbacks, removePreloadTracking);
 										for (const section of Object.values(cardData ?? {})) {
-											for (const card of Array.isArray(section?.list) ? section.list : []) cleanLiveCard(card);
+											for (const card of Array.isArray(section?.list) ? section.list : []) adBlock.cleanLiveCard(card, removeTracking, removeCallbacks, removePreloadTracking);
 										}
 									}
 									return true;
@@ -489,49 +383,11 @@ export async function Response($request, $response, KV) {
 							const removeTracking = Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict;
 							const removeCallbacks = Settings?.Xlive?.RemoveTrackingCallbacks || Settings?.Privacy?.Strict;
 							const removePreloadTracking = Settings?.Xlive?.RemovePreloadTracking;
-							const isLiveCardAd = card => {
-								if (!card || typeof card !== "object") return false;
-								const isExplicitAd = value => value === true || value === 1 || value === "1";
-								const transparent = card.ad_transparent_content;
-								const hasTransparentAd = typeof transparent === "string" ? transparent.trim().length > 0 : transparent && typeof transparent === "object" ? Object.keys(transparent).length > 0 : Boolean(transparent);
-								return isExplicitAd(card.is_ad) || isExplicitAd(card.show_ad_icon) || hasTransparentAd;
-							};
-							const removeTrackId = value => {
-								if (typeof value !== "string" || value.length === 0) return value;
-								const protocolRelative = value.startsWith("//");
-								if (!protocolRelative && !/^[a-z][a-z\d+.-]*:\/\//i.test(value)) return value;
-								try {
-									const target = new URL(protocolRelative ? `https:${value}` : value);
-									for (const parameter of [...target.searchParams.keys()]) {
-										if (parameter.toLowerCase() === "trackid") target.searchParams.delete(parameter);
-									}
-									const sanitized = target.toString();
-									return protocolRelative ? sanitized.replace(/^https:/, "") : sanitized;
-								} catch {
-									return value;
-								}
-							};
-							const cleanLiveCard = card => {
-								if (!card || typeof card !== "object") return;
-								if (removeTracking) {
-									card.trackid = undefined;
-									card.track_id = undefined;
-									card.report_flow_data = undefined;
-									card.link = removeTrackId(card.link);
-								}
-								if (removeCallbacks) {
-									card.show_callback = undefined;
-									card.click_callback = undefined;
-								}
-								if (removePreloadTracking && typeof card.subtitle_style?.link === "string") {
-									card.subtitle_style.link = removeTrackId(card.subtitle_style.link);
-								}
-							};
 							if (Array.isArray(body?.data?.list)) {
-								if (Settings?.Xlive?.AD) body.data.list = body.data.list.filter(item => !isLiveCardAd(item));
+								if (Settings?.Xlive?.AD) body.data.list = body.data.list.filter(item => !adBlock.isLiveCardAd(item));
 								if (removeTracking || removeCallbacks || removePreloadTracking) {
 									body.data.list.forEach(card => {
-										cleanLiveCard(card);
+										adBlock.cleanLiveCard(card, removeTracking, removeCallbacks, removePreloadTracking);
 									});
 								}
 							}
@@ -904,87 +760,19 @@ export async function Response($request, $response, KV) {
 									case "bilibili.main.community.reply.v1.Reply":
 										{
 											//评论区
-											const commercialUrlPattern = /https?:\/\/(?:b23\.tv\/(?:cm|mall)|cm\.bilibili\.com\/ad-showcase-h5\/?#\/goods-select)/i;
-											const isCommercialReply = reply => {
-												const content = reply?.content;
-												if (!content || typeof content !== "object") return false;
-												if (commercialUrlPattern.test(String(content.message ?? ""))) return true;
-												for (const [key, link] of Object.entries(content.url ?? {})) {
-													if (commercialUrlPattern.test(key)) return true;
-													if (link && typeof link === "object" && (commercialUrlPattern.test(String(link.appUrlSchema ?? "")) || commercialUrlPattern.test(String(link.pcUrl ?? "")))) return true;
-												}
-												return false;
-											};
-											const cleanCommercialLinks = reply => {
-												if (!reply || typeof reply !== "object") return 0;
-												let changed = 0;
-												const urls = reply.content?.url;
-												if (urls && typeof urls === "object") {
-													for (const [key, link] of Object.entries(urls)) {
-														if (commercialUrlPattern.test(key) || (link && typeof link === "object" && (commercialUrlPattern.test(String(link.appUrlSchema ?? "")) || commercialUrlPattern.test(String(link.pcUrl ?? ""))))) {
-															delete urls[key];
-															changed++;
-														}
-													}
-												}
-												for (const child of reply.replies) changed += cleanCommercialLinks(child);
-												return changed;
-											};
-											const sanitizeTrackingUrl = value => {
-												if (typeof value !== "string" || value.length === 0) return value;
-												const protocolRelative = value.startsWith("//");
-												if (!protocolRelative && !/^[a-z][a-z\d+.-]*:\/\//i.test(value)) return value;
-												try {
-													const target = new URL(protocolRelative ? `https:${value}` : value);
-													for (const parameter of [...target.searchParams.keys()]) {
-														if (Configs.Privacy.TrackingParameters.includes(parameter.toLowerCase())) target.searchParams.delete(parameter);
-													}
-													const sanitized = target.toString();
-													return protocolRelative ? sanitized.replace(/^https:/, "") : sanitized;
-												} catch {
-													return value;
-												}
-											};
-											const cleanTracking = reply => {
-												if (!reply || typeof reply !== "object") return 0;
-												let changed = 0;
-												for (const link of Object.values(reply.content?.url ?? {})) {
-													if (!link || typeof link !== "object") continue;
-													const appUrlSchema = sanitizeTrackingUrl(link.appUrlSchema);
-													const pcUrl = sanitizeTrackingUrl(link.pcUrl);
-													if (appUrlSchema !== link.appUrlSchema) {
-														link.appUrlSchema = appUrlSchema;
-														changed++;
-													}
-													if (pcUrl !== link.pcUrl) {
-														link.pcUrl = pcUrl;
-														changed++;
-													}
-													if (link.clickReport) {
-														link.clickReport = "";
-														changed++;
-													}
-													if (link.exposureReport) {
-														link.exposureReport = "";
-														changed++;
-													}
-												}
-												for (const child of reply.replies) changed += cleanTracking(child);
-												return changed;
-											};
 											switch (PATHs?.[1]) {
 												case "MainList": {
 													body = MainListReply.fromBinary(rawBody);
 													if (Settings?.Reply?.AD) {
 														body.topReplies = body.topReplies.filter(item => {
-															if (isCommercialReply(item)) {
+															if (adBlock.isCommercialReply(item)) {
 																Console.info("✅ 评论置顶带货广告去除");
 																return false;
 															}
 															return true;
 														});
 														for (const key of ["upTop", "adminTop", "voteTop"]) {
-															if (isCommercialReply(body[key])) {
+															if (adBlock.isCommercialReply(body[key])) {
 																body[key] = undefined;
 																Console.info(`✅ 评论${key}带货广告去除`);
 															}
@@ -1000,12 +788,12 @@ export async function Response($request, $response, KV) {
 													const replies = [...body.replies, ...body.topReplies, body.upTop, body.adminTop, body.voteTop];
 													if (Settings?.Reply?.CommercialLinks || Settings?.Privacy?.Strict) {
 														let changed = 0;
-														for (const reply of replies) changed += cleanCommercialLinks(reply);
+														for (const reply of replies) changed += adBlock.cleanReplyCommercialLinks(reply);
 														if (changed) Console.info(`✅ 普通评论商业跳转去除: ${changed}`);
 													}
 													if (Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict) {
 														let changed = 0;
-														for (const reply of replies) changed += cleanTracking(reply);
+														for (const reply of replies) changed += adBlock.cleanReplyTracking(reply);
 														if (changed) Console.info(`✅ 评论跳转链接跟踪参数去除: ${changed}`);
 													}
 													rawBody = MainListReply.toBinary(body);
@@ -1013,15 +801,15 @@ export async function Response($request, $response, KV) {
 												}
 												case "DetailList": {
 													body = DetailListReply.fromBinary(rawBody);
-													if (Settings?.Reply?.CommercialLinks || Settings?.Privacy?.Strict) cleanCommercialLinks(body.root);
-													if (Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict) cleanTracking(body.root);
+													if (Settings?.Reply?.CommercialLinks || Settings?.Privacy?.Strict) adBlock.cleanReplyCommercialLinks(body.root);
+													if (Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict) adBlock.cleanReplyTracking(body.root);
 													rawBody = DetailListReply.toBinary(body);
 													break;
 												}
 												case "ReplyInfo": {
 													body = ReplyInfoReply.fromBinary(rawBody);
-													if (Settings?.Reply?.CommercialLinks || Settings?.Privacy?.Strict) cleanCommercialLinks(body.reply);
-													if (Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict) cleanTracking(body.reply);
+													if (Settings?.Reply?.CommercialLinks || Settings?.Privacy?.Strict) adBlock.cleanReplyCommercialLinks(body.reply);
+													if (Settings?.Privacy?.Tracking || Settings?.Privacy?.Strict) adBlock.cleanReplyTracking(body.reply);
 													rawBody = ReplyInfoReply.toBinary(body);
 													break;
 												}
@@ -1075,38 +863,6 @@ export async function Response($request, $response, KV) {
 										break;
 									case "bilibili.polymer.app.search.v1.Search": {
 										// 搜索结果
-										const sanitizeTrackingUrl = value => {
-											if (typeof value !== "string" || value.length === 0) return value;
-											const protocolRelative = value.startsWith("//");
-											if (!protocolRelative && !/^[a-z][a-z\d+.-]*:\/\//i.test(value)) return value;
-											try {
-												const target = new URL(protocolRelative ? `https:${value}` : value);
-												for (const parameter of [...target.searchParams.keys()]) {
-													if (Configs.Privacy.TrackingParameters.includes(parameter.toLowerCase())) target.searchParams.delete(parameter);
-												}
-												const sanitized = target.toString();
-												return protocolRelative ? sanitized.replace(/^https:/, "") : sanitized;
-											} catch {
-												return value;
-											}
-										};
-										const cleanSearchTracking = value => {
-											if (!value || typeof value !== "object") return 0;
-											let changed = 0;
-											for (const [key, child] of Object.entries(value)) {
-												if (Configs.Privacy.TrackingFields.Search.includes(key) && typeof child === "string" && child !== "") {
-													value[key] = "";
-													changed++;
-												} else if (Configs.Privacy.URLFields.Search.includes(key) && typeof child === "string") {
-													const sanitized = sanitizeTrackingUrl(child);
-													if (sanitized !== child) {
-														value[key] = sanitized;
-														changed++;
-													}
-												} else if (child && typeof child === "object") changed += cleanSearchTracking(child);
-											}
-											return changed;
-										};
 										switch (PATHs?.[1]) {
 											case "SearchAll": {
 												// 全部结果（综合）
@@ -1116,11 +872,11 @@ export async function Response($request, $response, KV) {
 													body = SearchAllResponse.fromBinary(rawBody);
 													if (removeAD) {
 														const oldLength = body.item.length;
-														body.item = body.item.filter(i => !(i.cardItem?.oneofKind === "cm" || i.cardItem?.oneofKind === "game"));
+														body.item = body.item.filter(item => !["cm", "game"].includes(item.cardItem?.oneofKind));
 														Console.info(`✅ 搜索页广告去除: ${oldLength - body.item.length}`);
 													} else Console.warn("用户设置搜索页广告不去除");
 													if (removeTracking) {
-														const changed = cleanSearchTracking(body);
+														const changed = adBlock.cleanTracking(body, "Search");
 														Console.info(`✅ 搜索页响应跟踪参数去除: ${changed}`);
 													} else Console.warn("用户设置搜索页响应跟踪参数不去除");
 													rawBody = SearchAllResponse.toBinary(body);

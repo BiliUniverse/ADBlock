@@ -49,44 +49,6 @@ export default {
 				Strict: false,
 			},
 		},
-		Configs: {
-			Feed: {
-				StoryAdCardGotos: ["vertical_ad_av", "vertical_ad_picture", "vertical_ad_live", "vertical_pgc"],
-			},
-			Privacy: {
-				TrackingParameters: [
-					"bsource",
-					"from_comid",
-					"from_source",
-					"from_spmid",
-					"from_trackid",
-					"live_from",
-					"msource",
-					"report_flow_data",
-					"search_from_source",
-					"seid",
-					"share_medium",
-					"share_plat",
-					"share_session_id",
-					"share_source",
-					"share_tag",
-					"spm_id_from",
-					"spmid",
-					"track_id",
-					"trackid",
-					"unique_k",
-					"vd_source",
-				],
-				TrackingFields: {
-					JSON: ["report_flow_data", "track_id", "trackid"],
-					Search: ["reportFlowData", "trackId", "trackid"],
-				},
-				URLFields: {
-					JSON: ["appUrlSchema", "app_url_schema", "jumpUri", "jumpUrl", "jump_uri", "jump_url", "link", "pcUrl", "pc_url", "uri", "url"],
-					Search: ["appUrlSchema", "jumpUri", "jumpUrl", "link", "liveLink", "pcUrl", "uri", "url"],
-				},
-			},
-		},
 	},
 	Default: {
 		Settings: {
