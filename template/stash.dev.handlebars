@@ -40,6 +40,10 @@ http:
     - ^https?:\/\/manga\.bilibili\.com\/twirp\/comic\.v\d\.Comic\/ListFlash - reject-dict
     - ^https?:\/\/api\.live\.bilibili\.com\/xlive\/e-commerce-interface\/v1\/ecommerce-user\/get_shopping_info\? - reject-dict
   script:
+    - match: ^https:\/\/app\.bilibili\.com\/biliverse\/settings\/api\/ADBlock(?:\?.*)?$
+      name: 📺 BiliBili.ADBlock.request.grpc
+      type: request
+      require-body: true
     - match: ^https?:\/\/(grpc\.biliapi\.net|app\.biliapi\.net|app\.bilibili\.com|app\.biliapi\.com)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$
       name: 📺 BiliBili.ADBlock.request.grpc
       type: request

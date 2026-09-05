@@ -31,6 +31,7 @@
 http-response-jq ^https:\/\/api\.bilibili\.com\/pgc\/view\/v2\/app\/season\? 'del(.data.payment)'
 
 [Script]
+📺 BiliBili.ADBlock.Settings = type=http-request, pattern=^https:\/\/app\.bilibili\.com\/biliverse\/settings\/api\/ADBlock(?:\?.*)?$, requires-body=1, max-size=65536, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.feed.index.request.json = type=http-request,pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/feed\/index\?, engine=webview, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/request.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.privacy.request = type=http-request, pattern=^https?:\/\/(cm\.bilibili\.com\/cm\/api\/(conversion\/mobile\/v2|fees\/wise)|adtrack\.qianwen\.com\/v3\/ad\/(show\/)?bilibili|tkio-redirect\.solar-engine\.com\/receive\/turl\/), engine=webview, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/request.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.response.json = type=http-response, pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/(splash\/(brand\/list|event\/list2|list|show)|feed\/index(\/(relate\/)?story)?|search\/square), requires-body=1, engine=webview, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js, argument={{{scriptParams}}}

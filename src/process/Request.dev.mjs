@@ -1,3 +1,4 @@
+import { settingsResponse } from "../function/settings.mjs";
 import { DefaultWordsReply } from "@biliverse/protobuf/bilibili/app/interface/v1/search.js";
 import gRPC from "@nsnanocat/grpc";
 import { Lodash as _, Console } from "@nsnanocat/util";
@@ -24,6 +25,8 @@ export async function Request($request, KV) {
 	 */
 	const { Settings, Caches, Configs } = await setENV("BiliBili", "ADBlock", database, KV);
 	Console.logLevel = Settings.LogLevel;
+	$response = settingsResponse($request, Settings);
+	if ($response) return { $request, $response };
 	// 创建空数据
 	const body = { code: 0, message: "0", data: {} };
 	// 方法判断

@@ -21,6 +21,7 @@
 ^https?:\/\/api\.live\.bilibili\.com\/xlive\/e-commerce-interface\/v1\/ecommerce-user\/get_shopping_info\? data-type=text data="{}" header="application/json"
 
 [Script]
+📺 BiliBili.ADBlock.Settings = type=http-request, pattern=^https:\/\/app\.bilibili\.com\/biliverse\/settings\/api\/ADBlock(?:\?.*)?$, requires-body=1, max-size=65536, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.defaultwords.request.grpc = type=http-request, pattern=^https?:\/\/(grpc\.biliapi\.net|app\.biliapi\.net|app\.bilibili\.com|app\.biliapi\.com)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$, binary-body-mode=1, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/request.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.feed.index.request.json = type=http-request,pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/feed\/index\?, script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/request.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.privacy.request = type=http-request, pattern=^https?:\/\/(cm\.bilibili\.com\/cm\/api\/(conversion\/mobile\/v2|fees\/wise)|adtrack\.qianwen\.com\/v3\/ad\/(show\/)?bilibili|tkio-redirect\.solar-engine\.com\/receive\/turl\/), script-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/request.bundle.js, argument={{{scriptParams}}}

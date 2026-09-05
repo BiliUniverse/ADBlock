@@ -1,5 +1,5 @@
 import getStorage from "@nsnanocat/util/getStorage.mjs";
-import { Console, Lodash as _ } from "@nsnanocat/util";
+import { Console, Storage, Lodash as _ } from "@nsnanocat/util";
 
 /**
  * 设置环境变量。
@@ -18,7 +18,10 @@ import { Console, Lodash as _ } from "@nsnanocat/util";
  */
 export default async function setENV(name, platforms, database, KV) {
 	Console.log("☑️ Set Environment Variables");
+	const argumentStorage = globalThis.$argument.Storage;
+	globalThis.$argument.Storage = Storage.getItem(`@${name}.${platforms}.Settings`, {}).Storage ?? argumentStorage;
 	const { Settings, Caches, Configs } = getStorage(name, platforms, database);
+	globalThis.$argument.Storage = argumentStorage;
 	if (KV) {
 		for (const platform of [platforms].flat(Number.POSITIVE_INFINITY)) {
 			_.merge(Caches, await KV.getItem(`@${name}.${platform}.Caches`, {}));
