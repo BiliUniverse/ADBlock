@@ -10,7 +10,7 @@
 
 #[rewrite_local]
 # Biliverse 本地设置
-^https:\/\/app\.bilibili\.com\/biliverse\/settings\/api\/ADBlock(?:\?.*)?$ url script-echo-response 'version'}}/request.bundle.js
+^https:\/\/biliverse\.github\.io\/settings\/api\/ADBlock(?:\?.*)?$ url script-echo-response 'version'}}/request.bundle.js
 # 去除搜索中的大家都在搜
 ^https?:\/\/api\.vc\.bilibili\.com\/search_svr\/v\d\/Search\/recommend_words url reject-dict
 # 去除动态中的话题
@@ -43,4 +43,4 @@
 ^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.pgc\.gateway\.player\.v2\.PlayURL\/PlayView$ url script-response-body https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/response.bundle.js
 
 #[mitm]
-hostname = manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, app.biliapi.com, api.bilibili.com, api.biliapi.net, grpc.biliapi.net, cm.bilibili.com, adtrack.qianwen.com, tkio-redirect.solar-engine.com
+hostname = biliverse.github.io, manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, app.biliapi.com, api.bilibili.com, api.biliapi.net, grpc.biliapi.net, cm.bilibili.com, adtrack.qianwen.com, tkio-redirect.solar-engine.com

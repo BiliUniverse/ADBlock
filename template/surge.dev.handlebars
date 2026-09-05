@@ -31,7 +31,7 @@
 http-response-jq ^https:\/\/api\.bilibili\.com\/pgc\/view\/v2\/app\/season\? 'del(.data.payment)'
 
 [Script]
-📺 BiliBili.ADBlock.Settings = type=http-request, pattern=^https:\/\/app\.bilibili\.com\/biliverse\/settings\/api\/ADBlock(?:\?.*)?$, requires-body=1, max-size=65536, script-path=https://gist.githubusercontent.com/VirgilClyne/0b0c5ac2b8977d5461d4b3276d120896/raw/request.dev.bundle.js, argument={{{scriptParams}}}
+📺 BiliBili.ADBlock.Settings = type=http-request, pattern=^https:\/\/biliverse\.github\.io\/settings\/api\/ADBlock(?:\?.*)?$, requires-body=1, max-size=65536, script-path=https://gist.githubusercontent.com/VirgilClyne/0b0c5ac2b8977d5461d4b3276d120896/raw/request.dev.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.feed.index.request.json = type=http-request,pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/feed\/index\?, engine=webview, script-path=https://gist.githubusercontent.com/VirgilClyne/0b0c5ac2b8977d5461d4b3276d120896/raw/request.dev.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.privacy.request = type=http-request, pattern=^https?:\/\/(cm\.bilibili\.com\/cm\/api\/(conversion\/mobile\/v2|fees\/wise)|adtrack\.qianwen\.com\/v3\/ad\/(show\/)?bilibili|tkio-redirect\.solar-engine\.com\/receive\/turl\/), engine=webview, script-path=https://gist.githubusercontent.com/VirgilClyne/0b0c5ac2b8977d5461d4b3276d120896/raw/request.dev.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.response.json = type=http-response, pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/(splash\/(brand\/list|event\/list2|list|show)|feed\/index(\/(relate\/)?story)?|search\/square), requires-body=1, engine=webview, script-path=https://gist.githubusercontent.com/VirgilClyne/0b0c5ac2b8977d5461d4b3276d120896/raw/response.dev.bundle.js, argument={{{scriptParams}}}
@@ -49,5 +49,5 @@ http-response-jq ^https:\/\/api\.bilibili\.com\/pgc\/view\/v2\/app\/season\? 'de
 📺 BiliBili.ADBlock.pgc.response.grpc = type=http-response, pattern=^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.pgc\.gateway\.player\.v2\.PlayURL\/PlayView$, requires-body=1, binary-body-mode=1, engine=webview, script-path=https://gist.githubusercontent.com/VirgilClyne/0b0c5ac2b8977d5461d4b3276d120896/raw/response.dev.bundle.js, argument={{{scriptParams}}}
 
 [MITM]
-hostname = %APPEND% manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, app.biliapi.com, api.bilibili.com, api.biliapi.net, grpc.biliapi.net, cm.bilibili.com, adtrack.qianwen.com, tkio-redirect.solar-engine.com
+hostname = biliverse.github.io, %APPEND% biliverse.github.io, manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, app.biliapi.com, api.bilibili.com, api.biliapi.net, grpc.biliapi.net, cm.bilibili.com, adtrack.qianwen.com, tkio-redirect.solar-engine.com
 h2 = true
