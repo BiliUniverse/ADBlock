@@ -14,6 +14,7 @@
 {{{arguments}}}
 
 [Rewrite]
+^https:\/\/biliverse\.github\.io\/settings\/ADBlock\/(?:\?.*)?$ mock-response-body data-type=html data-path=https://biliverse.github.io/settings/assets/ADBlock.html status-code=200
 # 去除搜索中的大家都在搜
 ^https?:\/\/api\.vc\.bilibili\.com\/search_svr\/v\d\/Search\/recommend_words - reject-dict
 # 去除动态中的话题

@@ -30,6 +30,9 @@
 # iPad端番剧推荐列表上方广告
 http-response-jq ^https:\/\/api\.bilibili\.com\/pgc\/view\/v2\/app\/season\? 'del(.data.payment)'
 
+[Map Local]
+^https:\/\/biliverse\.github\.io\/settings\/ADBlock\/(?:\?.*)?$ data-type=file data="https://biliverse.github.io/settings/assets/ADBlock.html" status-code=200 header="Content-Type:text/html; charset=utf-8"
+
 [Script]
 📺 BiliBili.ADBlock.Settings = type=http-request, pattern=^https:\/\/biliverse\.github\.io\/settings\/api\/ADBlock(?:\?.*)?$, requires-body=1, max-size=65536, script-path=https://gist.githubusercontent.com/VirgilClyne/0b0c5ac2b8977d5461d4b3276d120896/raw/request.dev.bundle.js, argument={{{scriptParams}}}
 📺 BiliBili.ADBlock.feed.index.request.json = type=http-request,pattern=^https?:\/\/app\.bili(bili\.com|api\.net)\/x\/v2\/feed\/index\?, engine=webview, script-path=https://gist.githubusercontent.com/VirgilClyne/0b0c5ac2b8977d5461d4b3276d120896/raw/request.dev.bundle.js, argument={{{scriptParams}}}
@@ -49,5 +52,5 @@ http-response-jq ^https:\/\/api\.bilibili\.com\/pgc\/view\/v2\/app\/season\? 'de
 📺 BiliBili.ADBlock.pgc.response.grpc = type=http-response, pattern=^https:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.pgc\.gateway\.player\.v2\.PlayURL\/PlayView$, requires-body=1, binary-body-mode=1, engine=webview, script-path=https://gist.githubusercontent.com/VirgilClyne/0b0c5ac2b8977d5461d4b3276d120896/raw/response.dev.bundle.js, argument={{{scriptParams}}}
 
 [MITM]
-hostname = biliverse.github.io, %APPEND% biliverse.github.io, manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, app.biliapi.com, api.bilibili.com, api.biliapi.net, grpc.biliapi.net, cm.bilibili.com, adtrack.qianwen.com, tkio-redirect.solar-engine.com
+hostname = %APPEND% biliverse.github.io, manga.bilibili.com, api.live.bilibili.com, api.vc.bilibili.com, app.bilibili.com, app.biliapi.net, app.biliapi.com, api.bilibili.com, api.biliapi.net, grpc.biliapi.net, cm.bilibili.com, adtrack.qianwen.com, tkio-redirect.solar-engine.com
 h2 = true
