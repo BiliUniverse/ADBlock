@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package bilibili.app.viewunite.v1;
+
+// Wire-compatible subset used to remove promotional material while retaining
+// progress points, contract cards and undeclared response fields.
+
+message ProgressOpaqueMessage {}
+
+message VideoGuide {
+    repeated ProgressOpaqueMessage material = 1;
+    ProgressOpaqueMessage video_point = 2;
+    ProgressOpaqueMessage contract_card = 3;
+}
+
+message ViewProgressReply {
+    VideoGuide video_guide = 1;
+}

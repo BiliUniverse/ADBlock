@@ -4,6 +4,7 @@ import test from "node:test";
 import { DynAllPersonalReply } from "@biliverse/protobuf/bilibili/app/dynamic/v2/dynamic.js";
 import { PlayViewUniteReply } from "@biliverse/protobuf/bilibili/app/playerunite/v1/playerunite.js";
 import { ViewProgressReply as ViewUniteProgressReply } from "@biliverse/protobuf/bilibili/app/viewunite/v1/viewprogress.js";
+import { RelatesFeedReply as PackagedViewUniteRelatesFeedReply, ViewReply as PackagedViewUniteReply } from "@biliverse/protobuf/bilibili/app/viewunite/v1/viewunite.js";
 import { SubjectDescriptionReply } from "@biliverse/protobuf/bilibili/main/community/reply/v2/reply.js";
 import { FragmentType } from "@biliverse/protobuf/bilibili/playershared/playershared.js";
 import gRPC from "@nsnanocat/grpc";
@@ -196,6 +197,70 @@ test("clears legacy playback-page advertising fields", async () => {
 	assert.deepEqual(
 		decoded.relates.map(item => item.title),
 		["normal"],
+	);
+});
+
+test("local unified-view protobuf filters packaged responses without losing unrelated fields", async () => {
+	const unknownField = Uint8Array.from([0xa0, 0x06, 0x07]);
+	const viewUrl = "https://grpc.biliapi.net/bilibili.app.viewunite.v1.View/View";
+	HonoWorkerAdapter.buildArgument({ url: viewUrl, headers: { "biliverse-args": "View.AD=true&LogLevel=OFF" } });
+	const viewPayload = PackagedViewUniteReply.toBinary(
+		PackagedViewUniteReply.create({
+			cm: {},
+			tab: {
+				tabModule: [
+					{
+						tab: {
+							oneofKind: "introduction",
+							introduction: {
+								modules: [
+									{
+										type: 28,
+										data: {
+											oneofKind: "relates",
+											relates: { cards: [{ relateCardType: 1 }, { relateCardType: 5 }] },
+										},
+									},
+									{ type: 55 },
+									{ type: 1 },
+								],
+							},
+						},
+					},
+				],
+			},
+		}),
+	);
+	const viewResult = await DevResponse(
+		{ method: "POST", url: viewUrl, headers: { "user-agent": "bili-universal/80000100" } },
+		{ status: 200, headers: { "content-type": "application/grpc" }, body: gRPC.encode(Uint8Array.from([...viewPayload, ...unknownField])) },
+	);
+	const viewResultPayload = gRPC.decode(viewResult.body);
+	const decodedView = PackagedViewUniteReply.fromBinary(viewResultPayload);
+	const modules = decodedView.tab.tabModule[0].tab.introduction.modules;
+	assert.equal(decodedView.cm, undefined);
+	assert.deepEqual(
+		modules.map(module => module.type),
+		[28, 1],
+	);
+	assert.deepEqual(
+		modules[0].data.relates.cards.map(card => card.relateCardType),
+		[1],
+	);
+	assert.deepEqual([...viewResultPayload.slice(-unknownField.length)], [...unknownField]);
+
+	const relatesUrl = "https://grpc.biliapi.net/bilibili.app.viewunite.v1.View/RelatesFeed";
+	HonoWorkerAdapter.buildArgument({ url: relatesUrl, headers: { "biliverse-args": "View.AD=true&LogLevel=OFF" } });
+	const relatesPayload = PackagedViewUniteRelatesFeedReply.toBinary(
+		PackagedViewUniteRelatesFeedReply.create({ relates: [{ relateCardType: 1 }, { relateCardType: 4 }, { relateCardType: 1, cmStock: {} }] }),
+	);
+	const relatesResult = await DevResponse(
+		{ method: "POST", url: relatesUrl, headers: { "user-agent": "bili-universal/80000100" } },
+		{ status: 200, headers: { "content-type": "application/grpc" }, body: gRPC.encode(relatesPayload) },
+	);
+	assert.deepEqual(
+		PackagedViewUniteRelatesFeedReply.fromBinary(gRPC.decode(relatesResult.body)).relates.map(card => card.relateCardType),
+		[1],
 	);
 });
 

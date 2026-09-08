@@ -1,15 +1,14 @@
 import { DynAllPersonalReply, DynAllReply, DynVideoPersonalReply } from "@biliverse/protobuf/bilibili/app/dynamic/v2/dynamic.js";
 import { ModeStatusReply } from "@biliverse/protobuf/bilibili/app/interface/teenagers.js";
-import { PlayViewUniteReply } from "@biliverse/protobuf/bilibili/app/playerunite/v1/playerunite.js";
 import { PlayViewReply } from "@biliverse/protobuf/bilibili/app/playurl/v1/playurl.js";
 import { TFInfoReply } from "@biliverse/protobuf/bilibili/app/view/v1/view.js";
-import { RelatesFeedReply, ViewReply as ViewUniteReply } from "@biliverse/protobuf/bilibili/app/viewunite/v1/viewunite.js";
-import { ViewProgressReply as ViewUniteProgressReply } from "@biliverse/protobuf/bilibili/app/viewunite/v1/viewprogress.js";
-import { FragmentType } from "@biliverse/protobuf/bilibili/playershared/playershared.js";
 import { DmColorfulType, DmSegMobileReply, DmSegMobileReq, DmViewReply } from "@biliverse/protobuf/bilibili/community/service/dm/v1/dm.js";
 import { DetailListReply, MainListReply, ReplyInfoReply } from "@biliverse/protobuf/bilibili/main/community/reply/v1/reply.js";
 import { DynVideoReply } from "../protobuf/bilibili/app/dynamic/v2/dynamic.js";
+import { FragmentType, PlayViewUniteReply } from "../protobuf/bilibili/app/playerunite/v1/playerunite.js";
 import { PlayerRelatesReply, RelatesFeedReply as ViewRelatesFeedReply, ViewProgressReply, ViewReply } from "../protobuf/bilibili/app/view/v1/view.js";
+import { ViewProgressReply as ViewUniteProgressReply } from "../protobuf/bilibili/app/viewunite/v1/viewprogress.js";
+import { RelatesFeedReply, ViewReply as ViewUniteReply } from "../protobuf/bilibili/app/viewunite/v1/viewunite.js";
 import { SubjectDescriptionReply } from "@biliverse/protobuf/bilibili/main/community/reply/v2/reply.js";
 import { PlayViewReply as PGCPlayViewReply } from "@biliverse/protobuf/bilibili/pgc/gateway/player/v2/playurl.js";
 import { SearchAllResponse } from "@biliverse/protobuf/bilibili/polymer/app/search/v1/search.js";
