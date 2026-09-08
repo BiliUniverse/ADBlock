@@ -1,12 +1,24 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { DynAllPersonalReply } from "@biliverse/protobuf/bilibili/app/dynamic/v2/dynamic.js";
+import { PlayViewUniteReply } from "@biliverse/protobuf/bilibili/app/playerunite/v1/playerunite.js";
+import { ViewProgressReply as ViewUniteProgressReply } from "@biliverse/protobuf/bilibili/app/viewunite/v1/viewprogress.js";
 import { SubjectDescriptionReply } from "@biliverse/protobuf/bilibili/main/community/reply/v2/reply.js";
+import { FragmentType } from "@biliverse/protobuf/bilibili/playershared/playershared.js";
 import gRPC from "@nsnanocat/grpc";
 import ADBlock from "../src/class/ADBlock.mjs";
 import HonoWorkerAdapter from "../src/class/HonoWorkerAdapter.mjs";
 import { Request } from "../src/process/Request.mjs";
 import { Response as DevResponse } from "../src/process/Response.dev.mjs";
+import { Response as ReleaseResponse } from "../src/process/Response.mjs";
+import { DynVideoReply } from "../src/protobuf/bilibili/app/dynamic/v2/dynamic.js";
+import { PlayerRelatesReply, RelatesFeedReply as ViewRelatesFeedReply, ViewProgressReply, ViewReply } from "../src/protobuf/bilibili/app/view/v1/view.js";
+
+test("local protobuf subsets preserve undeclared response fields", () => {
+	const unknownField = Uint8Array.from([0xa0, 0x06, 0x07]); // field 100, varint 7
+	assert.deepEqual(ViewReply.toBinary(ViewReply.fromBinary(unknownField)), unknownField);
+});
 
 test("ADBlock centralizes search ad and tracking cleanup", () => {
 	const adBlock = new ADBlock();
@@ -86,6 +98,305 @@ test("filters personal dynamic advertising cards with the packaged protobuf bind
 		decoded.list.map(item => item.cardType),
 		[8],
 	);
+});
+
+test("filters advertising cards from the dynamic video feed", async () => {
+	HonoWorkerAdapter.buildArgument({
+		url: "https://grpc.biliapi.net/bilibili.app.dynamic.v2.Dynamic/DynVideo",
+		headers: { "biliverse-args": "Dynamic.AdCard=true&LogLevel=OFF" },
+	});
+	const responseBody = gRPC.encode(
+		DynVideoReply.toBinary(
+			DynVideoReply.create({
+				dynamicList: { list: [{ cardType: 15 }, { cardType: 8 }] },
+			}),
+		),
+	);
+	const result = await DevResponse(
+		{
+			method: "POST",
+			url: "https://grpc.biliapi.net/bilibili.app.dynamic.v2.Dynamic/DynVideo",
+			headers: { "user-agent": "bili-universal/80000100" },
+		},
+		{ status: 200, headers: { "content-type": "application/grpc" }, body: responseBody },
+	);
+	const decoded = DynVideoReply.fromBinary(gRPC.decode(result.body));
+
+	assert.deepEqual(
+		decoded.dynamicList.list.map(item => item.cardType),
+		[8],
+	);
+});
+
+test("filters legacy playback-related advertising cards", async () => {
+	for (const [method, ReplyType] of [
+		["RelatesFeed", ViewRelatesFeedReply],
+		["PlayerRelates", PlayerRelatesReply],
+	]) {
+		const url = `https://grpc.biliapi.net/bilibili.app.view.v1.View/${method}`;
+		HonoWorkerAdapter.buildArgument({
+			url,
+			headers: { "biliverse-args": "View.AD=true&LogLevel=OFF" },
+		});
+		const responseBody = gRPC.encode(
+			ReplyType.toBinary(
+				ReplyType.create({
+					list: [
+						{ title: "normal", goto: "av" },
+						{ title: "cm", goto: "cm" },
+						{ title: "game", goto: "game" },
+						{ title: "cm-field", goto: "av", cm: {} },
+						{ title: "unique-id", goto: "av", uniqueId: "ad-material" },
+					],
+				}),
+			),
+		);
+		const result = await DevResponse(
+			{ method: "POST", url, headers: { "user-agent": "bili-universal/80000100" } },
+			{ status: 200, headers: { "content-type": "application/grpc" }, body: responseBody },
+		);
+		const decoded = ReplyType.fromBinary(gRPC.decode(result.body));
+
+		assert.deepEqual(
+			decoded.list.map(item => item.title),
+			["normal"],
+		);
+	}
+});
+
+test("clears legacy playback-page advertising fields", async () => {
+	const url = "https://grpc.biliapi.net/bilibili.app.view.v1.View/View";
+	HonoWorkerAdapter.buildArgument({
+		url,
+		headers: { "biliverse-args": "View.AD=true&LogLevel=OFF" },
+	});
+	const responseBody = gRPC.encode(
+		ViewReply.toBinary(
+			ViewReply.create({
+				cms: [{}],
+				cmConfig: {},
+				cmIpad: {},
+				cmUnderPlayer: {},
+				tab: { otype: 3 },
+				relates: [{ title: "normal", goto: "av" }, { title: "cm", goto: "cm" }],
+			}),
+		),
+	);
+	const result = await DevResponse(
+		{ method: "POST", url, headers: { "user-agent": "bili-universal/80000100" } },
+		{ status: 200, headers: { "content-type": "application/grpc" }, body: responseBody },
+	);
+	const decoded = ViewReply.fromBinary(gRPC.decode(result.body));
+
+	assert.deepEqual(decoded.cms, []);
+	assert.equal(decoded.cmConfig, undefined);
+	assert.equal(decoded.cmIpad, undefined);
+	assert.equal(decoded.cmUnderPlayer, undefined);
+	assert.equal(decoded.tab, undefined);
+	assert.deepEqual(
+		decoded.relates.map(item => item.title),
+		["normal"],
+	);
+});
+
+test("returns an empty gRPC message for pause and end-page ads only when View.AD is enabled", async () => {
+	const originalPayload = Uint8Array.from([0x08, 0x01]);
+	for (const method of ["PlayPause", "ViewEndPage"]) {
+		const url = `https://grpc.biliapi.net/bilibili.app.viewunite.v1.View/${method}`;
+		for (const [enabled, expected] of [
+			[true, []],
+			[false, [...originalPayload]],
+		]) {
+			HonoWorkerAdapter.buildArgument({
+				url,
+				headers: { "biliverse-args": `View.AD=${enabled}&LogLevel=OFF` },
+			});
+			const result = await DevResponse(
+				{ method: "POST", url, headers: { "user-agent": "bili-universal/80000100", "x-bili-moss-engine-type": "1" } },
+				{ status: 200, headers: { "content-type": "application/grpc" }, body: gRPC.encode(originalPayload) },
+			);
+
+			assert.deepEqual([...gRPC.decode(result.body)], expected);
+			assert.equal(result.headers["grpc-status"], "0");
+		}
+	}
+});
+
+test("blocks playback-page advertising materials only when View.AD is enabled", async () => {
+	const url = "https://api.bilibili.com/x/vip/ads/materials?position=52";
+	const original = { code: 0, message: "success", data: { materials: [{ id: 1 }] } };
+	for (const enabled of [true, false]) {
+		HonoWorkerAdapter.buildArgument({
+			url,
+			headers: { "biliverse-args": `View.AD=${enabled}&LogLevel=OFF` },
+		});
+		const result = await DevResponse(
+			{ method: "GET", url, headers: { "user-agent": "bili-universal/80000100" } },
+			{ status: 200, headers: { "content-type": "application/json" }, body: JSON.stringify(original) },
+		);
+		assert.deepEqual(JSON.parse(result.body), enabled ? { code: -404, message: "-404", ttl: 1, data: null } : original);
+	}
+});
+
+test("release and development handlers agree on the new playback-ad routes", async () => {
+	const cases = [
+		{
+			url: "https://api.bilibili.com/x/vip/ads/materials?position=52",
+			response: { status: 200, headers: { "content-type": "application/json" }, body: JSON.stringify({ code: 0, data: { materials: [{}] } }) },
+		},
+		{
+			url: "https://grpc.biliapi.net/bilibili.app.viewunite.v1.View/PlayPause",
+			response: { status: 200, headers: { "content-type": "application/grpc" }, body: gRPC.encode(Uint8Array.from([0x08, 0x01])) },
+		},
+	];
+	for (const { url, response } of cases) {
+		const results = [];
+		for (const handler of [ReleaseResponse, DevResponse]) {
+			HonoWorkerAdapter.buildArgument({
+				url,
+				headers: { "biliverse-args": "View.AD=true&LogLevel=OFF" },
+			});
+			results.push(await handler({ method: "GET", url, headers: { "user-agent": "bili-universal/80000100" } }, structuredClone(response)));
+		}
+		assert.deepEqual(results[0], results[1]);
+	}
+});
+
+test("filters explicit ad fragments and the promotional prompt from PlayViewUnite", async () => {
+	const url = "https://grpc.biliapi.net/bilibili.app.playerunite.v1.Player/PlayViewUnite";
+	HonoWorkerAdapter.buildArgument({
+		url,
+		headers: { "biliverse-args": "View.AD=true&LogLevel=OFF" },
+	});
+	const unknownField = Uint8Array.from([0xa0, 0x06, 0x07]);
+	const payload = PlayViewUniteReply.toBinary(
+		PlayViewUniteReply.create({
+			viewInfo: { promptBar: {} },
+			fragmentVideo: {
+				videos: [
+					{ fragmentInfo: { index: 1, fragmentType: FragmentType.AD_FRAGMENT } },
+					{ fragmentInfo: { index: 2, fragmentType: FragmentType.OGV_FRAGMENT } },
+					{},
+				],
+			},
+		}),
+	);
+	const result = await DevResponse(
+		{ method: "POST", url, headers: { "user-agent": "bili-universal/80000100" } },
+		{ status: 200, headers: { "content-type": "application/grpc" }, body: gRPC.encode(Uint8Array.from([...payload, ...unknownField])) },
+	);
+	const resultPayload = gRPC.decode(result.body);
+	const decoded = PlayViewUniteReply.fromBinary(resultPayload);
+
+	assert.equal(decoded.viewInfo?.promptBar, undefined);
+	assert.deepEqual(
+		decoded.fragmentVideo.videos.map(item => item.fragmentInfo?.fragmentType),
+		[FragmentType.OGV_FRAGMENT, undefined],
+	);
+	assert.deepEqual([...resultPayload.slice(-unknownField.length)], [...unknownField]);
+});
+
+test("preserves PlayViewUnite ads when View.AD is disabled", async () => {
+	const url = "https://grpc.biliapi.net/bilibili.app.playerunite.v1.Player/PlayViewUnite";
+	HonoWorkerAdapter.buildArgument({
+		url,
+		headers: { "biliverse-args": "View.AD=false&LogLevel=OFF" },
+	});
+	const payload = PlayViewUniteReply.toBinary(
+		PlayViewUniteReply.create({
+			viewInfo: { promptBar: {} },
+			fragmentVideo: { videos: [{ fragmentInfo: { fragmentType: FragmentType.AD_FRAGMENT } }] },
+		}),
+	);
+	const result = await DevResponse(
+		{ method: "POST", url, headers: { "user-agent": "bili-universal/80000100" } },
+		{ status: 200, headers: { "content-type": "application/grpc" }, body: gRPC.encode(payload) },
+	);
+
+	assert.deepEqual([...gRPC.decode(result.body)], [...payload]);
+});
+
+test("removes playback-process promotional guides without deleting unrelated fields", async () => {
+	const unknownField = Uint8Array.from([0xa0, 0x06, 0x07]);
+	for (const [service, ReplyType, value, verify] of [
+		[
+			"bilibili.app.view.v1.View",
+			ViewProgressReply,
+			{ videoGuide: {} },
+			decoded => assert.equal(decoded.videoGuide, undefined),
+		],
+		[
+			"bilibili.app.viewunite.v1.View",
+			ViewUniteProgressReply,
+			{
+				videoGuide: {
+					material: [{ text: "promotion", url: "https://example.com/ad" }],
+					videoPoint: { pointPermanent: true },
+					contractCard: { playDisplaySwitch: true },
+				},
+				arcShot: { pvData: "keep" },
+			},
+			decoded => {
+				assert.deepEqual(decoded.videoGuide.material, []);
+				assert.equal(decoded.videoGuide.videoPoint?.pointPermanent, true);
+				assert.equal(decoded.videoGuide.contractCard?.playDisplaySwitch, true);
+				assert.equal(decoded.arcShot?.pvData, "keep");
+			},
+		],
+	]) {
+		const url = `https://grpc.biliapi.net/${service}/ViewProgress`;
+		HonoWorkerAdapter.buildArgument({
+			url,
+			headers: { "biliverse-args": "View.AD=true&LogLevel=OFF" },
+		});
+		const payload = ReplyType.toBinary(ReplyType.create(value));
+		const framedPayload = Uint8Array.from([...payload, ...unknownField]);
+		const result = await DevResponse(
+			{ method: "POST", url, headers: { "user-agent": "bili-universal/80000100" } },
+			{ status: 200, headers: { "content-type": "application/grpc" }, body: gRPC.encode(framedPayload) },
+		);
+		const resultPayload = gRPC.decode(result.body);
+		verify(ReplyType.fromBinary(resultPayload));
+		assert.deepEqual([...resultPayload.slice(-unknownField.length)], [...unknownField]);
+
+		HonoWorkerAdapter.buildArgument({
+			url,
+			headers: { "biliverse-args": "View.AD=false&LogLevel=OFF" },
+		});
+		const disabledResult = await DevResponse(
+			{ method: "POST", url, headers: { "user-agent": "bili-universal/80000100" } },
+			{ status: 200, headers: { "content-type": "application/grpc" }, body: gRPC.encode(framedPayload) },
+		);
+		assert.deepEqual([...gRPC.decode(disabledResult.body)], [...framedPayload]);
+	}
+});
+
+test("keeps every client template and the BoxJS control synchronized", async () => {
+	const templates = [
+		"loon.dev.handlebars",
+		"loon.handlebars",
+		"loon.rewrite.handlebars",
+		"quantumultx.dev.handlebars",
+		"quantumultx.handlebars",
+		"shadowrocket.handlebars",
+		"shadowrocket.rewrite.handlebars",
+		"stash.dev.handlebars",
+		"stash.handlebars",
+		"stash.rewrite.handlebars",
+		"surge.dev.handlebars",
+		"surge.handlebars",
+		"surge.rewrite.handlebars",
+	];
+	for (const template of templates) {
+		const content = await readFile(new URL(`../template/${template}`, import.meta.url), "utf8");
+		for (const token of ["PlayPause", "ViewEndPage", "ViewProgress", "PlayViewUnite", "vip\\/ads\\/materials"]) assert.match(content, new RegExp(token.replaceAll("/", "\\/")), template);
+	}
+
+	const boxjs = JSON.parse(await readFile(new URL("../template/boxjs.settings.json", import.meta.url), "utf8"));
+	const controls = boxjs.filter(item => item.id === "@BiliBili.ADBlock.Settings.View.AD");
+	assert.equal(controls.length, 1);
+	assert.equal(controls[0].val, true);
+	assert.equal(controls[0].desc, "是否启用此处修改");
 });
 
 test("filters commercial Reply v2 editor buttons with the packaged protobuf binding", async () => {

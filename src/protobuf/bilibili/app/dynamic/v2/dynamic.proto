@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package bilibili.app.dynamic.v2;
+
+// Wire-compatible subset of API/protobuf/bilibili/app/dynamic/v2/dynamic.proto.
+// Undeclared fields are preserved by protobuf-ts as unknown fields.
+
+message DynamicItem {
+    int32 card_type = 1;
+}
+
+message CardVideoDynList {
+    repeated DynamicItem list = 1;
+}
+
+message CardVideoUpList {}
+
+message DynVideoReply {
+    CardVideoDynList dynamic_list = 1;
+    CardVideoUpList video_up_list = 2;
+}

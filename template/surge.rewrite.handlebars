@@ -7,9 +7,9 @@
 
 [URL Rewrite]
 ^https?:\/\/(app\.bili(?:bili\.com|api\.net))\/(x\/v2\/(?:splash\/(?:brand\/list|event\/list2|list|show)|feed\/index(?:\/story)?|search\/square).*)$ https:\/\/\{{{endpoint}}}\/$1\/$2 header
-^https?:\/\/(api\.bili(?:bili\.com|api\.net))\/((?:x\/web-interface\/wbi\/index\/top\/feed\/rcmd|pgc\/page\/(?:bangumi|cinema\/tab)).*)$ https:\/\/\{{{endpoint}}}\/$1\/$2 header
+^https?:\/\/(api\.bili(?:bili\.com|api\.net))\/((?:x\/(?:web-interface\/wbi\/index\/top\/feed\/rcmd|vip\/ads\/materials)|pgc\/page\/(?:bangumi|cinema\/tab)).*)$ https:\/\/\{{{endpoint}}}\/$1\/$2 header
 ^https?:\/\/(api\.live\.bilibili\.com)\/(xlive\/app-room\/v1\/index\/getInfoByRoom.*)$ https:\/\/\{{{endpoint}}}\/$1\/$2 header
-^https?:\/\/((?:grpc|app)\.bili(?:bili\.com|api\.net))\/(bilibili\/(?:app\/(?:view|viewunite)\/v1\/View\/(?:View|TFInfo|RelatesFeed)|app\/dynamic\/v2\/Dynamic\/Dyn(?:All|Video)|app\/playurl\/v1\/PlayURL\/PlayView|polymer\/app\/search\/v1\/Search\/SearchAll|community\/service\/dm\/v1\/DM\/(?:DmView|DmSegMobile)|app\/interface\/v1\/Teenagers\/ModeStatus|main\/community\/reply\/v1\/Reply\/MainList|pgc\/gateway\/player\/v2\/PlayURL\/PlayView).*)$ https:\/\/\{{{endpoint}}}\/$1\/$2 header
+^https?:\/\/((?:grpc|app)\.bili(?:bili\.com|api\.net))\/(bilibili\/(?:app\/(?:view\/v1\/View\/(?:View|TFInfo|RelatesFeed|PlayerRelates|ViewProgress)|viewunite\/v1\/View\/(?:View|RelatesFeed|ViewProgress|PlayPause|ViewEndPage)|playerunite\/v1\/Player\/PlayViewUnite)|app\/dynamic\/v2\/Dynamic\/Dyn(?:All|Video)(?:Personal)?|app\/playurl\/v1\/PlayURL\/PlayView|polymer\/app\/search\/v1\/Search\/SearchAll|community\/service\/dm\/v1\/DM\/(?:DmView|DmSegMobile)|app\/interface\/v1\/Teenagers\/ModeStatus|main\/community\/reply\/v1\/Reply\/MainList|pgc\/gateway\/player\/v2\/PlayURL\/PlayView).*)$ https:\/\/\{{{endpoint}}}\/$1\/$2 header
 
 [MITM]
 hostname = biliverse.github.io, app.bilibili.com, app.biliapi.net, api.bilibili.com, api.biliapi.net, api.live.bilibili.com, grpc.biliapi.net

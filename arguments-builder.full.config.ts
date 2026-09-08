@@ -167,7 +167,7 @@ export const args: ArgumentItem[] = [
 	},
 	{
 		key: "View.AD",
-		name: "[用户投稿] 去除视频广告",
+		name: "[视频] 去除播放页广告",
 		defaultValue: true,
 		type: "boolean",
 		description: "是否启用此处修改",

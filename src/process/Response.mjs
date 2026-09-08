@@ -1,10 +1,15 @@
-import { DynAllPersonalReply, DynAllReply, DynVideoPersonalReply, DynVideoReply } from "@biliverse/protobuf/bilibili/app/dynamic/v2/dynamic.js";
+import { DynAllPersonalReply, DynAllReply, DynVideoPersonalReply } from "@biliverse/protobuf/bilibili/app/dynamic/v2/dynamic.js";
 import { ModeStatusReply } from "@biliverse/protobuf/bilibili/app/interface/teenagers.js";
+import { PlayViewUniteReply } from "@biliverse/protobuf/bilibili/app/playerunite/v1/playerunite.js";
 import { PlayViewReply } from "@biliverse/protobuf/bilibili/app/playurl/v1/playurl.js";
-import { TFInfoReply, ViewReply } from "@biliverse/protobuf/bilibili/app/view/v1/view.js";
+import { TFInfoReply } from "@biliverse/protobuf/bilibili/app/view/v1/view.js";
 import { RelatesFeedReply, ViewReply as ViewUniteReply } from "@biliverse/protobuf/bilibili/app/viewunite/v1/viewunite.js";
+import { ViewProgressReply as ViewUniteProgressReply } from "@biliverse/protobuf/bilibili/app/viewunite/v1/viewprogress.js";
+import { FragmentType } from "@biliverse/protobuf/bilibili/playershared/playershared.js";
 import { DmColorfulType, DmSegMobileReply, DmSegMobileReq, DmViewReply } from "@biliverse/protobuf/bilibili/community/service/dm/v1/dm.js";
 import { DetailListReply, MainListReply, ReplyInfoReply } from "@biliverse/protobuf/bilibili/main/community/reply/v1/reply.js";
+import { DynVideoReply } from "../protobuf/bilibili/app/dynamic/v2/dynamic.js";
+import { PlayerRelatesReply, RelatesFeedReply as ViewRelatesFeedReply, ViewProgressReply, ViewReply } from "../protobuf/bilibili/app/view/v1/view.js";
 import { SubjectDescriptionReply } from "@biliverse/protobuf/bilibili/main/community/reply/v2/reply.js";
 import { PlayViewReply as PGCPlayViewReply } from "@biliverse/protobuf/bilibili/pgc/gateway/player/v2/playurl.js";
 import { SearchAllResponse } from "@biliverse/protobuf/bilibili/polymer/app/search/v1/search.js";
@@ -311,6 +316,12 @@ export async function Response($request, $response, KV) {
 				case "api.bilibili.com":
 				case "api.biliapi.net":
 					switch (url.pathname) {
+						case "/x/vip/ads/materials": // 播放页广告素材
+							if (Settings?.View?.AD !== false) {
+								body = { code: -404, message: "-404", ttl: 1, data: null };
+								Console.info("✅ 播放页广告素材去除");
+							} else Console.warn("用户设置播放页广告素材不去除");
+							break;
 						case "/pgc/page/bangumi": // 追番页
 						case "/pgc/page/cinema/tab": // 观影页
 							switch (Settings?.PGC?.AD) {
@@ -482,6 +493,25 @@ export async function Response($request, $response, KV) {
 												break;
 										}
 										break;
+									case "bilibili.app.playerunite.v1.Player": // 新版播放器
+										switch (PATHs?.[1]) {
+											case "PlayViewUnite":
+												if (Settings?.View?.AD !== false) {
+													body = PlayViewUniteReply.fromBinary(rawBody);
+													if (body.viewInfo?.promptBar) {
+														body.viewInfo.promptBar = undefined;
+														Console.info("✅ 新版播放器推广提示栏去除");
+													}
+													if (body.fragmentVideo?.videos?.length) {
+														const oldLength = body.fragmentVideo.videos.length;
+														body.fragmentVideo.videos = body.fragmentVideo.videos.filter(item => item.fragmentInfo?.fragmentType !== FragmentType.AD_FRAGMENT);
+														if (oldLength !== body.fragmentVideo.videos.length) Console.info(`✅ 播放器广告视频片段去除: ${oldLength - body.fragmentVideo.videos.length}`);
+													}
+													rawBody = PlayViewUniteReply.toBinary(body);
+												} else Console.warn("用户设置新版播放器广告不去除");
+												break;
+										}
+										break;
 									case "bilibili.app.dynamic.v2.Dynamic": // 动态
 										switch (PATHs?.[1]) {
 											case "DynAll": // 动态综合页
@@ -542,6 +572,23 @@ export async function Response($request, $response, KV) {
 												break;
 											case "DynVideo": // 动态视频页
 												body = DynVideoReply.fromBinary(rawBody);
+												switch (Settings?.Dynamic?.AdCard) {
+													case true:
+													default:
+														if (body.dynamicList?.list?.length) {
+															body.dynamicList.list = body.dynamicList.list.filter(item => {
+																if (item.cardType === 15) {
+																	Console.info("✅ 动态视频页广告动态去除");
+																	return false;
+																}
+																return true;
+															});
+														}
+														break;
+													case false:
+														Console.warn("用户设置动态视频页广告动态不去除");
+														break;
+												}
 												switch (Settings?.Dynamic?.MostVisited) {
 													case true:
 														Console.info("✅ 动态视频页最常访问去除");
@@ -569,7 +616,15 @@ export async function Response($request, $response, KV) {
 											}
 										}
 										break;
-									case "bilibili.app.view.v1.View": // 视频
+									case "bilibili.app.view.v1.View": {
+										// 视频
+										const filterRelate = item => {
+											if (["cm", "game"].includes(item.goto) || item.cm || item.uniqueId) {
+												Console.info("✅ 播放页关联推荐广告去除");
+												return false;
+											}
+											return true;
+										};
 										switch (PATHs?.[1]) {
 											case "View": // 视频播放页
 												switch (Settings?.View?.AD) {
@@ -581,18 +636,17 @@ export async function Response($request, $response, KV) {
 															body.cms = [];
 														}
 														if (body.relates?.length) {
-															body.relates = body.relates.filter(item => {
-																if (item.cm) {
-																	Console.info("✅ 播放页关联推荐广告去除");
-																	return false;
-																}
-																return true;
-															});
+															body.relates = body.relates.filter(filterRelate);
 														}
-														if (body.cmConfig || body.cmIpad) {
-															Console.info("✅ 播放页定制tab去除");
+														if (body.cmConfig || body.cmIpad || body.cmUnderPlayer) {
+															Console.info("✅ 播放页广告配置去除");
 															body.cmConfig = undefined;
 															body.cmIpad = undefined;
+															body.cmUnderPlayer = undefined;
+														}
+														if (body.tab?.otype === 3 || body.tab?.adTabInfo) {
+															Console.info("✅ 播放页广告 Tab 去除");
+															body.tab = undefined;
 														}
 														for (const i in body.tIcon) {
 															if (body.tIcon[i] === null) {
@@ -608,6 +662,26 @@ export async function Response($request, $response, KV) {
 														break;
 												}
 												break;
+											case "RelatesFeed": // 播放页下方推荐卡
+												body = ViewRelatesFeedReply.fromBinary(rawBody);
+												if (Settings?.View?.AD !== false) body.list = body.list.filter(filterRelate);
+												else Console.warn("用户设置播放页关联推荐广告不去除");
+												rawBody = ViewRelatesFeedReply.toBinary(body);
+												break;
+											case "PlayerRelates": // 播放器下方推荐卡
+												body = PlayerRelatesReply.fromBinary(rawBody);
+												if (Settings?.View?.AD !== false) body.list = body.list.filter(filterRelate);
+												else Console.warn("用户设置播放器关联推荐广告不去除");
+												rawBody = PlayerRelatesReply.toBinary(body);
+												break;
+											case "ViewProgress": // 播放过程中的引导卡片
+												body = ViewProgressReply.fromBinary(rawBody);
+												if (Settings?.View?.AD !== false && body.videoGuide) {
+													body.videoGuide = undefined;
+													Console.info("✅ 旧版播放器过程引导卡片去除");
+												} else if (Settings?.View?.AD === false) Console.warn("用户设置旧版播放器过程引导卡片不去除");
+												rawBody = ViewProgressReply.toBinary(body);
+												break;
 											case "TFInfo": {
 												body = TFInfoReply.fromBinary(rawBody);
 												Console.debug(`tipsId: ${body.tipsId}`);
@@ -621,6 +695,7 @@ export async function Response($request, $response, KV) {
 											}
 										}
 										break;
+									}
 									case "bilibili.app.viewunite.v1.View": {
 										// 视频
 										// 4: 游戏, 5: 广告, 11: 课程
@@ -676,8 +751,24 @@ export async function Response($request, $response, KV) {
 												break;
 											case "RelatesFeed": // 播放页下方推荐卡
 												body = RelatesFeedReply.fromBinary(rawBody);
-												body.relates = body.relates.filter(filterRelateCard);
+												if (Settings?.View?.AD !== false) body.relates = body.relates.filter(filterRelateCard);
+												else Console.warn("用户设置播放页关联推荐广告不去除");
 												rawBody = RelatesFeedReply.toBinary(body);
+												break;
+											case "ViewProgress": // 播放过程中的素材
+												body = ViewUniteProgressReply.fromBinary(rawBody);
+												if (Settings?.View?.AD !== false && body.videoGuide?.material?.length) {
+													body.videoGuide.material = [];
+													Console.info("✅ 新版播放器过程推广素材去除");
+												} else if (Settings?.View?.AD === false) Console.warn("用户设置新版播放器过程推广素材不去除");
+												rawBody = ViewUniteProgressReply.toBinary(body);
+												break;
+											case "PlayPause": // 暂停广告
+											case "ViewEndPage": // 播放结束页广告
+												if (Settings?.View?.AD !== false) {
+													rawBody = new Uint8Array();
+													Console.info(`✅ ${PATHs[1] === "PlayPause" ? "播放暂停广告" : "播放结束页广告"}去除`);
+												} else Console.warn(`用户设置${PATHs[1] === "PlayPause" ? "播放暂停广告" : "播放结束页广告"}不去除`);
 												break;
 										}
 										break;
@@ -905,8 +996,8 @@ export async function Response($request, $response, KV) {
 						break;
 				}
 			}
-			return $response;
 	}
+	return $response;
 }
 
 function toBvid(avid) {

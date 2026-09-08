@@ -66,7 +66,7 @@ http:
       type: response
       require-body: true
       argument:
-    - match: ^https?:\/\/api\.bilibili\.com\/x\/web-interface\/wbi\/index\/top\/feed\/rcmd\?
+    - match: ^https?:\/\/api\.bili(bili\.com|api\.net)\/x\/(web-interface\/wbi\/index\/top\/feed\/rcmd|vip\/ads\/materials)\?
       name: 📺 BiliBili.ADBlock.response.json
       type: response
       require-body: true
@@ -81,7 +81,7 @@ http:
       type: response
       require-body: true
       argument:
-    - match: ^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.(view|viewunite)\.v1\.View\/(View|TFInfo|RelatesFeed)$
+    - match: ^https?:\/\/(grpc|app)\.bili(bili\.com|api\.net)\/bilibili\.app\.(view\.v1\.View\/(View|TFInfo|RelatesFeed|PlayerRelates|ViewProgress)|viewunite\.v1\.View\/(View|RelatesFeed|ViewProgress|PlayPause|ViewEndPage)|playerunite\.v1\.Player\/PlayViewUnite)$
       name: 📺 BiliBili.ADBlock.response.grpc
       type: response
       require-body: true
