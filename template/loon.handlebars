@@ -7,14 +7,14 @@
 #!tag = {{@package 'organizationName'}}
 #!system = {{@package 'system'}}
 #!date = {{now "yyyy-MM-dd HH:mm:ss"}}
-#!version = {{@package 'version'}}
+#!version = {{version}}
 #!system_version = {{ @package 'systemVersion'}}
 
 [Argument]
 {{{arguments}}}
 
 [Rewrite]
-^https:\/\/biliverse\.github\.io\/configs\/ADBlock(?:\?.*)?$ mock-response-body data-type=text data-path=https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/BiliBili.ADBlock.boxjs.json status-code=200
+response if ${url} ~= /^https:\/\/biliverse\.github\.io\/configs\/ADBlock(?:\?.*)?$/ then response.body.mock_file("json", "https://github.com/Biliverse/ADBlock/releases/download/v{{@package 'version'}}/BiliBili.ADBlock.boxjs.json", 200) | response.header.set("X-PreferencePanes-Version", "{{version}}") | response.header.set("Cache-Control", "no-store")
 # 去除搜索中的大家都在搜
 ^https?:\/\/api\.vc\.bilibili\.com\/search_svr\/v\d\/Search\/recommend_words - reject-dict
 # 去除动态中的话题
