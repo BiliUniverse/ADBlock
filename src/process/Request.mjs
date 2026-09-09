@@ -1,11 +1,10 @@
-import { settingsResponse } from "../function/settings.mjs";
-import { DefaultWordsReply } from "@biliverse/protobuf/bilibili/app/interface/v1/search.js";
 import gRPC from "@nsnanocat/grpc";
-import { Lodash as _, Console } from "@nsnanocat/util";
+import { Console } from "@nsnanocat/util";
 import MD5 from "crypto-js/md5.js";
 import database from "../function/database.mjs";
 import fixHeaders from "../function/fixHeaders.mjs";
 import setENV from "../function/setENV.mjs";
+import { settingsResponse } from "../function/settings.mjs";
 /***************** Processing *****************/
 export async function Request($request, KV) {
 	// 构造回复数据
@@ -23,18 +22,20 @@ export async function Request($request, KV) {
 	 * 设置
 	 * @type {{Settings: import('./types').Settings}}
 	 */
-	const { Settings, Caches, Configs } = await setENV("BiliBili", "ADBlock", database, KV);
+	const { Settings, Caches } = await setENV("BiliBili", "ADBlock", database, KV);
+	// 原实现还会解构 Configs；当前流程暂未使用，保留下面的原结构供后续功能恢复。
+	// const { Settings, Caches, Configs } = await setENV("BiliBili", "ADBlock", database, KV);
 	Console.logLevel = Settings.LogLevel;
 	$response = settingsResponse($request, Settings);
 	if ($response) return { $request, $response };
-	// 创建空数据
-	const body = { code: 0, message: "0", data: {} };
+	// 预留的通用响应结构，当前请求处理流程暂未使用。
+	// const body = { code: 0, message: "0", data: {} };
 	// 方法判断
 	switch ($request.method) {
 		case "POST":
 		case "PUT":
 		case "PATCH":
-		// biome-ignore lint/suspicious/noFallthroughSwitchClause: <explanation>
+		// biome-ignore lint/suspicious/noFallthroughSwitchClause: inspect the request body before URL routing
 		case "DELETE":
 			// 格式判断
 			switch (FORMAT) {
@@ -110,7 +111,7 @@ export async function Request($request, KV) {
 									"Content-Type": "application/grpc",
 									"Content-Length": "5",
 								}),
-								body: gRPC.encode(DefaultWordsReply.toBinary(DefaultWordsReply.create())),
+								body: gRPC.encode(new Uint8Array()),
 							};
 							Console.info("✅ 搜索默认关键词已返回空 gRPC 响应");
 							break;

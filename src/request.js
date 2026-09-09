@@ -1,9 +1,10 @@
-import { $app, Console, done, Lodash as _ } from "@nsnanocat/util";
+import { $app, Console, done } from "@nsnanocat/util";
 import { Request } from "./process/Request.mjs";
+
 /***************** Processing *****************/
 let $response;
 !(async () => {
-    ({ $request, $response } = await Request($request));
+	({ $request, $response } = await Request($request));
 })()
 	.catch(e => Console.error(e))
 	.finally(() => {
@@ -18,9 +19,9 @@ let $response;
 						break;
 					case "Quantumult X":
 						if (!$response.status) $response.status = "HTTP/1.1 200 OK";
-						delete $response.headers?.["Content-Length"];
-						delete $response.headers?.["content-length"];
-						delete $response.headers?.["Transfer-Encoding"];
+						for (const name of ["Content-Length", "content-length", "Transfer-Encoding"]) {
+							if ($response.headers) Reflect.deleteProperty($response.headers, name);
+						}
 						done($response);
 						break;
 				}

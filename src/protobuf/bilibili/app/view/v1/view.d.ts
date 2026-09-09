@@ -98,6 +98,33 @@ export interface ViewProgressReply {
     videoGuide?: OpaqueMessage;
 }
 /**
+ * @generated from protobuf message bilibili.app.view.v1.TFToast
+ */
+export interface TFToast {
+}
+/**
+ * @generated from protobuf message bilibili.app.view.v1.TFPanelCustomized
+ */
+export interface TFPanelCustomized {
+}
+/**
+ * @generated from protobuf message bilibili.app.view.v1.TFInfoReply
+ */
+export interface TFInfoReply {
+    /**
+     * @generated from protobuf field: int64 tips_id = 1
+     */
+    tipsId: string;
+    /**
+     * @generated from protobuf field: bilibili.app.view.v1.TFToast tf_toast = 2
+     */
+    tfToast?: TFToast;
+    /**
+     * @generated from protobuf field: bilibili.app.view.v1.TFPanelCustomized tf_panel_customized = 3
+     */
+    tfPanelCustomized?: TFPanelCustomized;
+}
+/**
  * @generated from protobuf message bilibili.app.view.v1.ViewReply
  */
 export interface ViewReply {
@@ -232,6 +259,36 @@ declare class ViewProgressReply$Type extends MessageType<ViewProgressReply> {
  * @generated MessageType for protobuf message bilibili.app.view.v1.ViewProgressReply
  */
 export declare const ViewProgressReply: ViewProgressReply$Type;
+declare class TFToast$Type extends MessageType<TFToast> {
+    constructor();
+    create(value?: PartialMessage<TFToast>): TFToast;
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: TFToast): TFToast;
+    internalBinaryWrite(message: TFToast, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter;
+}
+/**
+ * @generated MessageType for protobuf message bilibili.app.view.v1.TFToast
+ */
+export declare const TFToast: TFToast$Type;
+declare class TFPanelCustomized$Type extends MessageType<TFPanelCustomized> {
+    constructor();
+    create(value?: PartialMessage<TFPanelCustomized>): TFPanelCustomized;
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: TFPanelCustomized): TFPanelCustomized;
+    internalBinaryWrite(message: TFPanelCustomized, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter;
+}
+/**
+ * @generated MessageType for protobuf message bilibili.app.view.v1.TFPanelCustomized
+ */
+export declare const TFPanelCustomized: TFPanelCustomized$Type;
+declare class TFInfoReply$Type extends MessageType<TFInfoReply> {
+    constructor();
+    create(value?: PartialMessage<TFInfoReply>): TFInfoReply;
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: TFInfoReply): TFInfoReply;
+    internalBinaryWrite(message: TFInfoReply, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter;
+}
+/**
+ * @generated MessageType for protobuf message bilibili.app.view.v1.TFInfoReply
+ */
+export declare const TFInfoReply: TFInfoReply$Type;
 declare class ViewReply$Type extends MessageType<ViewReply> {
     constructor();
     create(value?: PartialMessage<ViewReply>): ViewReply;

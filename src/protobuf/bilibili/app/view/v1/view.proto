@@ -42,6 +42,16 @@ message ViewProgressReply {
     OpaqueMessage video_guide = 1;
 }
 
+message TFToast {}
+
+message TFPanelCustomized {}
+
+message TFInfoReply {
+    int64 tips_id = 1;
+    TFToast tf_toast = 2;
+    TFPanelCustomized tf_panel_customized = 3;
+}
+
 message ViewReply {
     map<string, TIcon> t_icon = 6;
     repeated Relate relates = 10;

@@ -36,6 +36,7 @@ export default {
 			DM: {
 				Command: false,
 				Colorful: false,
+				Airborne: false,
 			},
 			Reply: {
 				AD: true,

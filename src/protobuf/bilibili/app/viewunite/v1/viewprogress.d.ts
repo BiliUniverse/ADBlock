@@ -8,26 +8,61 @@ import type { IBinaryReader } from "@protobuf-ts/runtime";
 import type { PartialMessage } from "@protobuf-ts/runtime";
 import { MessageType } from "@protobuf-ts/runtime";
 /**
- * @generated from protobuf message bilibili.app.viewunite.v1.ProgressOpaqueMessage
+ * @generated from protobuf message bilibili.app.viewunite.v1.ProgressMaterial
  */
-export interface ProgressOpaqueMessage {
+export interface ProgressMaterial {
+    /**
+     * @generated from protobuf field: string text = 2
+     */
+    text: string;
+    /**
+     * @generated from protobuf field: string url = 3
+     */
+    url: string;
+}
+/**
+ * @generated from protobuf message bilibili.app.viewunite.v1.ProgressVideoPoint
+ */
+export interface ProgressVideoPoint {
+    /**
+     * @generated from protobuf field: bool point_permanent = 3
+     */
+    pointPermanent: boolean;
+}
+/**
+ * @generated from protobuf message bilibili.app.viewunite.v1.ProgressContractCard
+ */
+export interface ProgressContractCard {
+    /**
+     * @generated from protobuf field: bool play_display_switch = 12
+     */
+    playDisplaySwitch: boolean;
+}
+/**
+ * @generated from protobuf message bilibili.app.viewunite.v1.ProgressVideoShot
+ */
+export interface ProgressVideoShot {
+    /**
+     * @generated from protobuf field: string pv_data = 1
+     */
+    pvData: string;
 }
 /**
  * @generated from protobuf message bilibili.app.viewunite.v1.VideoGuide
  */
 export interface VideoGuide {
     /**
-     * @generated from protobuf field: repeated bilibili.app.viewunite.v1.ProgressOpaqueMessage material = 1
+     * @generated from protobuf field: repeated bilibili.app.viewunite.v1.ProgressMaterial material = 1
      */
-    material: ProgressOpaqueMessage[];
+    material: ProgressMaterial[];
     /**
-     * @generated from protobuf field: bilibili.app.viewunite.v1.ProgressOpaqueMessage video_point = 2
+     * @generated from protobuf field: bilibili.app.viewunite.v1.ProgressVideoPoint video_point = 2
      */
-    videoPoint?: ProgressOpaqueMessage;
+    videoPoint?: ProgressVideoPoint;
     /**
-     * @generated from protobuf field: bilibili.app.viewunite.v1.ProgressOpaqueMessage contract_card = 3
+     * @generated from protobuf field: bilibili.app.viewunite.v1.ProgressContractCard contract_card = 3
      */
-    contractCard?: ProgressOpaqueMessage;
+    contractCard?: ProgressContractCard;
 }
 /**
  * @generated from protobuf message bilibili.app.viewunite.v1.ViewProgressReply
@@ -37,17 +72,51 @@ export interface ViewProgressReply {
      * @generated from protobuf field: bilibili.app.viewunite.v1.VideoGuide video_guide = 1
      */
     videoGuide?: VideoGuide;
+    /**
+     * @generated from protobuf field: bilibili.app.viewunite.v1.ProgressVideoShot arc_shot = 3
+     */
+    arcShot?: ProgressVideoShot;
 }
-declare class ProgressOpaqueMessage$Type extends MessageType<ProgressOpaqueMessage> {
+declare class ProgressMaterial$Type extends MessageType<ProgressMaterial> {
     constructor();
-    create(value?: PartialMessage<ProgressOpaqueMessage>): ProgressOpaqueMessage;
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ProgressOpaqueMessage): ProgressOpaqueMessage;
-    internalBinaryWrite(message: ProgressOpaqueMessage, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter;
+    create(value?: PartialMessage<ProgressMaterial>): ProgressMaterial;
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ProgressMaterial): ProgressMaterial;
+    internalBinaryWrite(message: ProgressMaterial, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter;
 }
 /**
- * @generated MessageType for protobuf message bilibili.app.viewunite.v1.ProgressOpaqueMessage
+ * @generated MessageType for protobuf message bilibili.app.viewunite.v1.ProgressMaterial
  */
-export declare const ProgressOpaqueMessage: ProgressOpaqueMessage$Type;
+export declare const ProgressMaterial: ProgressMaterial$Type;
+declare class ProgressVideoPoint$Type extends MessageType<ProgressVideoPoint> {
+    constructor();
+    create(value?: PartialMessage<ProgressVideoPoint>): ProgressVideoPoint;
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ProgressVideoPoint): ProgressVideoPoint;
+    internalBinaryWrite(message: ProgressVideoPoint, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter;
+}
+/**
+ * @generated MessageType for protobuf message bilibili.app.viewunite.v1.ProgressVideoPoint
+ */
+export declare const ProgressVideoPoint: ProgressVideoPoint$Type;
+declare class ProgressContractCard$Type extends MessageType<ProgressContractCard> {
+    constructor();
+    create(value?: PartialMessage<ProgressContractCard>): ProgressContractCard;
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ProgressContractCard): ProgressContractCard;
+    internalBinaryWrite(message: ProgressContractCard, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter;
+}
+/**
+ * @generated MessageType for protobuf message bilibili.app.viewunite.v1.ProgressContractCard
+ */
+export declare const ProgressContractCard: ProgressContractCard$Type;
+declare class ProgressVideoShot$Type extends MessageType<ProgressVideoShot> {
+    constructor();
+    create(value?: PartialMessage<ProgressVideoShot>): ProgressVideoShot;
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ProgressVideoShot): ProgressVideoShot;
+    internalBinaryWrite(message: ProgressVideoShot, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter;
+}
+/**
+ * @generated MessageType for protobuf message bilibili.app.viewunite.v1.ProgressVideoShot
+ */
+export declare const ProgressVideoShot: ProgressVideoShot$Type;
 declare class VideoGuide$Type extends MessageType<VideoGuide> {
     constructor();
     create(value?: PartialMessage<VideoGuide>): VideoGuide;

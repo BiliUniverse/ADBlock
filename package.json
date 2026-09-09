@@ -68,9 +68,7 @@
 		"@auraflare/shared": "^1.1.1",
 		"@nsnanocat/grpc": "^1.1.0",
 		"@nsnanocat/util": "^2.7.4",
-		"@biliverse/protobuf": "^1.0.0",
 		"@protobuf-ts/runtime": "^2.11.1",
-		"@protobuf-ts/runtime-rpc": "^2.11.1",
 		"crypto-js": "^4.2.0",
 		"fetch-cookie": "^3.2.0",
 		"hono": "^4.13.5"

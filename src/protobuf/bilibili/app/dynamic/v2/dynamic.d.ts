@@ -17,6 +17,15 @@ export interface DynamicItem {
     cardType: number;
 }
 /**
+ * @generated from protobuf message bilibili.app.dynamic.v2.DynamicList
+ */
+export interface DynamicList {
+    /**
+     * @generated from protobuf field: repeated bilibili.app.dynamic.v2.DynamicItem list = 1
+     */
+    list: DynamicItem[];
+}
+/**
  * @generated from protobuf message bilibili.app.dynamic.v2.CardVideoDynList
  */
 export interface CardVideoDynList {
@@ -26,9 +35,70 @@ export interface CardVideoDynList {
     list: DynamicItem[];
 }
 /**
+ * @generated from protobuf message bilibili.app.dynamic.v2.UpListItem
+ */
+export interface UpListItem {
+    /**
+     * @generated from protobuf field: int32 live_state = 10
+     */
+    liveState: number;
+}
+/**
  * @generated from protobuf message bilibili.app.dynamic.v2.CardVideoUpList
  */
 export interface CardVideoUpList {
+    /**
+     * @generated from protobuf field: repeated bilibili.app.dynamic.v2.UpListItem list = 2
+     */
+    list: UpListItem[];
+    /**
+     * @generated from protobuf field: repeated bilibili.app.dynamic.v2.UpListItem list_second = 10
+     */
+    listSecond: UpListItem[];
+}
+/**
+ * @generated from protobuf message bilibili.app.dynamic.v2.TopicList
+ */
+export interface TopicList {
+    /**
+     * @generated from protobuf field: string title = 1
+     */
+    title: string;
+}
+/**
+ * @generated from protobuf message bilibili.app.dynamic.v2.DynAllReply
+ */
+export interface DynAllReply {
+    /**
+     * @generated from protobuf field: bilibili.app.dynamic.v2.DynamicList dynamic_list = 1
+     */
+    dynamicList?: DynamicList;
+    /**
+     * @generated from protobuf field: bilibili.app.dynamic.v2.CardVideoUpList up_list = 2
+     */
+    upList?: CardVideoUpList;
+    /**
+     * @generated from protobuf field: bilibili.app.dynamic.v2.TopicList topic_list = 3
+     */
+    topicList?: TopicList;
+}
+/**
+ * @generated from protobuf message bilibili.app.dynamic.v2.DynAllPersonalReply
+ */
+export interface DynAllPersonalReply {
+    /**
+     * @generated from protobuf field: repeated bilibili.app.dynamic.v2.DynamicItem list = 1
+     */
+    list: DynamicItem[];
+}
+/**
+ * @generated from protobuf message bilibili.app.dynamic.v2.DynVideoPersonalReply
+ */
+export interface DynVideoPersonalReply {
+    /**
+     * @generated from protobuf field: repeated bilibili.app.dynamic.v2.DynamicItem list = 1
+     */
+    list: DynamicItem[];
 }
 /**
  * @generated from protobuf message bilibili.app.dynamic.v2.DynVideoReply
@@ -53,6 +123,16 @@ declare class DynamicItem$Type extends MessageType<DynamicItem> {
  * @generated MessageType for protobuf message bilibili.app.dynamic.v2.DynamicItem
  */
 export declare const DynamicItem: DynamicItem$Type;
+declare class DynamicList$Type extends MessageType<DynamicList> {
+    constructor();
+    create(value?: PartialMessage<DynamicList>): DynamicList;
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: DynamicList): DynamicList;
+    internalBinaryWrite(message: DynamicList, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter;
+}
+/**
+ * @generated MessageType for protobuf message bilibili.app.dynamic.v2.DynamicList
+ */
+export declare const DynamicList: DynamicList$Type;
 declare class CardVideoDynList$Type extends MessageType<CardVideoDynList> {
     constructor();
     create(value?: PartialMessage<CardVideoDynList>): CardVideoDynList;
@@ -63,6 +143,16 @@ declare class CardVideoDynList$Type extends MessageType<CardVideoDynList> {
  * @generated MessageType for protobuf message bilibili.app.dynamic.v2.CardVideoDynList
  */
 export declare const CardVideoDynList: CardVideoDynList$Type;
+declare class UpListItem$Type extends MessageType<UpListItem> {
+    constructor();
+    create(value?: PartialMessage<UpListItem>): UpListItem;
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: UpListItem): UpListItem;
+    internalBinaryWrite(message: UpListItem, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter;
+}
+/**
+ * @generated MessageType for protobuf message bilibili.app.dynamic.v2.UpListItem
+ */
+export declare const UpListItem: UpListItem$Type;
 declare class CardVideoUpList$Type extends MessageType<CardVideoUpList> {
     constructor();
     create(value?: PartialMessage<CardVideoUpList>): CardVideoUpList;
@@ -73,6 +163,46 @@ declare class CardVideoUpList$Type extends MessageType<CardVideoUpList> {
  * @generated MessageType for protobuf message bilibili.app.dynamic.v2.CardVideoUpList
  */
 export declare const CardVideoUpList: CardVideoUpList$Type;
+declare class TopicList$Type extends MessageType<TopicList> {
+    constructor();
+    create(value?: PartialMessage<TopicList>): TopicList;
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: TopicList): TopicList;
+    internalBinaryWrite(message: TopicList, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter;
+}
+/**
+ * @generated MessageType for protobuf message bilibili.app.dynamic.v2.TopicList
+ */
+export declare const TopicList: TopicList$Type;
+declare class DynAllReply$Type extends MessageType<DynAllReply> {
+    constructor();
+    create(value?: PartialMessage<DynAllReply>): DynAllReply;
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: DynAllReply): DynAllReply;
+    internalBinaryWrite(message: DynAllReply, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter;
+}
+/**
+ * @generated MessageType for protobuf message bilibili.app.dynamic.v2.DynAllReply
+ */
+export declare const DynAllReply: DynAllReply$Type;
+declare class DynAllPersonalReply$Type extends MessageType<DynAllPersonalReply> {
+    constructor();
+    create(value?: PartialMessage<DynAllPersonalReply>): DynAllPersonalReply;
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: DynAllPersonalReply): DynAllPersonalReply;
+    internalBinaryWrite(message: DynAllPersonalReply, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter;
+}
+/**
+ * @generated MessageType for protobuf message bilibili.app.dynamic.v2.DynAllPersonalReply
+ */
+export declare const DynAllPersonalReply: DynAllPersonalReply$Type;
+declare class DynVideoPersonalReply$Type extends MessageType<DynVideoPersonalReply> {
+    constructor();
+    create(value?: PartialMessage<DynVideoPersonalReply>): DynVideoPersonalReply;
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: DynVideoPersonalReply): DynVideoPersonalReply;
+    internalBinaryWrite(message: DynVideoPersonalReply, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter;
+}
+/**
+ * @generated MessageType for protobuf message bilibili.app.dynamic.v2.DynVideoPersonalReply
+ */
+export declare const DynVideoPersonalReply: DynVideoPersonalReply$Type;
 declare class DynVideoReply$Type extends MessageType<DynVideoReply> {
     constructor();
     create(value?: PartialMessage<DynVideoReply>): DynVideoReply;
