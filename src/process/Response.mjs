@@ -20,13 +20,10 @@ import { SearchAllResponse } from "../protobuf/bilibili/polymer/app/search/v1/se
 export async function Response($request, $response, KV) {
 	// 解构URL
 	const url = new URL($request.url);
-	Console.info(`url: ${url.toJSON()}`);
 	// 获取连接参数
 	const PATHs = url.pathname.split("/").filter(Boolean);
-	Console.info(`PATHs: ${PATHs}`);
 	// 解析格式
 	const FORMAT = ($response.headers?.["Content-Type"] ?? $response.headers?.["content-type"])?.split(";")?.[0];
-	Console.info(`FORMAT: ${FORMAT}`);
 	/**
 	 * 设置
 	 * @type {{Settings: import('./types').Settings}}
@@ -36,6 +33,10 @@ export async function Response($request, $response, KV) {
 	// const { Settings, Caches, Configs } = await setENV("BiliBili", "ADBlock", database, KV);
 	const adBlock = new ADBlock();
 	Console.logLevel = Settings.LogLevel;
+	// 重要：环境合并完成后才能输出分级日志，确保整次执行只使用 BoxJS 最终确定的日志等级。
+	Console.info(`url: ${url.toJSON()}`);
+	Console.info(`PATHs: ${PATHs}`);
+	Console.info(`FORMAT: ${FORMAT}`);
 	// 创建空数据
 	let body = { code: 0, message: "0", data: {} };
 	// 格式判断

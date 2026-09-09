@@ -11,13 +11,10 @@ export async function Request($request, KV) {
 	let $response;
 	// 解构URL
 	const url = new URL($request.url);
-	Console.info(`url: ${url.toJSON()}`);
 	// 获取连接参数
 	const PATHs = url.pathname.split("/").filter(Boolean);
-	Console.info(`PATHs: ${PATHs}`);
 	// 解析格式
 	const FORMAT = ($request.headers?.["Content-Type"] ?? $request.headers?.["content-type"])?.split(";")?.[0];
-	Console.info(`FORMAT: ${FORMAT}`);
 	/**
 	 * 设置
 	 * @type {{Settings: import('./types').Settings}}
@@ -26,6 +23,10 @@ export async function Request($request, KV) {
 	// 原实现还会解构 Configs；当前流程暂未使用，保留下面的原结构供后续功能恢复。
 	// const { Settings, Caches, Configs } = await setENV("BiliBili", "ADBlock", database, KV);
 	Console.logLevel = Settings.LogLevel;
+	// 重要：环境合并完成后才能输出分级日志，确保整次执行只使用 BoxJS 最终确定的日志等级。
+	Console.info(`url: ${url.toJSON()}`);
+	Console.info(`PATHs: ${PATHs}`);
+	Console.info(`FORMAT: ${FORMAT}`);
 	$response = settingsResponse($request, Settings);
 	if ($response) return { $request, $response };
 	// 预留的通用响应结构，当前请求处理流程暂未使用。
